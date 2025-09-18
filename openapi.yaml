@@ -1,0 +1,2413 @@
+openapi: 3.1.0
+info:
+  title: TMA Admin API
+  version: '1.0'
+  description: |
+    Temple Manchester Admin API provides endpoints for managing the martial arts school operations.
+
+    ## Authentication
+    Most endpoints require authentication using a bearer token obtained from the `/auth/login` endpoint.
+
+    ## Mobile App Endpoints
+    Endpoints under the authenticated group are designed for the mobile app used by coaches.
+  contact:
+    name: Temple Manchester Support
+  license:
+    name: Proprietary
+servers:
+  - url: http://localhost:8000/api
+    description: Local development
+  - url: https://admin-test.templemanchester.co.uk/api
+    description: Test environment
+  - url: https://admin.templemanchester.co.uk/api
+    description: Production environment
+paths:
+  /auth/login:
+    post:
+      summary: Login
+      description: Authenticate with email and password to receive a bearer token
+      operationId: authLogin
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+            example:
+              email: user@example.com
+              password: password123
+      responses:
+        '200':
+          $ref: '#/components/responses/LoginSuccessResponse'
+        '422':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: object
+                    properties:
+                      email:
+                        type: array
+                        items:
+                          type: string
+              example:
+                message: The provided credentials are incorrect.
+                errors:
+                  email:
+                    - The provided credentials are incorrect.
+  /auth/logout:
+    post:
+      summary: Logout
+      description: Invalidate the current authentication token
+      operationId: authLogout
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully logged out
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+              example:
+                message: Successfully logged out
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /auth/user:
+    get:
+      summary: Get current user
+      description: Get the authenticated user's details
+      operationId: authUser
+      tags:
+        - Authentication
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /clubs:
+    get:
+      summary: Get clubs assigned to user
+      description: |
+        Returns a list of clubs assigned to the authenticated user through their classTimes relation.
+        Admin users (is_admin=true) will receive all clubs in the system.
+      operationId: getMobileClubs
+      tags:
+        - Mobile App
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of clubs successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Club'
+              example:
+                data:
+                  - id: 1
+                    name: Temple Manchester - City Center
+                    slug: city-center
+                    address: 123 Main St
+                    postcode: M1 1AA
+                    latitude: 53.4808
+                    longitude: -2.2426
+                    class_times:
+                      - id: 1
+                        club_id: 1
+                        day: Monday
+                        name: Kids 1
+                        start_time: '17:00:00'
+                        end_time: '18:00:00'
+                        coaches: John Smith, Jane Doe
+                        todays_booking_count: 12
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /clubs-count:
+    get:
+      summary: Get clubs count
+      description: |
+        Retrieve the total count of clubs accessible to the authenticated user.
+        - Admins can see the count of all clubs
+        - Non-admin users only see the count of clubs associated with their assigned class times
+      operationId: getClubsCount
+      tags:
+        - Mobile App
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Count of clubs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: integer
+                        description: Total number of accessible clubs
+                        example: 5
+                    required:
+                      - count
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /class-times:
+    get:
+      summary: Get class times
+      description: |
+        Retrieve class times from the database with optional filtering.
+        - Admins can see all class times
+        - Non-admin users only see class times they are assigned to
+      operationId: getClassTimes
+      tags:
+        - Mobile App
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: date_from
+          schema:
+            type: string
+            format: date
+          description: Filter class times from this date (inclusive)
+          example: '2024-01-01'
+        - in: query
+          name: date_to
+          schema:
+            type: string
+            format: date
+          description: Filter class times to this date (inclusive). Must be after or equal to date_from
+          example: '2024-12-31'
+        - in: query
+          name: club_id
+          schema:
+            type: integer
+          description: Filter by specific club ID
+          example: 1
+      responses:
+        '200':
+          description: List of class times
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        club_id:
+                          type: integer
+                          example: 1
+                        day:
+                          type: string
+                          example: Monday
+                          description: Day of the week
+                        name:
+                          type: string
+                          example: Morning Class
+                          description: Name of the class
+                        start_time:
+                          type: string
+                          format: time
+                          example: '09:00:00'
+                        end_time:
+                          type: string
+                          format: time
+                          example: '10:30:00'
+                        club:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              example: 1
+                            name:
+                              type: string
+                              example: Downtown Club
+                            address:
+                              type: string
+                              example: 123 Main St
+                            city:
+                              type: string
+                              example: New York
+                            county:
+                              type: string
+                              example: New York County
+                            postcode:
+                              type: string
+                              example: '10001'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /class-times/{id}/bookings:
+    get:
+      summary: Get bookings for a class time on a specific date
+      description: Returns all bookings for a specific class time on a given date. Coaches can only see bookings for their assigned class times.
+      operationId: getClassTimeBookings
+      tags:
+        - Class Times
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the class time
+          schema:
+            type: integer
+        - name: date
+          in: query
+          required: true
+          description: Date to get bookings for (YYYY-MM-DD format)
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Bookings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+        '403':
+          description: Unauthorized - User doesn't have permission for this class time
+        '404':
+          description: Class time not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ValidationError'
+  /facebook-pages:
+    get:
+      tags:
+        - Mobile App
+        - Cadence Proxy
+      summary: Get Facebook pages
+      description: |
+        Retrieve Facebook pages from Cadence API. This is a proxy endpoint that forwards
+        the request to Cadence and returns the response as-is. Only accessible by admin users.
+      operationId: getFacebookPages
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          description: Optional search term to filter Facebook pages by name
+          required: false
+          schema:
+            type: string
+            maxLength: 255
+          example: Didsbury
+      responses:
+        '200':
+          description: Successful response from Cadence API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: Unique identifier for the Facebook page
+                        uuid:
+                          type: string
+                          format: uuid
+                          description: Universal unique identifier for cross-system coordination
+                        name:
+                          type: string
+                          description: Name of the Facebook page
+                        facebook_page_id:
+                          type: string
+                          description: Facebook's internal page ID
+                        organisation_id:
+                          type: integer
+                          description: ID of the organisation that owns this page
+                        status:
+                          type: string
+                          enum:
+                            - active
+                            - inactive
+                            - error
+                          description: Current status of the page
+                        url:
+                          type: string
+                          format: uri
+                          description: URL to the Facebook page
+                        last_synced_at:
+                          type: string
+                          format: date-time
+                          nullable: true
+                          description: Last time the page was synced with Facebook
+                        clubs:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                              name:
+                                type: string
+                          description: Associated clubs (only included when loaded)
+              example:
+                data:
+                  - id: 1
+                    uuid: 550e8400-e29b-41d4-a716-446655440000
+                    name: Didsbury Martial Arts
+                    facebook_page_id: '123456789'
+                    organisation_id: 1
+                    status: active
+                    url: https://facebook.com/didsburyma
+                    last_synced_at: '2024-01-15T10:30:00Z'
+                    clubs:
+                      - id: 1
+                        name: Didsbury Club
+        '403':
+          description: Forbidden - User is not an admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '500':
+          description: Server error - Failed to fetch from Cadence API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch Facebook pages
+                  error:
+                    type: string
+                    description: Detailed error message from Cadence service
+  /advertising/metrics:
+    get:
+      tags:
+        - Mobile App
+        - Cadence Proxy
+      summary: Get advertising metrics summary
+      description: |
+        Retrieve advertising metrics summary from Cadence API for a specified date range with optional
+        Facebook page filtering. Returns only the summary data with total spend, total bookings,
+        and cost per booking. Only accessible by admin users.
+      operationId: getAdvertisingMetrics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          description: Start date for metrics (YYYY-MM-DD format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2024-01-01'
+        - name: end_date
+          in: query
+          description: End date for metrics (YYYY-MM-DD format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2024-01-31'
+        - name: facebook_page_uuids
+          in: query
+          description: Array of Facebook page UUIDs to filter by
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+            - 550e8400-e29b-41d4-a716-446655440001
+      responses:
+        '200':
+          description: Successful response with advertising metrics summary
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_spend:
+                    type: number
+                    format: float
+                    description: Total advertising spend for the period
+                  total_bookings:
+                    type: integer
+                    description: Total number of bookings generated
+                  cost_per_booking:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Average cost per booking (null if no bookings)
+                  club_bookings:
+                    type: array
+                    description: Booking breakdown by club
+                    items:
+                      type: object
+                      properties:
+                        club_id:
+                          type: integer
+                          nullable: true
+                          description: ID of the club
+                        club_name:
+                          type: string
+                          description: Name of the club
+                        bookings:
+                          type: integer
+                          description: Number of bookings for this club
+              example:
+                total_spend: 150
+                total_bookings: 25
+                cost_per_booking: 6
+                club_bookings:
+                  - club_id: 1
+                    club_name: Temple Manchester
+                    bookings: 15
+                  - club_id: 2
+                    club_name: Temple Liverpool
+                    bookings: 10
+        '403':
+          description: Forbidden - User is not an admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+              example:
+                message: The given data was invalid.
+                errors:
+                  start_date:
+                    - The start date field is required.
+                  end_date:
+                    - The end date must be a date after or equal to start date.
+        '500':
+          description: Server error - Failed to fetch from Cadence API
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch advertising metrics
+                  error:
+                    type: string
+                    description: Detailed error message from Cadence service
+  /bookings:
+    get:
+      summary: List bookings
+      description: Returns a paginated list of bookings with optional filters
+      operationId: listBookings
+      tags:
+        - Bookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          required: false
+          description: Filter bookings starting from this date
+          schema:
+            type: string
+            format: date
+        - name: end_date
+          in: query
+          required: false
+          description: Filter bookings up to this date
+          schema:
+            type: string
+            format: date
+        - name: per_page
+          in: query
+          required: false
+          description: Number of items per page (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: club_id
+          in: query
+          required: false
+          description: Filter by specific club ID
+          schema:
+            type: integer
+        - name: class_time_id
+          in: query
+          required: false
+          description: Filter by specific class time ID
+          schema:
+            type: integer
+        - name: status
+          in: query
+          required: false
+          description: Filter by booking status
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid_dd
+              - paid_awaiting_dd
+              - unpaid_dd
+              - unpaid_coach_call
+              - not_joining
+      responses:
+        '200':
+          description: Bookings retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Booking'
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                      last:
+                        type: string
+                      prev:
+                        type: string
+                        nullable: true
+                      next:
+                        type: string
+                        nullable: true
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      from:
+                        type: integer
+                      last_page:
+                        type: integer
+                      path:
+                        type: string
+                      per_page:
+                        type: integer
+                      to:
+                        type: integer
+                      total:
+                        type: integer
+        '401':
+          description: Unauthorized - Invalid or missing token
+        '422':
+          description: Validation error
+  /bookings/totals:
+    get:
+      summary: Get booking totals
+      description: |
+        Retrieve aggregated booking counts.
+        - Admins can see totals for all bookings
+        - Non-admin users only see totals for bookings in their assigned class times
+      operationId: getBookingsTotals
+      tags:
+        - Mobile App
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Booking totals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      today:
+                        type: integer
+                        description: Number of bookings for today
+                        example: 12
+                      month:
+                        type: integer
+                        description: Number of bookings for the current month
+                        example: 145
+                      upcoming:
+                        type: integer
+                        description: Number of future bookings from now
+                        example: 67
+                    required:
+                      - today
+                      - month
+                      - upcoming
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /bookings/stats:
+    get:
+      summary: Get booking statistics
+      description: Returns statistical information about bookings including conversion rates
+      operationId: getBookingStatistics
+      tags:
+        - Bookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          required: false
+          description: Filter statistics by specific status
+          schema:
+            type: string
+            enum:
+              - pending
+              - paid_dd
+              - paid_awaiting_dd
+              - unpaid_dd
+              - unpaid_coach_call
+              - not_joining
+      responses:
+        '200':
+          description: Booking statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BookingStatistics'
+        '401':
+          description: Unauthorized - Invalid or missing token
+  /bookings/{booking_id}/status:
+    put:
+      summary: Update booking status
+      description: Updates the status of a booking and optionally creates kit orders and reminders
+      operationId: updateBookingStatus
+      tags:
+        - Bookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          description: ID of the booking to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - pending
+                    - paid_dd
+                    - paid_awaiting_dd
+                    - unpaid_dd
+                    - unpaid_coach_call
+                    - not_joining
+                  description: New status for the booking
+                kit_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      type:
+                        type: string
+                        example: tshirt
+                      size:
+                        type: string
+                        example: medium youth
+                  description: Optional kit items to order
+                reminder_time:
+                  type: string
+                  format: date-time
+                  example: '2025-01-20T10:00:00Z'
+                  description: Optional reminder time
+      responses:
+        '200':
+          description: Status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Status updated
+                  booking:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123
+                      status:
+                        type: string
+                        example: paid_dd
+                      kit_order_id:
+                        type: integer
+                        nullable: true
+                        example: 456
+                      reminder_id:
+                        type: integer
+                        nullable: true
+                        example: 789
+        '403':
+          description: Unauthorized - User doesn't have permission to update this booking
+        '404':
+          description: Booking not found
+        '422':
+          description: Validation error
+        '500':
+          description: Failed to update booking status
+  /kit-orders:
+    get:
+      summary: List kit orders
+      description: Returns a paginated list of all kit orders with optional search
+      operationId: listKitOrders
+      tags:
+        - Kit Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          required: false
+          description: Number of items per page (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: search
+          in: query
+          required: false
+          description: Search by student name or booking name
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Kit orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/KitOrder'
+        '401':
+          description: Unauthorized - Invalid or missing token
+    post:
+      summary: Create kit order
+      description: Creates a new kit order either for a booking or standalone with student name
+      operationId: createKitOrder
+      tags:
+        - Kit Orders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - items
+              properties:
+                booking_id:
+                  type: integer
+                  nullable: true
+                  example: 123
+                  description: Optional booking ID to link the kit order to
+                student_name:
+                  type: string
+                  example: John Smith
+                  description: Student name (required if no booking_id)
+                contact_email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                  description: Contact email for standalone orders
+                contact_phone:
+                  type: string
+                  example: '+447900123456'
+                  description: Contact phone for standalone orders
+                items:
+                  type: array
+                  items:
+                    type: object
+                    required:
+                      - type
+                      - size
+                    properties:
+                      type:
+                        type: string
+                        example: tshirt
+                      size:
+                        type: string
+                        example: medium youth
+                notes:
+                  type: string
+                  example: Please order extra large for growth
+                  description: Optional notes about the order
+      responses:
+        '201':
+          description: Kit order created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KitOrder'
+        '403':
+          description: Unauthorized - User doesn't have permission for this booking
+        '404':
+          description: Booking not found
+        '422':
+          description: Validation error
+  /kit-orders/{id}:
+    get:
+      summary: Get kit order
+      description: Returns a specific kit order by ID
+      operationId: getKitOrder
+      tags:
+        - Kit Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the kit order to retrieve
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Kit order retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/KitOrder'
+        '403':
+          description: Unauthorized - User doesn't have permission for this kit order
+        '404':
+          description: Kit order not found
+  /bookings/{booking_id}/kit-orders:
+    get:
+      summary: Get kit orders for booking
+      description: Returns all kit orders associated with a specific booking
+      operationId: getKitOrdersForBooking
+      tags:
+        - Kit Orders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          description: ID of the booking to get kit orders for
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Kit orders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/KitOrder'
+        '403':
+          description: Unauthorized - User doesn't have permission for this booking
+        '404':
+          description: Booking not found
+  /reminders:
+    post:
+      summary: Create reminder
+      description: Creates a new reminder. Admins can create reminders for any user, while coaches can only create reminders for themselves.
+      operationId: createReminder
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - reminder_time
+              properties:
+                title:
+                  type: string
+                  example: Call John about trial
+                description:
+                  type: string
+                  nullable: true
+                  example: 'Phone: 0411 123 456'
+                reminder_time:
+                  type: string
+                  format: date-time
+                  example: '2025-01-20T10:00:00Z'
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                    - urgent
+                  default: medium
+                  example: high
+                booking_id:
+                  type: integer
+                  nullable: true
+                  example: 123
+                user_id:
+                  type: integer
+                  nullable: true
+                  description: Only admins can set this field to create reminders for other users
+                  example: 5
+      responses:
+        '201':
+          description: Reminder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+        '403':
+          description: Unauthorized - Only admins can create reminders for other users
+        '422':
+          description: Validation error
+  /reminders/dashboard:
+    get:
+      summary: Get dashboard reminders
+      description: Returns user's upcoming reminders sorted by time, along with count statistics
+      operationId: getDashboardReminders
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Dashboard reminders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+                  stats:
+                    type: object
+                    properties:
+                      overdue:
+                        type: integer
+                        example: 2
+                      today:
+                        type: integer
+                        example: 5
+                      upcoming:
+                        type: integer
+                        example: 12
+        '401':
+          description: Unauthorized
+  /reminders/my:
+    get:
+      summary: Get my reminders
+      description: Returns all reminders for the current user with optional filtering
+      operationId: getMyReminders
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum:
+              - pending
+              - completed
+              - snoozed
+              - cancelled
+          description: Filter by reminder status
+        - in: query
+          name: priority
+          schema:
+            type: string
+            enum:
+              - low
+              - medium
+              - high
+              - urgent
+          description: Filter by priority
+        - in: query
+          name: sort
+          schema:
+            type: string
+            default: reminder_time
+          description: Field to sort by
+        - in: query
+          name: direction
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+          description: Sort direction
+        - in: query
+          name: per_page
+          schema:
+            type: integer
+            default: 20
+          description: Number of items per page
+      responses:
+        '200':
+          description: Reminders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+                  meta:
+                    type: object
+                    properties:
+                      current_page:
+                        type: integer
+                      total:
+                        type: integer
+                      per_page:
+                        type: integer
+                  links:
+                    type: object
+                    properties:
+                      first:
+                        type: string
+                      last:
+                        type: string
+                      next:
+                        type: string
+                        nullable: true
+                      prev:
+                        type: string
+                        nullable: true
+        '401':
+          description: Unauthorized
+  /reminders/{id}:
+    put:
+      summary: Update reminder
+      description: Update an existing reminder's details
+      operationId: updateReminder
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Reminder ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                  example: 'Updated: Call John about trial'
+                description:
+                  type: string
+                  nullable: true
+                  example: 'Updated phone number: 0412 345 678'
+                reminder_time:
+                  type: string
+                  format: date-time
+                  example: '2025-01-21T14:00:00Z'
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                    - urgent
+                  example: urgent
+                status:
+                  type: string
+                  enum:
+                    - pending
+                    - completed
+                    - snoozed
+                    - cancelled
+                  example: snoozed
+                snooze_until:
+                  type: string
+                  format: date-time
+                  nullable: true
+                  description: Required when status is set to 'snoozed'
+                  example: '2025-01-21T16:00:00Z'
+      responses:
+        '200':
+          description: Reminder updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+        '403':
+          description: Unauthorized - Reminder belongs to another user
+        '404':
+          description: Reminder not found
+        '422':
+          description: Validation error (e.g., snooze_until required when status is snoozed)
+    delete:
+      summary: Delete reminder
+      description: Delete a reminder permanently
+      operationId: deleteReminder
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Reminder ID
+      responses:
+        '200':
+          description: Reminder deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Reminder deleted successfully
+        '403':
+          description: Unauthorized - Reminder belongs to another user
+        '404':
+          description: Reminder not found
+  /reminders/{id}/complete:
+    put:
+      summary: Complete reminder
+      description: Marks a reminder as completed
+      operationId: completeReminder
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID of the reminder to complete
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reminder marked as completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Reminder marked as completed
+                  reminder:
+                    $ref: '#/components/schemas/Reminder'
+        '403':
+          description: Unauthorized - User doesn't have permission for this reminder
+        '404':
+          description: Reminder not found
+  /reminders/bulk-complete:
+    post:
+      summary: Bulk complete reminders
+      description: Mark multiple reminders as completed at once
+      operationId: bulkCompleteReminders
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reminder_ids
+              properties:
+                reminder_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example:
+                    - 1
+                    - 2
+                    - 3
+                    - 5
+      responses:
+        '200':
+          description: Reminders marked as completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 4 reminders marked as completed
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+        '403':
+          description: Some reminders not found or unauthorized
+        '422':
+          description: Validation error
+  /reminders/bulk-snooze:
+    post:
+      summary: Bulk snooze reminders
+      description: Snooze multiple reminders at once until a specified time
+      operationId: bulkSnoozeReminders
+      tags:
+        - Reminders
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - reminder_ids
+                - snooze_until
+              properties:
+                reminder_ids:
+                  type: array
+                  items:
+                    type: integer
+                  example:
+                    - 1
+                    - 2
+                    - 3
+                    - 5
+                snooze_until:
+                  type: string
+                  format: date-time
+                  example: '2025-01-21T16:00:00Z'
+      responses:
+        '200':
+          description: Reminders snoozed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: 4 reminders snoozed until 2025-01-21T16:00:00Z
+                  reminders:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+        '403':
+          description: Some reminders not found or unauthorized
+        '422':
+          description: Validation error
+  /end-of-day-reports:
+    get:
+      summary: List End of Day reports
+      operationId: listEndOfDayReports
+      tags:
+        - End of Day Reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: club_id
+          in: query
+          schema:
+            type: integer
+          description: ID of the club to get EoD reports for
+        - name: user_id
+          in: query
+          schema:
+            type: integer
+          description: ID of the user to get EoD reports for (admin only)
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: page
+          in: query
+          schema:
+            type: integer
+          description: Page number
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+          description: Items per page
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EndOfDayReport'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    post:
+      summary: Create End of Day report
+      operationId: storeEndOfDayReport
+      tags:
+        - End of Day Reports
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - club_id
+                - report_date
+                - kids_1_count
+                - kids_2_count
+                - adults_count
+                - kids_1_trials
+                - kids_2_trials
+                - adults_trials
+                - new_kids_paid_kit_and_signed_dd_count
+                - new_kids_signed_dd_no_kit_count
+                - new_adults_paid_kit_and_signed_dd_count
+                - new_adults_signed_dd_no_kit_count
+                - returning_kids_paid_kit_and_signed_dd_count
+                - returning_kids_signed_dd_no_kit_count
+                - returning_adults_paid_kit_and_signed_dd_count
+                - returning_adults_signed_dd_no_kit_count
+                - total_cash_taken
+              properties:
+                club_id:
+                  type: integer
+                  description: ID of the club this report is for
+                report_date:
+                  type: string
+                  format: date
+                  description: Date of the report
+                kids_1_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of kids in group 1
+                kids_2_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of kids in group 2
+                adults_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of adults
+                kids_1_trials:
+                  type: integer
+                  minimum: 0
+                  description: Number of trial kids in group 1
+                kids_2_trials:
+                  type: integer
+                  minimum: 0
+                  description: Number of trial kids in group 2
+                adults_trials:
+                  type: integer
+                  minimum: 0
+                  description: Number of trial adults
+                new_kids_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new kids who paid for kit and signed direct debit
+                new_kids_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new kids who signed direct debit without kit
+                new_adults_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new adults who paid for kit and signed direct debit
+                new_adults_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new adults who signed direct debit without kit
+                returning_kids_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning kids who paid for kit and signed direct debit
+                returning_kids_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning kids who signed direct debit without kit
+                returning_adults_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning adults who paid for kit and signed direct debit
+                returning_adults_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning adults who signed direct debit without kit
+                total_cash_taken:
+                  type: number
+                  minimum: 0
+                  description: Total cash taken (in pounds)
+                signup_names:
+                  type: string
+                  nullable: true
+                  description: Names of people who signed up
+                helper_names:
+                  type: string
+                  nullable: true
+                  description: Names of helpers
+                incidents:
+                  type: string
+                  nullable: true
+                  description: Any incidents that occurred
+                general_notes:
+                  type: string
+                  nullable: true
+                  description: General notes about the session
+      responses:
+        '201':
+          description: Report created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  report:
+                    $ref: '#/components/schemas/EndOfDayReport'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - User does not have access to this club
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '409':
+          description: Conflict - Report already exists for this club and date
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: object
+  /end-of-day-reports/{id}:
+    get:
+      summary: Get End of Day report details
+      operationId: showEndOfDayReport
+      tags:
+        - End of Day Reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the report to retrieve
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EndOfDayReport'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - User is not authorized to view this report
+        '404':
+          description: Report not found
+    put:
+      summary: Update End of Day report
+      operationId: updateEndOfDayReport
+      tags:
+        - End of Day Reports
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID of the report to update
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                club_id:
+                  type: integer
+                  description: ID of the club this report is for
+                report_date:
+                  type: string
+                  format: date
+                  description: Date of the report
+                kids_1_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of kids in group 1
+                kids_2_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of kids in group 2
+                adults_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of adults
+                kids_1_trials:
+                  type: integer
+                  minimum: 0
+                  description: Number of trial kids in group 1
+                kids_2_trials:
+                  type: integer
+                  minimum: 0
+                  description: Number of trial kids in group 2
+                adults_trials:
+                  type: integer
+                  minimum: 0
+                  description: Number of trial adults
+                new_kids_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new kids who paid for kit and signed direct debit
+                new_kids_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new kids who signed direct debit without kit
+                new_adults_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new adults who paid for kit and signed direct debit
+                new_adults_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of new adults who signed direct debit without kit
+                returning_kids_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning kids who paid for kit and signed direct debit
+                returning_kids_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning kids who signed direct debit without kit
+                returning_adults_paid_kit_and_signed_dd_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning adults who paid for kit and signed direct debit
+                returning_adults_signed_dd_no_kit_count:
+                  type: integer
+                  minimum: 0
+                  description: Number of returning adults who signed direct debit without kit
+                total_cash_taken:
+                  type: number
+                  minimum: 0
+                  description: Total cash taken (in pounds)
+                signup_names:
+                  type: string
+                  nullable: true
+                  description: Names of people who signed up
+                helper_names:
+                  type: string
+                  nullable: true
+                  description: Names of helpers
+                incidents:
+                  type: string
+                  nullable: true
+                  description: Any incidents that occurred
+                general_notes:
+                  type: string
+                  nullable: true
+                  description: General notes about the session
+      responses:
+        '200':
+          description: Report updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  report:
+                    $ref: '#/components/schemas/EndOfDayReport'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Forbidden - User is not authorized to update this report
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '404':
+          description: Report not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '409':
+          description: Conflict - Report already exists for this club and date combination
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: object
+  /users:
+    get:
+      summary: List users
+      operationId: listUsers
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+          description: Items per page
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /users/{id}:
+    parameters:
+      - schema:
+          type: integer
+        name: id
+        in: path
+        required: true
+        description: User ID
+    get:
+      summary: Get user by ID
+      operationId: getUserById
+      tags:
+        - Users
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: User not found
+components:
+  schemas:
+    User:
+      title: User
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the given user.
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        phone_number:
+          type: string
+          nullable: true
+        is_admin:
+          type: boolean
+          default: false
+        email_verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    EndOfDayReport:
+      title: EndOfDayReport
+      type: object
+      properties:
+        id:
+          type: integer
+        report_date:
+          type: string
+          format: date
+        kids_1_count:
+          type: integer
+        kids_2_count:
+          type: integer
+        adults_count:
+          type: integer
+        kids_1_trials:
+          type: integer
+        kids_2_trials:
+          type: integer
+        adults_trials:
+          type: integer
+        new_kids_paid_kit_and_signed_dd_count:
+          type: integer
+        new_kids_signed_dd_no_kit_count:
+          type: integer
+        new_adults_paid_kit_and_signed_dd_count:
+          type: integer
+        new_adults_signed_dd_no_kit_count:
+          type: integer
+        returning_kids_paid_kit_and_signed_dd_count:
+          type: integer
+        returning_kids_signed_dd_no_kit_count:
+          type: integer
+        returning_adults_paid_kit_and_signed_dd_count:
+          type: integer
+        returning_adults_signed_dd_no_kit_count:
+          type: integer
+        total_cash_taken:
+          type: number
+          format: float
+        signup_names:
+          type: string
+          nullable: true
+        helper_names:
+          type: string
+          nullable: true
+        incidents:
+          type: string
+          nullable: true
+        general_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        club:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        coach:
+          type: object
+          description: Alias for user, kept for backward compatibility
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+    Club:
+      title: Club
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the club
+        name:
+          type: string
+          description: Club name
+        slug:
+          type: string
+          description: URL-friendly club identifier
+        address:
+          type: string
+          description: Physical address of the club
+        postcode:
+          type: string
+          description: Postal code
+        latitude:
+          type: number
+          format: float
+          nullable: true
+          description: GPS latitude coordinate
+        longitude:
+          type: number
+          format: float
+          nullable: true
+          description: GPS longitude coordinate
+        class_times:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassTime'
+          description: List of class times at this club (only included when specifically loaded)
+    ClassTime:
+      title: ClassTime
+      type: object
+      required:
+        - id
+        - club_id
+        - day
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the class time
+        club_id:
+          type: integer
+          description: ID of the club this class belongs to
+        day:
+          type: string
+          enum:
+            - Monday
+            - Tuesday
+            - Wednesday
+            - Thursday
+            - Friday
+            - Saturday
+            - Sunday
+          description: Day of the week
+        name:
+          type: string
+          description: Name of the class (e.g., "Kids 1", "Adults")
+        start_time:
+          type: string
+          format: time
+          description: Class start time (HH:MM:SS)
+        end_time:
+          type: string
+          format: time
+          description: Class end time (HH:MM:SS)
+        coaches:
+          type: string
+          description: Comma-separated list of coach names assigned to this class (excludes admin users)
+          example: John Smith, Jane Doe
+        helpers:
+          type: array
+          items:
+            type: string
+          description: List of helper names assigned to this class
+          example:
+            - Mike Wilson
+            - Sarah Johnson
+        todays_booking_count:
+          type: integer
+          description: Number of bookings scheduled for this class time today (excludes cancelled bookings)
+          example: 15
+    Booking:
+      title: Booking
+      type: object
+      required:
+        - id
+        - names
+        - start_time
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the booking
+        uuid:
+          type: string
+          format: uuid
+          description: UUID for the booking
+        names:
+          type: string
+          description: Name(s) of the person(s) in the booking
+        email:
+          type: string
+          format: email
+          description: Contact email for the booking
+        phone:
+          type: string
+          description: Contact phone number
+        status:
+          type: string
+          enum:
+            - pending
+            - paid_dd
+            - paid_awaiting_dd
+            - unpaid_dd
+            - unpaid_coach_call
+            - not_joining
+          default: pending
+          description: Current status of the booking
+        start_time:
+          type: string
+          format: date-time
+          description: Scheduled start time of the booking
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when booking was cancelled
+        no_show:
+          type: boolean
+          default: false
+          description: Whether the booking was a no-show
+        channel:
+          type: string
+          enum:
+            - Cadence
+            - Website
+          description: Booking source channel
+        channel_display_name:
+          type: string
+          description: Display name for the channel with additional details
+        source:
+          type: string
+          description: Display name for the booking source
+        class_time:
+          $ref: '#/components/schemas/ClassTime'
+          description: Associated class time (when loaded)
+        club:
+          $ref: '#/components/schemas/Club'
+          description: Associated club (when loaded via class time)
+    BookingStatistics:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 50
+        converted:
+          type: integer
+          example: 30
+        pending:
+          type: integer
+          example: 15
+        not_joining:
+          type: integer
+          example: 5
+        conversion_rate:
+          type: number
+          format: float
+          example: 60
+        by_status:
+          type: object
+          properties:
+            paid_dd:
+              type: integer
+              example: 20
+            paid_awaiting_dd:
+              type: integer
+              example: 10
+            unpaid_dd:
+              type: integer
+              example: 0
+            unpaid_coach_call:
+              type: integer
+              example: 15
+            not_joining:
+              type: integer
+              example: 5
+    KitOrder:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        booking_id:
+          type: integer
+          nullable: true
+          example: 123
+          description: Optional booking ID if this kit order is linked to a booking
+        student_name:
+          type: string
+          nullable: true
+          example: John Smith
+          description: Student name for standalone kit orders (when no booking_id)
+        contact_email:
+          type: string
+          nullable: true
+          format: email
+          example: john@example.com
+          description: Contact email for standalone kit orders
+        contact_phone:
+          type: string
+          nullable: true
+          example: '+447900123456'
+          description: Contact phone for standalone kit orders
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                example: tshirt
+              size:
+                type: string
+                example: medium youth
+        notes:
+          type: string
+          nullable: true
+          example: Please order extra large for growth
+          description: Optional notes about the kit order
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-01-15T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-01-15T10:00:00Z'
+    Reminder:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Call John about trial
+        description:
+          type: string
+          nullable: true
+          example: 'Phone: 0411 123 456'
+        reminder_time:
+          type: string
+          format: date-time
+          example: '2025-01-20T10:00:00Z'
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+            - urgent
+          example: high
+        status:
+          type: string
+          enum:
+            - pending
+            - completed
+            - snoozed
+            - cancelled
+          example: pending
+        booking_id:
+          type: integer
+          nullable: true
+          example: 123
+        user_id:
+          type: integer
+          example: 5
+        created_by:
+          type: integer
+          nullable: true
+          example: 1
+        snooze_until:
+          type: string
+          format: date-time
+          nullable: true
+          example: '2025-01-20T15:00:00Z'
+        is_overdue:
+          type: boolean
+          example: false
+        is_today:
+          type: boolean
+          example: true
+        booking:
+          $ref: '#/components/schemas/Booking'
+          nullable: true
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            email:
+              type: string
+          nullable: true
+        creator:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          example: '2025-01-15T10:00:00Z'
+        updated_at:
+          type: string
+          format: date-time
+          example: '2025-01-15T10:00:00Z'
+    ValidationError:
+      description: Validation Error - Invalid input data
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: General error message
+              errors:
+                type: object
+                description: Field-specific validation errors
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          example:
+            message: The given data was invalid.
+            errors:
+              email:
+                - The email field is required.
+              password:
+                - The password field must be at least 8 characters.
+  responses:
+    LoginSuccessResponse:
+      description: A successful login response
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - token
+              - user
+              - expires_at
+            properties:
+              token:
+                type: string
+                description: Bearer token for authentication
+              user:
+                $ref: '#/components/schemas/User'
+              expires_at:
+                type: string
+                format: date-time
+                description: Token expiration timestamp
+          example:
+            token: mPDZsV6SK8ln3RLtsQkvEESeCSIWOaEfP0ldk19EVDGWfpcAzY3fyLLNiNzUJeh9
+            user:
+              id: 1
+              name: John Doe
+              email: john@example.com
+              is_admin: false
+            expires_at: '2025-09-06T12:33:38+00:00'
+    UnauthorizedError:
+      description: Unauthorized - Invalid or missing authentication token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: Error message
+          examples:
+            no_token:
+              value:
+                message: Unauthorized - No token provided
+            invalid_token:
+              value:
+                message: Unauthorized - Invalid or expired token
+    ValidationError:
+      description: Validation Error - Invalid input data
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                description: General error message
+              errors:
+                type: object
+                description: Field-specific validation errors
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+          example:
+            message: The given data was invalid.
+            errors:
+              email:
+                - The email field is required.
+              password:
+                - The password field must be at least 8 characters.
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: Bearer token authentication using CoachToken
