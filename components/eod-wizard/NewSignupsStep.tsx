@@ -3,7 +3,7 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
@@ -12,6 +12,7 @@ import Colors from '@/constants/Colors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
+import { NumberInput } from './NumberInput';
 
 export const NewSignupsStep: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -31,10 +32,8 @@ export const NewSignupsStep: React.FC = () => {
     new_adults_signed_dd_no_kit_count = 0,
   } = wizardState.data;
 
-  const handleCountChange = (field: string, delta: number) => {
-    const currentValue = wizardState.data[field as keyof typeof wizardState.data] as number || 0;
-    const newValue = Math.max(0, currentValue + delta);
-    updateWizardData({ [field]: newValue });
+  const handleCountChange = (field: string) => (value: number) => {
+    updateWizardData({ [field]: value });
   };
 
   const renderSignupOption = (
@@ -57,23 +56,11 @@ export const NewSignupsStep: React.FC = () => {
         </View>
       </View>
 
-      <View style={styles.counterControls}>
-        <TouchableOpacity
-          onPress={() => handleCountChange(field, -1)}
-          style={styles.counterButton}
-        >
-          <Ionicons name="remove-circle" size={32} color={Theme.colors.secondary.default} />
-        </TouchableOpacity>
-        <Text style={[styles.counterValue, { color: currentTheme.text }]}>
-          {value}
-        </Text>
-        <TouchableOpacity
-          onPress={() => handleCountChange(field, 1)}
-          style={styles.counterButton}
-        >
-          <Ionicons name="add-circle" size={32} color={Theme.colors.primary} />
-        </TouchableOpacity>
-      </View>
+      <NumberInput
+        value={value}
+        onChange={handleCountChange(field)}
+        color={Theme.colors.primary}
+      />
     </Card>
   );
 
@@ -85,7 +72,7 @@ export const NewSignupsStep: React.FC = () => {
     new_adults_signed_dd_no_kit_count;
 
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
       <Text style={[styles.title, { color: currentTheme.text }]}>
         New Sign-ups (Same Day)
       </Text>
@@ -161,7 +148,7 @@ export const NewSignupsStep: React.FC = () => {
           Continue
         </Button>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
@@ -208,21 +195,6 @@ const styles = StyleSheet.create({
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
     marginTop: 2,
-  },
-  counterControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterButton: {
-    padding: Theme.spacing.xs,
-  },
-  counterValue: {
-    fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
-    marginHorizontal: Theme.spacing.lg,
-    minWidth: 40,
-    textAlign: 'center',
   },
   summaryCard: {
     backgroundColor: Theme.colors.success + '10',

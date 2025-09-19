@@ -1,6 +1,3 @@
-import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import {
   Manrope_200ExtraLight,
   Manrope_300Light,
@@ -10,6 +7,9 @@ import {
   Manrope_700Bold,
   Manrope_800ExtraBold,
 } from '@expo-google-fonts/manrope';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -17,19 +17,18 @@ import { AppState, AppStateStatus } from 'react-native';
 import 'react-native-reanimated';
 
 import { useColorScheme } from '@/components/useColorScheme';
-import { useAuthStore } from '../store/authStore';
-import { LoadingScreen } from '../components/LoadingScreen';
-import { useClubStore } from '../store/clubStore';
-import { useFacebookStore } from '../store/facebookStore';
-import { AuthStatusProvider } from '../components/AuthStatusProvider';
 import { ApiHealthProvider } from '../components/ApiHealthProvider';
+import { AuthStatusProvider } from '../components/AuthStatusProvider';
+import { LoadingScreen } from '../components/LoadingScreen';
 import { apiClient } from '../services/api/client';
 import { syncManager } from '../services/offline/syncManager';
-import { NetworkStatusBanner } from '../components/NetworkStatusBanner';
+import { useAuthStore } from '../store/authStore';
+import { useClubStore } from '../store/clubStore';
+import { useFacebookStore } from '../store/facebookStore';
 
 export {
   // Catch any errors thrown by the Layout component.
-  ErrorBoundary,
+  ErrorBoundary
 } from 'expo-router';
 
 export const unstable_settings = {

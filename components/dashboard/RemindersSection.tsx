@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Alert, Animated } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { Theme } from '@/constants/Theme';
 import { Card } from '@/components/ui';
-import { formatDistanceToNow, isPast, isToday, isTomorrow, format } from 'date-fns';
+import { Theme } from '@/constants/Theme';
+import { Ionicons } from '@expo/vector-icons';
+import { format, formatDistanceToNow, isPast, isToday, isTomorrow } from 'date-fns';
+import React, { useState } from 'react';
+import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 interface Reminder {
   id: number;
@@ -164,121 +164,82 @@ export function RemindersSection({
   }
 
   if (activeReminders.length === 0) {
-    return (
-      <Card variant="elevated" style={styles.container}>
-        <View style={styles.emptyContainer}>
-          <View style={styles.emptyIconContainer}>
-            <Ionicons name="checkmark-circle" size={32} color={Theme.colors.status.success} />
-          </View>
-          <View style={styles.emptyTextContainer}>
-            <Text style={styles.emptyTitle}>All caught up!</Text>
-            <Text style={styles.emptySubtext}>No reminders pending</Text>
-          </View>
-          <TouchableOpacity onPress={onAddReminder} style={styles.addButton}>
-            <Ionicons name="add" size={24} color={Theme.colors.primary} />
-          </TouchableOpacity>
-        </View>
-      </Card>
-    );
+    return null; // Don't show anything when no reminders
   }
 
+  // Get the first reminder for display
+  const primaryReminder = activeReminders[0];
+  const timeDisplay = getTimeDisplay(primaryReminder.reminder_time);
+  const priorityIndicator = getPriorityIndicator(primaryReminder.priority);
+  const isOverdue = isPast(new Date(primaryReminder.reminder_time));
+  const remainingTotal = reminders.filter(r => r.status === 'pending').length;
+
   return (
-    <Card variant="elevated" style={styles.container}>
-      <View style={styles.content}>
-        {activeReminders.map((reminder, index) => {
-          const timeDisplay = getTimeDisplay(reminder.reminder_time);
-          const priorityIndicator = getPriorityIndicator(reminder.priority);
-          const isOverdue = isPast(new Date(reminder.reminder_time));
+    <View style={styles.container}>
+      <View style={styles.toastContent}>
+        <View style={[styles.priorityBar, { backgroundColor: priorityIndicator.color }]} />
 
-          return (
-            <Animated.View
-              key={reminder.id}
-              style={[
-                styles.reminderItem,
-                index > 0 && styles.reminderItemBorder,
-                { opacity: animatedValues[index] }
-              ]}
-            >
-              <View style={styles.reminderLeft}>
-                <View style={[styles.timeIndicator, { backgroundColor: timeDisplay.color + '15' }]}>
-                  <Ionicons name={timeDisplay.icon as any} size={20} color={timeDisplay.color} />
-                </View>
+        <View style={styles.toastLeft}>
+          <Ionicons
+            name={isOverdue ? 'alert-circle' : 'notifications'}
+            size={18}
+            color={isOverdue ? Theme.colors.status.error : Theme.colors.primary}
+          />
+        </View>
 
-                <View style={styles.reminderContent}>
-                  <View style={styles.reminderHeader}>
-                    <Text style={styles.reminderTitle} numberOfLines={1}>
-                      {reminder.title}
-                    </Text>
-                    {reminder.priority !== 'low' && (
-                      <View style={[styles.priorityDot, { backgroundColor: priorityIndicator.color }]} />
-                    )}
-                  </View>
+        <View style={styles.toastMiddle}>
+          <Text style={styles.toastTitle} numberOfLines={1}>
+            {primaryReminder.title}
+          </Text>
+          <Text style={styles.toastTime}>
+            {timeDisplay.text} · {timeDisplay.subtext}
+            {remainingTotal > 1 && ` · +${remainingTotal - 1} more`}
+          </Text>
+        </View>
 
-                  <View style={styles.reminderMeta}>
-                    <Text style={[styles.timeText, { color: timeDisplay.color }]}>
-                      {timeDisplay.text}
-                    </Text>
-                    <Text style={styles.timeSubtext}>
-                      {timeDisplay.subtext}
-                    </Text>
-                  </View>
-
-                  {reminder.description && (
-                    <Text style={styles.reminderDescription} numberOfLines={1}>
-                      {reminder.description}
-                    </Text>
-                  )}
-                </View>
-              </View>
-
-              <View style={styles.reminderActions}>
-                <TouchableOpacity
-                  onPress={() => handleComplete(reminder, index)}
-                  style={[styles.actionButton, styles.completeButton]}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="checkmark" size={20} color="#fff" />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => handleSnooze(reminder)}
-                  style={[styles.actionButton, styles.snoozeButton]}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="time-outline" size={20} color={Theme.colors.text.secondary} />
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-          );
-        })}
-
-        {remainingCount > 0 && (
-          <TouchableOpacity onPress={onViewAll} style={styles.viewAllButton} activeOpacity={0.7}>
-            <Text style={styles.viewAllText}>
-              View {remainingCount} more reminder{remainingCount > 1 ? 's' : ''}
-            </Text>
-            <Ionicons name="arrow-forward" size={16} color={Theme.colors.primary} />
+        <View style={styles.toastActions}>
+          <TouchableOpacity
+            onPress={() => handleComplete(primaryReminder, 0)}
+            style={styles.toastButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="checkmark" size={18} color={Theme.colors.status.success} />
           </TouchableOpacity>
-        )}
+
+          <TouchableOpacity
+            onPress={() => handleSnooze(primaryReminder)}
+            style={styles.toastButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="time-outline" size={18} color={Theme.colors.text.secondary} />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            onPress={onViewAll}
+            style={styles.toastButton}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="arrow-forward" size={18} color={Theme.colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
-    </Card>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     marginHorizontal: Theme.spacing.lg,
-    marginTop: Theme.spacing.md,
-    marginBottom: Theme.spacing.lg,
-    borderWidth: 2,
-    borderColor: Theme.colors.primary,
-    borderRadius: Theme.borderRadius.lg,
-    backgroundColor: '#fff',
-    shadowColor: Theme.colors.primary,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    marginBottom: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.md,
+    backgroundColor: Theme.colors.primary + '08',
+    borderWidth: 1,
+    borderColor: Theme.colors.primary + '20',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
   },
   content: {
     padding: 0,
@@ -292,134 +253,51 @@ const styles = StyleSheet.create({
     borderRadius: Theme.borderRadius.sm,
     width: '80%',
   },
-  emptyContainer: {
+  toastContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.sm,
+    paddingHorizontal: Theme.spacing.md,
+    position: 'relative',
   },
-  emptyIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: Theme.colors.status.success + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
+  priorityBar: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 3,
+    borderTopLeftRadius: Theme.borderRadius.md,
+    borderBottomLeftRadius: Theme.borderRadius.md,
+  },
+  toastLeft: {
+    marginLeft: Theme.spacing.sm,
     marginRight: Theme.spacing.md,
   },
-  emptyTextContainer: {
+  toastMiddle: {
     flex: 1,
+    justifyContent: 'center',
   },
-  emptyTitle: {
-    fontSize: Theme.typography.sizes.md,
+  toastTitle: {
+    fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
     color: Theme.colors.text.primary,
+    marginBottom: 2,
   },
-  emptySubtext: {
-    fontSize: Theme.typography.sizes.sm,
+  toastTime: {
+    fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
     color: Theme.colors.text.secondary,
-    marginTop: 2,
   },
-  addButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Theme.colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  reminderItem: {
+  toastActions: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: Theme.spacing.lg,
-  },
-  reminderItemBorder: {
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
-  },
-  reminderLeft: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  timeIndicator: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: Theme.spacing.md,
-  },
-  reminderContent: {
-    flex: 1,
-  },
-  reminderHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  reminderTitle: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
-    flex: 1,
-  },
-  priorityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginLeft: Theme.spacing.xs,
-  },
-  reminderMeta: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: Theme.spacing.xs,
   },
-  timeText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-  },
-  timeSubtext: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
-  },
-  reminderDescription: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
-    marginTop: 4,
-  },
-  reminderActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Theme.spacing.sm,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  completeButton: {
-    backgroundColor: Theme.colors.status.success,
-  },
-  snoozeButton: {
+  toastButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     backgroundColor: Theme.colors.background.secondary,
-  },
-  viewAllButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: Theme.spacing.sm,
-    paddingVertical: Theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
-  },
-  viewAllText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
+    alignItems: 'center',
   },
 });

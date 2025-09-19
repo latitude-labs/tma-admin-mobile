@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,6 +6,9 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  TouchableOpacity,
+  Keyboard,
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
@@ -29,6 +32,13 @@ export const AdditionalInfoStep: React.FC = () => {
   const [helperNames, setHelperNames] = useState(wizardState.data.helper_names || '');
   const [incidents, setIncidents] = useState(wizardState.data.incidents || '');
   const [generalNotes, setGeneralNotes] = useState(wizardState.data.general_notes || '');
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+
+  // Refs for input navigation
+  const signupNamesRef = useRef<TextInput>(null);
+  const helperNamesRef = useRef<TextInput>(null);
+  const incidentsRef = useRef<TextInput>(null);
+  const generalNotesRef = useRef<TextInput>(null);
 
   const handleNext = () => {
     updateWizardData({
@@ -47,40 +57,104 @@ export const AdditionalInfoStep: React.FC = () => {
     placeholder: string,
     icon: string,
     iconColor: string,
-    maxLength: number = 500
-  ) => (
-    <Card style={styles.inputCard}>
-      <View style={styles.inputHeader}>
-        <Ionicons name={icon as any} size={20} color={iconColor} />
-        <Text style={[styles.inputLabel, { color: currentTheme.text }]}>
-          {label}
-        </Text>
-        <Text style={[styles.charCount, { color: Theme.colors.text.tertiary }]}>
-          {value.length}/{maxLength}
-        </Text>
-      </View>
-      <TextInput
-        style={[styles.textInput, { color: currentTheme.text }]}
-        value={value}
-        onChangeText={onChange}
-        placeholder={placeholder}
-        placeholderTextColor={Theme.colors.text.secondary}
-        multiline
-        numberOfLines={3}
-        maxLength={maxLength}
-        textAlignVertical="top"
-      />
-    </Card>
-  );
+    maxLength: number = 500,
+    inputRef?: React.RefObject<TextInput>,
+    nextInputRef?: React.RefObject<TextInput>,
+    fieldName?: string
+  ) => {
+    const isFocused = focusedField === fieldName;
+
+    return (
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => inputRef?.current?.focus()}
+        style={styles.inputTouchable}
+      >
+        <Card style={[
+          styles.inputCard,
+          isFocused && styles.inputCardFocused
+        ]}>
+          <View style={styles.inputHeader}>
+            <Ionicons name={icon as any} size={20} color={iconColor} />
+            <Text style={[styles.inputLabel, { color: currentTheme.text }]}>
+              {label}
+            </Text>
+            <Text style={[styles.charCount, { color: Theme.colors.text.tertiary }]}>
+              {value.length}/{maxLength}
+            </Text>
+          </View>
+          <TextInput
+            ref={inputRef}
+            style={[styles.textInput, { color: currentTheme.text }]}
+            value={value}
+            onChangeText={onChange}
+            placeholder={placeholder}
+            placeholderTextColor={Theme.colors.text.secondary}
+            multiline
+            numberOfLines={3}
+            maxLength={maxLength}
+            textAlignVertical="top"
+            returnKeyType={nextInputRef ? 'next' : 'done'}
+            blurOnSubmit={!nextInputRef}
+            onFocus={() => setFocusedField(fieldName || null)}
+            onBlur={() => setFocusedField(null)}
+            onSubmitEditing={() => {
+              if (nextInputRef?.current) {
+                nextInputRef.current.focus();
+              } else {
+                Keyboard.dismiss();
+              }
+            }}
+          />
+          {isFocused && (
+            <View style={styles.keyboardToolbar}>
+              {nextInputRef && (
+                <TouchableOpacity
+                  onPress={() => nextInputRef.current?.focus()}
+                  style={styles.toolbarButton}
+                >
+                  <Text style={[styles.toolbarButtonText, { color: Theme.colors.primary }]}>
+                    Next Field
+                  </Text>
+                  <Ionicons name="arrow-down" size={16} color={Theme.colors.primary} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                onPress={() => Keyboard.dismiss()}
+                style={styles.toolbarButton}
+              >
+                <Text style={[styles.toolbarButtonText, { color: Theme.colors.primary }]}>
+                  Done
+                </Text>
+                <Ionicons name="checkmark" size={16} color={Theme.colors.primary} />
+              </TouchableOpacity>
+            </View>
+          )}
+        </Card>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <KeyboardAvoidingView
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      keyboardVerticalOffset={100}
     >
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
-        Add any additional information about today's sessions (optional)
-      </Text>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        contentContainerStyle={styles.scrollContent}
+      >
+      <TouchableOpacity
+        activeOpacity={1}
+        onPress={() => Keyboard.dismiss()}
+        style={styles.dismissArea}
+      >
+        <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+          Add any additional information about today's sessions (optional)
+        </Text>
+      </TouchableOpacity>
 
       {renderTextArea(
         'New Sign-ups',
@@ -89,7 +163,10 @@ export const AdditionalInfoStep: React.FC = () => {
         'Names of people who signed up today...',
         'person-add',
         Theme.colors.success,
-        500
+        500,
+        signupNamesRef,
+        helperNamesRef,
+        'signup'
       )}
 
       {renderTextArea(
@@ -99,7 +176,10 @@ export const AdditionalInfoStep: React.FC = () => {
         'Names of people who helped with the class...',
         'people',
         Theme.colors.info,
-        500
+        500,
+        helperNamesRef,
+        incidentsRef,
+        'helpers'
       )}
 
       {renderTextArea(
@@ -109,7 +189,10 @@ export const AdditionalInfoStep: React.FC = () => {
         'Any injuries, issues, or incidents to report...',
         'warning',
         Theme.colors.error,
-        1000
+        1000,
+        incidentsRef,
+        generalNotesRef,
+        'incidents'
       )}
 
       {renderTextArea(
@@ -119,7 +202,10 @@ export const AdditionalInfoStep: React.FC = () => {
         'Any other notes about today\'s sessions...',
         'document-text',
         Theme.colors.primary,
-        1000
+        1000,
+        generalNotesRef,
+        undefined,
+        'notes'
       )}
 
       <View style={styles.info}>
@@ -145,6 +231,7 @@ export const AdditionalInfoStep: React.FC = () => {
           Continue
         </Button>
       </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -153,14 +240,29 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: Theme.spacing.xl,
+  },
+  dismissArea: {
+    marginBottom: Theme.spacing.sm,
+  },
   description: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
     marginBottom: Theme.spacing.lg,
     lineHeight: Theme.typography.sizes.md * 1.5,
   },
+  inputTouchable: {
+    marginBottom: Theme.spacing.lg,
+  },
   inputCard: {
-    marginBottom: Theme.spacing.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  inputCardFocused: {
+    borderColor: Theme.colors.primary,
+    borderWidth: 1,
   },
   inputHeader: {
     flexDirection: 'row',
@@ -182,6 +284,29 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.fonts.regular,
     minHeight: 80,
     lineHeight: Theme.typography.sizes.md * 1.5,
+    paddingVertical: Theme.spacing.sm,
+    paddingHorizontal: Theme.spacing.xs,
+  },
+  keyboardToolbar: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    paddingTop: Theme.spacing.sm,
+    borderTopWidth: 1,
+    borderTopColor: Theme.colors.border.light,
+    marginTop: Theme.spacing.sm,
+  },
+  toolbarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: Theme.spacing.xs,
+    paddingHorizontal: Theme.spacing.md,
+    marginLeft: Theme.spacing.md,
+  },
+  toolbarButtonText: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.semibold,
+    marginRight: Theme.spacing.xs,
   },
   info: {
     flexDirection: 'row',

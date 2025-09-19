@@ -313,9 +313,18 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     const updatedBookings = bookings.map(booking => {
       if (booking.id === bookingId) {
         if (status === 'no-show') {
-          return { ...booking, no_show: true };
+          return {
+            ...booking,
+            no_show: true,
+            no_show_at: new Date().toISOString(),
+            attendance_status: 'no-show' as const
+          };
         } else if (status === 'completed') {
-          return { ...booking, status: 'completed' };
+          return {
+            ...booking,
+            checked_in_at: new Date().toISOString(),
+            attendance_status: 'completed' as const
+          };
         }
       }
       return booking;
@@ -325,10 +334,6 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     await offlineStorage.saveBookings(updatedBookings);
 
     // Queue the operation for sync (handles both online and offline)
-    if (status === 'no-show') {
-      await bookingsService.markBookingNoShowOffline(bookingId);
-    } else {
-      await bookingsService.updateBookingStatusOffline(bookingId, status);
-    }
+    await bookingsService.updateBookingAttendanceStatusOffline(bookingId, status);
   },
 }));

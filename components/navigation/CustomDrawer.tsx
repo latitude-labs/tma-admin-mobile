@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,15 @@ import { useAuthStore } from '@/store/authStore';
 import { getNavigationItems, NavigationItem } from '@/config/navigation';
 import { Avatar } from '@/components/ui';
 import { Logo } from '@/components/Logo';
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+  withTiming,
+  interpolate,
+  Easing,
+} from 'react-native-reanimated';
+import * as Haptics from 'expo-haptics';
 
 export function CustomDrawer(props: DrawerContentComponentProps) {
   const colorScheme = useColorScheme();
@@ -62,27 +71,64 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
     props.navigation.closeDrawer();
   };
 
-  const renderNavItem = (item: NavigationItem) => {
+  const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+  const renderNavItem = (item: NavigationItem, index: number) => {
     const isActive = props.state.routeNames[props.state.index] === item.name;
+    const scale = useSharedValue(1);
+    const translateX = useSharedValue(-20);
+    const opacity = useSharedValue(0);
+
+    useEffect(() => {
+      translateX.value = withTiming(0, {
+        duration: 300 + index * 50,
+        easing: Easing.out(Easing.exp),
+      });
+      opacity.value = withTiming(1, {
+        duration: 300 + index * 50,
+      });
+    }, []);
+
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [
+        { translateX: translateX.value },
+        { scale: scale.value },
+      ],
+      opacity: opacity.value,
+    }));
+
+    const handlePress = () => {
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+      scale.value = withSpring(0.95, { damping: 20, stiffness: 400 }, () => {
+        scale.value = withSpring(1, { damping: 20, stiffness: 400 });
+      });
+      handleNavigation(item.href);
+    };
 
     return (
-      <Pressable
+      <AnimatedPressable
         key={item.name}
-        onPress={() => handleNavigation(item.href)}
-        style={({ pressed }) => [
+        onPress={handlePress}
+        style={[
           styles.navItem,
+          animatedStyle,
           isActive && styles.navItemActive,
-          isActive && { backgroundColor: Theme.colors.primary + '10' },
-          pressed && styles.navItemPressed,
+          isActive && { backgroundColor: Theme.colors.primary + '15' },
         ]}
       >
         <View style={styles.navItemContent}>
-          <Ionicons
-            name={item.icon}
-            size={22}
-            color={isActive ? Theme.colors.primary : Theme.colors.text.secondary}
-            style={styles.navItemIcon}
-          />
+          <View style={[
+            styles.iconContainer,
+            isActive && styles.iconContainerActive,
+          ]}>
+            <Ionicons
+              name={item.icon}
+              size={22}
+              color={isActive ? Theme.colors.primary : Theme.colors.text.secondary}
+            />
+          </View>
           <Text
             style={[
               styles.navItemText,
@@ -93,22 +139,45 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
             {item.title}
           </Text>
           {item.badge && item.badge > 0 && (
-            <View style={styles.badge}>
+            <Animated.View
+              style={[
+                styles.badge,
+                useAnimatedStyle(() => ({
+                  transform: [{
+                    scale: withSpring(1, { damping: 15, stiffness: 200 })
+                  }]
+                }))
+              ]}
+            >
               <Text style={styles.badgeText}>{item.badge > 99 ? '99+' : item.badge}</Text>
-            </View>
+            </Animated.View>
           )}
         </View>
-      </Pressable>
+      </AnimatedPressable>
     );
   };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: currentTheme.background }]}>
       <View style={styles.header}>
-        <Logo width={100} height={90} variant={isDark ? 'dark' : 'light'} />
+        <Logo width={80} height={72} variant={isDark ? 'dark' : 'light'} />
       </View>
 
-      <View style={[styles.userSection, { borderBottomColor: Theme.colors.border.light }]}>
+      <Animated.View
+        style={[
+          styles.userSection,
+          { borderBottomColor: Theme.colors.border.light },
+          useAnimatedStyle(() => ({
+            opacity: withTiming(1, { duration: 400 }),
+            transform: [{
+              translateY: withTiming(0, {
+                duration: 400,
+                easing: Easing.out(Easing.exp),
+              })
+            }]
+          }))
+        ]}
+      >
         <Avatar name={user?.name || 'User'} size="md" />
         <View style={styles.userInfo}>
           <Text style={[styles.userName, { color: currentTheme.text }]} numberOfLines={1}>
@@ -124,17 +193,17 @@ export function CustomDrawer(props: DrawerContentComponentProps) {
             </View>
           ) : null}
         </View>
-      </View>
+      </Animated.View>
 
-      <DrawerContentScrollView
-        {...props}
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
+        style={styles.scrollView}
       >
         <View style={styles.navSection}>
-          {navigationItems.map(renderNavItem)}
+          {navigationItems.map((item, index) => renderNavItem(item, index))}
         </View>
-      </DrawerContentScrollView>
+      </ScrollView>
 
       <View style={[styles.footer, { borderTopColor: Theme.colors.border.light }]}>
         <Pressable
@@ -183,16 +252,16 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingVertical: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.md,
     paddingHorizontal: Theme.spacing.xl,
   },
   userSection: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Theme.spacing.lg,
-    paddingVertical: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.md,
     borderBottomWidth: 1,
-    marginBottom: Theme.spacing.sm,
+    marginBottom: Theme.spacing.xs,
   },
   userInfo: {
     flex: 1,
@@ -218,38 +287,54 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.fonts.medium,
     color: Theme.colors.primary,
   },
+  scrollView: {
+    flex: 1,
+  },
   scrollContent: {
-    paddingBottom: Theme.spacing.md,
+    paddingTop: Theme.spacing.xs,
+    paddingBottom: Theme.spacing.xs,
   },
   navSection: {
     paddingHorizontal: Theme.spacing.md,
   },
   navItem: {
     marginBottom: Theme.spacing.xs,
-    borderRadius: Theme.borderRadius.md,
+    borderRadius: Theme.borderRadius.lg,
     overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
   navItemActive: {
-    backgroundColor: Theme.colors.primary + '15',
+    backgroundColor: Theme.colors.primary + '10',
+    borderLeftWidth: 3,
+    borderLeftColor: Theme.colors.primary,
   },
   navItemPressed: {
-    opacity: 0.7,
+    opacity: 0.9,
     backgroundColor: Theme.colors.background.secondary,
+  },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: Theme.borderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  iconContainerActive: {
+    backgroundColor: Theme.colors.primary + '15',
   },
   navItemContent: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.md,
-  },
-  navItemIcon: {
-    width: 28,
+    paddingVertical: 10,
+    minHeight: 48,
   },
   navItemText: {
     flex: 1,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    marginLeft: Theme.spacing.md,
+    marginLeft: Theme.spacing.sm,
   },
   navItemTextActive: {
     fontFamily: Theme.typography.fonts.semibold,
@@ -257,10 +342,17 @@ const styles = StyleSheet.create({
   badge: {
     backgroundColor: Theme.colors.status.error,
     paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: 2,
+    paddingVertical: 3,
     borderRadius: Theme.borderRadius.full,
-    minWidth: 24,
+    minWidth: 26,
+    minHeight: 20,
     alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: Theme.colors.status.error,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   badgeText: {
     color: '#FFFFFF',
@@ -269,15 +361,16 @@ const styles = StyleSheet.create({
   },
   footer: {
     borderTopWidth: 1,
-    paddingVertical: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.xs,
     paddingHorizontal: Theme.spacing.md,
   },
   footerItem: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.md,
+    paddingVertical: 10,
+    borderRadius: Theme.borderRadius.lg,
+    marginBottom: 4,
   },
   footerItemText: {
     fontSize: Theme.typography.sizes.md,

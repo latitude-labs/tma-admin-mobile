@@ -19,6 +19,10 @@ interface UpdateBookingStatusParams {
   reminder_time?: string;
 }
 
+interface UpdateAttendanceStatusParams {
+  status: 'completed' | 'no-show' | 'cancelled' | 'scheduled';
+}
+
 export class BookingsService {
   async getBookings(params: BookingsParams = {}): Promise<PaginatedResponse<Booking>> {
     try {
@@ -83,7 +87,7 @@ export class BookingsService {
     }
   }
 
-  async updateBookingStatus(bookingId: number, params: UpdateBookingStatusParams): Promise<{
+  async updateBookingConversionStatus(bookingId: number, params: UpdateBookingStatusParams): Promise<{
     success: boolean;
     message: string;
     booking: {
@@ -94,22 +98,36 @@ export class BookingsService {
     };
   }> {
     try {
-      const response = await apiClient.put(`/bookings/${bookingId}/status`, params);
+      const response = await apiClient.put(`/bookings/${bookingId}/conversion-status`, params);
       return response.data;
     } catch (error) {
-      console.error('Failed to update booking status:', error);
+      console.error('Failed to update booking conversion status:', error);
       throw error;
     }
   }
 
-  // Offline-capable version of updateBookingStatus
-  async updateBookingStatusOffline(bookingId: number, status: string): Promise<void> {
+  async updateBookingAttendanceStatus(bookingId: number, params: UpdateAttendanceStatusParams): Promise<{
+    success: boolean;
+    message: string;
+    booking: Booking;
+  }> {
+    try {
+      const response = await apiClient.put(`/bookings/${bookingId}/status`, params);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update booking attendance status:', error);
+      throw error;
+    }
+  }
+
+  // Offline-capable version of updateBookingAttendanceStatus
+  async updateBookingAttendanceStatusOffline(bookingId: number, status: 'completed' | 'no-show' | 'cancelled' | 'scheduled'): Promise<void> {
     const isOnline = await offlineStorage.isOnline();
 
     if (isOnline) {
       // Try to update directly if online
       try {
-        await this.updateBookingStatus(bookingId, { status: status as any });
+        await this.updateBookingAttendanceStatus(bookingId, { status });
         return;
       } catch (error) {
         console.log('Direct update failed, queuing for sync:', error);
@@ -123,23 +141,6 @@ export class BookingsService {
     // This would be handled by the booking store
   }
 
-  // Offline-capable version of marking a booking as no-show
-  async markBookingNoShowOffline(bookingId: number): Promise<void> {
-    const isOnline = await offlineStorage.isOnline();
-
-    if (isOnline) {
-      // Try to update directly if online
-      try {
-        await apiClient.patch(`/bookings/${bookingId}/no-show`, { no_show: true });
-        return;
-      } catch (error) {
-        console.log('Direct update failed, queuing for sync:', error);
-      }
-    }
-
-    // Queue the operation for later sync
-    queueCommand(CommandFactory.markBookingNoShow(bookingId));
-  }
 
   async createKitOrder(bookingId: number, items: Array<{ type: string; size: string; }>): Promise<KitOrder> {
     try {

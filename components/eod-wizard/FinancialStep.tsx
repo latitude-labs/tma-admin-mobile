@@ -5,6 +5,7 @@ import {
   StyleSheet,
   TextInput,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
@@ -58,7 +59,11 @@ export const FinancialStep: React.FC = () => {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={styles.scrollContent}>
       <Text style={[styles.title, { color: currentTheme.text }]}>
         Cash Collection
       </Text>
@@ -79,6 +84,8 @@ export const FinancialStep: React.FC = () => {
             placeholderTextColor={Theme.colors.text.secondary}
             keyboardType="decimal-pad"
             maxLength={10}
+            returnKeyType="done"
+            blurOnSubmit={true}
           />
         </View>
       </Card>
@@ -153,13 +160,17 @@ export const FinancialStep: React.FC = () => {
           Continue
         </Button>
       </View>
-    </View>
+    </ScrollView>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: Theme.spacing.xl,
   },
   title: {
     fontSize: Theme.typography.sizes.lg,

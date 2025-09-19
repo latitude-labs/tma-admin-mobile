@@ -1,5 +1,3 @@
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,9 +11,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import Svg, { Circle } from 'react-native-svg';
 
-import { RemindersSection } from '@/components/dashboard/RemindersSection';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
@@ -29,6 +28,7 @@ import { useBookingStore } from '@/store/bookingStore';
 import { useClubStore } from '@/store/clubStore';
 import { useSyncStore } from '@/store/syncStore';
 import { Booking, ClassTime } from '@/types/api';
+import { RemindersSection } from '@/components/dashboard/RemindersSection';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -114,9 +114,7 @@ export default function CoachDashboardScreen() {
   const [daysData, setDaysData] = useState<DayData[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
   const [remindersLoading, setRemindersLoading] = useState(true);
-  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0])); // Only today expanded by default
-  const [showAllDays, setShowAllDays] = useState(false); // Show only 3 days by default
-  const [currentTime, setCurrentTime] = useState(Date.now());
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0])); // Today expanded by default
 
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -143,15 +141,6 @@ export default function CoachDashboardScreen() {
       setSyncing(false);
     };
   }, [user]);
-
-  // Update current time every minute for sync time display
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setCurrentTime(Date.now());
-    }, 60000); // Update every minute
-
-    return () => clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     if (!isOffline && daysData.length > 0) {
@@ -218,11 +207,11 @@ export default function CoachDashboardScreen() {
   };
 
   const handleAddReminder = () => {
-    router.push('/reminders');
+    Alert.alert('Coming Soon', 'Add reminder feature will be available soon');
   };
 
   const handleViewAllReminders = () => {
-    router.push('/reminders');
+    Alert.alert('Coming Soon', 'View all reminders will be available soon');
   };
 
   const initializeDaysData = async () => {
@@ -321,16 +310,8 @@ export default function CoachDashboardScreen() {
         date_to: dayData.dateString
       });
 
-      // Filter classes to only include those for this specific day
-      const dayOfWeek = dayData.dayName;
-      const filteredClassTimes = classTimes.filter(classTime => {
-        // Check if the class's day matches the current day
-        const classDay = classTime.day;
-        return classDay && classDay.toLowerCase() === dayOfWeek.toLowerCase();
-      })
-
       const classesWithBookings: ClassWithBookings[] = await Promise.all(
-        filteredClassTimes.map(async (classTime) => {
+        classTimes.map(async (classTime) => {
           try {
             const bookingsData = await bookingsService.getAllBookings({
               class_time_id: classTime.id,
@@ -453,20 +434,6 @@ export default function CoachDashboardScreen() {
     return `${displayHours}:${minutes.toString().padStart(2, '0')} ${period}`;
   };
 
-  const getLastSyncText = () => {
-    if (!lastSyncTime) return '';
-
-    const diff = currentTime - lastSyncTime;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-
-    if (diff < 60000) return 'just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
   const toggleDayExpansion = (index: number) => {
     setExpandedDays(prev => {
       const newSet = new Set(prev);
@@ -522,42 +489,38 @@ export default function CoachDashboardScreen() {
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={false}
+            onRefresh={handleRefresh}
+            tintColor={Theme.colors.primary}
+            colors={[Theme.colors.primary]}
+          />
+        }
       >
         {/* Friendly Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
-            <View style={styles.greetingContainer}>
-              <Text style={styles.greetingEmoji}>
-                {new Date().getHours() < 12 ? '☀️' : new Date().getHours() < 18 ? '🌤️' : '🌙'}
+            <View>
+              <Text style={styles.greeting}>
+                Hi {user?.name?.split(' ')[0] || 'Coach'} 👋
               </Text>
-              <View>
-                <Text style={styles.greeting}>
-                  Hi {user?.name?.split(' ')[0] || 'Coach'} 👋
-                </Text>
-                <Text style={styles.greetingSubtext}>
-                  {stats.classes > 0 ? `${stats.classes} classes today!` : 'No classes today'} · {new Date().toLocaleDateString('en-GB', { weekday: 'long' })}
-                </Text>
-              </View>
+              <Text style={styles.date}>
+                {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' })}
+              </Text>
             </View>
             <TouchableOpacity
               style={[styles.syncBadge, isOffline && styles.syncBadgeOffline]}
               onPress={handleRefresh}
               disabled={isSyncing || isRefreshing}
             >
-              <View style={styles.syncBadgeContent}>
-                <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                  <Ionicons
-                    name={isOffline ? 'cloud-offline' : (isSyncing || isRefreshing) ? 'sync' : 'checkmark-circle'}
-                    size={20}
-                    color={isOffline ? Theme.colors.status.error : Theme.colors.primary}
-                  />
-                </Animated.View>
-                {lastSyncTime && !isSyncing && !isRefreshing && (
-                  <Text style={[styles.syncTimeText, isOffline && styles.syncTimeTextOffline]}>
-                    {getLastSyncText()}
-                  </Text>
-                )}
-              </View>
+              <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                <Ionicons
+                  name={isOffline ? 'cloud-offline' : (isSyncing || isRefreshing) ? 'sync' : 'checkmark-circle'}
+                  size={20}
+                  color={isOffline ? Theme.colors.status.error : Theme.colors.primary}
+                />
+              </Animated.View>
             </TouchableOpacity>
           </View>
         </View>
@@ -572,93 +535,58 @@ export default function CoachDashboardScreen() {
           onViewAll={handleViewAllReminders}
         />
 
-        {/* Today's Overview with Circular Progress - Moved after Classes */}
+        {/* Today's Overview with Circular Progress */}
         <View style={styles.overviewContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today's Metrics</Text>
-            {stats.percentage === 100 && <Text style={styles.celebrateEmoji}>🎉</Text>}
-          </View>
+          <Text style={styles.sectionTitle}>Today's Overview</Text>
           <Card variant="elevated" style={styles.overviewCard}>
             <View style={styles.statsRow}>
               <View style={styles.statItem}>
                 <CircularProgress
-                  percentage={stats.classes > 0 ? Math.min(100, stats.classes * 20) : 0}
-                  size={70}
-                  strokeWidth={7}
+                  percentage={100}
+                  size={60}
+                  strokeWidth={6}
                   color={Theme.colors.primary}
-                  bgColor={Theme.colors.primary + '15'}
+                  bgColor={Theme.colors.primary + '20'}
                 >
-                  <View style={styles.statContent}>
-                    <Text style={styles.statNumber}>{stats.classes}</Text>
-                  </View>
+                  <Text style={styles.statNumber}>{stats.classes}</Text>
                 </CircularProgress>
                 <Text style={styles.statLabel}>Classes</Text>
               </View>
 
               <View style={styles.statItem}>
                 <CircularProgress
-                  percentage={stats.bookings > 0 ? Math.min(100, (stats.bookings / 30) * 100) : 0}
-                  size={70}
-                  strokeWidth={7}
+                  percentage={stats.bookings > 0 ? 100 : 0}
+                  size={60}
+                  strokeWidth={6}
                   color={Theme.colors.status.info}
-                  bgColor={Theme.colors.status.info + '15'}
+                  bgColor={Theme.colors.status.info + '20'}
                 >
-                  <View style={styles.statContent}>
-                    <Text style={styles.statNumber}>{stats.bookings}</Text>
-                  </View>
+                  <Text style={styles.statNumber}>{stats.bookings}</Text>
                 </CircularProgress>
-                <Text style={styles.statLabel}>Trials</Text>
+                <Text style={styles.statLabel}>Bookings</Text>
               </View>
 
               <View style={styles.statItem}>
                 <CircularProgress
                   percentage={stats.percentage}
-                  size={70}
-                  strokeWidth={7}
-                  color={
-                    stats.percentage === 100 ? Theme.colors.status.success :
-                    stats.percentage >= 75 ? Theme.colors.status.warning :
-                    Theme.colors.status.info
-                  }
-                  bgColor={
-                    stats.percentage === 100 ? Theme.colors.status.success + '15' :
-                    stats.percentage >= 75 ? Theme.colors.status.warning + '15' :
-                    Theme.colors.status.info + '15'
-                  }
+                  size={60}
+                  strokeWidth={6}
+                  color={Theme.colors.status.success}
+                  bgColor={Theme.colors.status.success + '20'}
                 >
-                  <View style={styles.statContent}>
-                    <Text style={styles.statNumber}>{stats.percentage}%</Text>
-                  </View>
+                  <Text style={styles.statNumber}>{stats.percentage}%</Text>
                 </CircularProgress>
                 <Text style={styles.statLabel}>Complete</Text>
               </View>
             </View>
-
-            {stats.percentage === 100 && (
-              <View style={styles.completionBadge}>
-                <Text style={styles.completionText}>🏆 All classes processed!</Text>
-              </View>
-            )}
           </Card>
         </View>
 
-        {/* Classes Section - Moved before stats */}
+        {/* Classes Section - Vertical List */}
         <View style={styles.classesSection}>
-          <View style={styles.sectionHeaderWithAction}>
-            <Text style={styles.sectionTitle}>Your Classes</Text>
-            {!showAllDays && (
-              <TouchableOpacity
-                onPress={() => setShowAllDays(true)}
-                style={styles.viewMoreButton}
-                activeOpacity={0.7}
-              >
-                <Text style={styles.viewMoreText}>View week</Text>
-                <Ionicons name="chevron-down" size={16} color={Theme.colors.primary} />
-              </TouchableOpacity>
-            )}
-          </View>
+          <Text style={styles.sectionTitle}>Your Classes</Text>
 
-          {daysData.slice(0, showAllDays ? 7 : 3).map((day, dayIndex) => {
+          {daysData.map((day, dayIndex) => {
             const isExpanded = expandedDays.has(dayIndex);
             const hasClasses = day.classes.length > 0;
             const totalBookings = day.classes.reduce((sum, c) => sum + c.bookings.length, 0);
@@ -762,8 +690,8 @@ export default function CoachDashboardScreen() {
                                             width: `${processedPercentage}%`,
                                             backgroundColor: statusColor
                                           }
-                                        ]}>
-                                      </View>
+                                        ]}
+                                      />
                                     </View>
                                   </View>
                                 )}
@@ -778,45 +706,35 @@ export default function CoachDashboardScreen() {
               </View>
             );
           })}
-
-          {showAllDays && daysData.length > 3 && (
-            <TouchableOpacity
-              onPress={() => {
-                setShowAllDays(false);
-                setExpandedDays(new Set([0, 1, 2]));
-              }}
-              style={styles.collapseButton}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.collapseText}>Show less</Text>
-              <Ionicons name="chevron-up" size={16} color={Theme.colors.primary} />
-            </TouchableOpacity>
-          )}
         </View>
-        <View style={{ height: 150 }} />
+
+        {/* Floating Quick Actions */}
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={[styles.actionButton, styles.primaryAction]}
+            onPress={() => router.push('/eod-wizard')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.actionGradient}>
+              <Ionicons name="document-text" size={28} color="#fff" />
+              <Text style={styles.actionLabel}>EOD Report</Text>
+            </View>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryAction]}
+            onPress={() => router.push('/clubs')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.actionGradient}>
+              <Ionicons name="business" size={28} color="#fff" />
+              <Text style={styles.actionLabel}>All Clubs</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+
+        <View style={{ height: 100 }} />
       </ScrollView>
-
-      {/* Floating Action Buttons */}
-      <View style={styles.floatingActions}>
-        <TouchableOpacity
-          style={[styles.fab, styles.fabSecondary]}
-          onPress={() => router.push('/clubs')}
-          activeOpacity={0.9}
-        >
-          <Ionicons name="business" size={22} color={Theme.colors.primary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.fab, styles.fabPrimary]}
-          onPress={() => router.push('/eod-wizard')}
-          activeOpacity={0.9}
-        >
-          <View style={styles.fabContent}>
-            <Ionicons name="document-text" size={26} color="#fff" />
-            <Text style={styles.fabLabel}>EOD</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
     </Animated.View>
   );
 }
@@ -824,7 +742,7 @@ export default function CoachDashboardScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   scrollContainer: {
     flex: 1,
@@ -833,7 +751,7 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FFFFFF',
   },
   loadingText: {
     fontSize: Theme.typography.sizes.md,
@@ -845,41 +763,19 @@ const styles = StyleSheet.create({
   // Header Styles
   header: {
     paddingHorizontal: Theme.spacing.lg,
-    paddingTop: Theme.spacing.xl,
-    paddingBottom: Theme.spacing.lg,
-    backgroundColor: '#FFFFFF',
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 2,
-    marginBottom: Theme.spacing.md,
+    paddingTop: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.md,
   },
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
-  greetingContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Theme.spacing.md,
-  },
-  greetingEmoji: {
-    fontSize: 32,
-  },
   greeting: {
-    fontSize: 24,
+    fontSize: 28,
     fontFamily: Theme.typography.fonts.bold,
     color: Theme.colors.text.primary,
-  },
-  greetingSubtext: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
-    marginTop: 2,
+    marginBottom: 4,
   },
   date: {
     fontSize: Theme.typography.sizes.md,
@@ -887,60 +783,33 @@ const styles = StyleSheet.create({
     color: Theme.colors.text.secondary,
   },
   syncBadge: {
-    backgroundColor: Theme.colors.primary + '10',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    backgroundColor: Theme.colors.primary + '15',
+    padding: 10,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Theme.colors.primary + '20',
   },
   syncBadgeOffline: {
-    backgroundColor: Theme.colors.status.error + '10',
-    borderColor: Theme.colors.status.error + '20',
-  },
-  syncBadgeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  syncTimeText: {
-    fontSize: 12,
-    fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
-  },
-  syncTimeTextOffline: {
-    color: Theme.colors.status.error,
+    backgroundColor: Theme.colors.status.error + '15',
   },
 
   // Overview Styles
   overviewContainer: {
     paddingHorizontal: Theme.spacing.lg,
-    marginBottom: Theme.spacing.md,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Theme.spacing.md,
+    marginBottom: Theme.spacing.xl,
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
     color: Theme.colors.text.primary,
-  },
-  celebrateEmoji: {
-    fontSize: 24,
+    marginBottom: Theme.spacing.md,
   },
   overviewCard: {
-    borderRadius: 16,
+    borderRadius: Theme.borderRadius.lg,
     backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: Theme.colors.border.light,
-    shadowColor: '#000',
+    shadowColor: Theme.colors.primary,
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   statsRow: {
     flexDirection: 'row',
@@ -950,15 +819,10 @@ const styles = StyleSheet.create({
   statItem: {
     alignItems: 'center',
   },
-  statContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   statNumber: {
-    fontSize: Theme.typography.sizes.xl,
+    fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
     color: Theme.colors.text.primary,
-    lineHeight: Theme.typography.sizes.xl,
   },
   statLabel: {
     fontSize: Theme.typography.sizes.sm,
@@ -966,62 +830,10 @@ const styles = StyleSheet.create({
     color: Theme.colors.text.secondary,
     marginTop: Theme.spacing.sm,
   },
-  completionBadge: {
-    backgroundColor: Theme.colors.status.success + '10',
-    paddingVertical: 10,
-    paddingHorizontal: Theme.spacing.lg,
-    borderRadius: 12,
-    marginTop: Theme.spacing.md,
-    marginHorizontal: Theme.spacing.lg,
-    marginBottom: Theme.spacing.sm,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Theme.colors.status.success + '20',
-  },
-  completionText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.status.success,
-  },
 
   // Classes Section Styles
   classesSection: {
     paddingHorizontal: Theme.spacing.lg,
-    paddingTop: Theme.spacing.lg,
-    marginBottom: Theme.spacing.xl,
-  },
-  sectionHeaderWithAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Theme.spacing.md,
-  },
-  viewMoreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: 4,
-    backgroundColor: Theme.colors.primary + '10',
-    borderRadius: Theme.borderRadius.full,
-  },
-  viewMoreText: {
-    fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
-  },
-  collapseButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    paddingVertical: Theme.spacing.md,
-    marginTop: Theme.spacing.sm,
-  },
-  collapseText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
   },
   daySection: {
     marginBottom: Theme.spacing.md,
@@ -1030,8 +842,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Theme.spacing.sm,
-    paddingBottom: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
   },
   dayHeaderLeft: {
     flexDirection: 'row',
@@ -1041,16 +852,14 @@ const styles = StyleSheet.create({
   dayBadge: {
     backgroundColor: Theme.colors.background.secondary,
     paddingHorizontal: Theme.spacing.md,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.full,
     marginRight: Theme.spacing.md,
-    minWidth: 56,
+    minWidth: 60,
     alignItems: 'center',
   },
   todayBadge: {
-    backgroundColor: Theme.colors.primary + '15',
-    borderWidth: 1,
-    borderColor: Theme.colors.primary + '30',
+    backgroundColor: Theme.colors.primary,
   },
   dayBadgeText: {
     fontSize: Theme.typography.sizes.sm,
@@ -1058,8 +867,7 @@ const styles = StyleSheet.create({
     color: Theme.colors.text.secondary,
   },
   todayBadgeText: {
-    color: Theme.colors.primary,
-    fontFamily: Theme.typography.fonts.bold,
+    color: '#FFFFFF',
   },
   dayDate: {
     fontSize: Theme.typography.sizes.md,
@@ -1081,13 +889,10 @@ const styles = StyleSheet.create({
   },
   emptyDay: {
     alignItems: 'center',
-    paddingVertical: Theme.spacing.lg,
-    backgroundColor: Theme.colors.background.secondary + '50',
-    borderRadius: 12,
+    paddingVertical: Theme.spacing.xl,
+    backgroundColor: Theme.colors.background.secondary,
+    borderRadius: Theme.borderRadius.lg,
     marginBottom: Theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: Theme.colors.border.light,
-    borderStyle: 'dashed',
   },
   emptyDayText: {
     fontSize: Theme.typography.sizes.sm,
@@ -1106,16 +911,14 @@ const styles = StyleSheet.create({
   },
   classCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: Theme.borderRadius.lg,
     padding: Theme.spacing.md,
-    borderLeftWidth: 3,
+    borderLeftWidth: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 3,
-    elevation: 1,
-    borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   classHeader: {
     flexDirection: 'row',
@@ -1124,10 +927,10 @@ const styles = StyleSheet.create({
     marginBottom: Theme.spacing.sm,
   },
   timeBadge: {
-    backgroundColor: Theme.colors.primary + '10',
-    paddingHorizontal: 10,
+    backgroundColor: Theme.colors.primary + '15',
+    paddingHorizontal: Theme.spacing.sm,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: Theme.borderRadius.sm,
   },
   timeBadgeText: {
     fontSize: Theme.typography.sizes.sm,
@@ -1140,9 +943,9 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   statDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
   statText: {
     fontSize: Theme.typography.sizes.sm,
@@ -1175,14 +978,14 @@ const styles = StyleSheet.create({
     marginLeft: Theme.spacing.md,
   },
   progressBar: {
-    height: 3,
+    height: 4,
     backgroundColor: Theme.colors.background.secondary,
-    borderRadius: 1.5,
+    borderRadius: 2,
     overflow: 'hidden',
   },
   progressFill: {
     height: '100%',
-    borderRadius: 1.5,
+    borderRadius: 2,
   },
 
   // Quick Actions Styles
@@ -1219,48 +1022,5 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.fonts.semibold,
     color: '#FFFFFF',
     marginTop: Theme.spacing.xs,
-  },
-
-  // Floating Action Button Styles
-  floatingActions: {
-    position: 'absolute',
-    bottom: Theme.spacing.xl,
-    right: Theme.spacing.lg,
-    flexDirection: 'column',
-    gap: Theme.spacing.md,
-    alignItems: 'center',
-  },
-  fab: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  fabPrimary: {
-    backgroundColor: Theme.colors.primary,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-  },
-  fabSecondary: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: Theme.colors.border.light,
-  },
-  fabContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  fabLabel: {
-    fontSize: 10,
-    fontFamily: Theme.typography.fonts.bold,
-    color: '#FFFFFF',
-    marginTop: 2,
   },
 });

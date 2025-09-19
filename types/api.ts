@@ -40,8 +40,11 @@ export interface Booking {
   email?: string;
   phone?: string;
   status?: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
+  attendance_status?: 'scheduled' | 'completed' | 'no-show' | 'cancelled';
   start_time: string;
   cancelled_at?: string | null;
+  checked_in_at?: string | null;
+  no_show_at?: string | null;
   no_show: boolean;
   channel: 'Cadence' | 'Website';
   channel_display_name?: string;

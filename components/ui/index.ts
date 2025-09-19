@@ -5,3 +5,5 @@ export { Badge } from './Badge';
 export { Avatar } from './Avatar';
 export { Chip } from './Chip';
 export { Skeleton } from './Skeleton';
+export { Dropdown } from './Dropdown';
+export type { DropdownOption } from './Dropdown';

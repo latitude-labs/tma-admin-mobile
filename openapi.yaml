@@ -752,6 +752,204 @@ paths:
           description: Unauthorized - Invalid or missing token
   /bookings/{booking_id}/status:
     put:
+      summary: Update booking attendance status
+      description: Updates the attendance status of a booking (completed, no-show, cancelled, or scheduled). This endpoint is used for tracking attendance at trial classes.
+      operationId: updateBookingAttendanceStatus
+      tags:
+        - Bookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: booking_id
+          in: path
+          required: true
+          description: ID of the booking to update
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum:
+                    - completed
+                    - no-show
+                    - cancelled
+                    - scheduled
+                  description: |
+                    New attendance status for the booking:
+                    - `completed`: Student attended and completed the trial (checked in)
+                    - `no-show`: Student did not attend without notice
+                    - `cancelled`: Booking was cancelled
+                    - `scheduled`: Reset to scheduled state (removes all attendance marks)
+            examples:
+              checkIn:
+                summary: Mark as completed/checked in
+                value:
+                  status: completed
+              markNoShow:
+                summary: Mark as no-show
+                value:
+                  status: no-show
+              cancel:
+                summary: Mark as cancelled
+                value:
+                  status: cancelled
+              resetToScheduled:
+                summary: Reset to scheduled
+                value:
+                  status: scheduled
+      responses:
+        '200':
+          description: Attendance status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Booking status updated successfully
+                  booking:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 123
+                      uuid:
+                        type: string
+                        example: 550e8400-e29b-41d4-a716-446655440000
+                      names:
+                        type: string
+                        example: John Doe
+                      email:
+                        type: string
+                        example: john@example.com
+                      phone:
+                        type: string
+                        example: '+447123456789'
+                      attendance_status:
+                        type: string
+                        example: completed
+                        enum:
+                          - completed
+                          - no-show
+                          - cancelled
+                          - scheduled
+                      checked_in_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: '2025-01-20T10:30:00Z'
+                      no_show_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      cancelled_at:
+                        type: string
+                        format: date-time
+                        nullable: true
+                        example: null
+                      no_show:
+                        type: boolean
+                        example: false
+                      start_time:
+                        type: string
+                        format: date-time
+                        example: '2025-01-20T10:00:00Z'
+                      class_time:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          day_of_week:
+                            type: string
+                            example: Monday
+                          time:
+                            type: string
+                            example: '10:00'
+                          club:
+                            type: object
+                            properties:
+                              id:
+                                type: integer
+                                example: 1
+                              name:
+                                type: string
+                                example: Temple Kung Fu - Leeds
+                      kit_orders:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/KitOrder'
+                      reminders:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Reminder'
+        '403':
+          description: Unauthorized - User doesn't have permission to update this booking
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Unauthorized
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Booking not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The given data was invalid.
+                  errors:
+                    type: object
+                    properties:
+                      status:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - The selected status is invalid.
+        '500':
+          description: Failed to update booking status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to update booking status
+                  details:
+                    type: string
+                    example: Database transaction failed
+  /bookings/{booking_id}/conversion-status:
+    put:
       summary: Update booking status
       description: Updates the status of a booking and optionally creates kit orders and reminders
       operationId: updateBookingStatus
@@ -2108,7 +2306,16 @@ components:
             - unpaid_coach_call
             - not_joining
           default: pending
-          description: Current status of the booking
+          description: Conversion status of the booking (for trial conversion tracking)
+        attendance_status:
+          type: string
+          enum:
+            - scheduled
+            - completed
+            - no-show
+            - cancelled
+          nullable: true
+          description: Attendance status for the booking
         start_time:
           type: string
           format: date-time
@@ -2118,6 +2325,16 @@ components:
           format: date-time
           nullable: true
           description: Timestamp when booking was cancelled
+        checked_in_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when booking was marked as completed/checked-in
+        no_show_at:
+          type: string
+          format: date-time
+          nullable: true
+          description: Timestamp when booking was marked as no-show
         no_show:
           type: boolean
           default: false

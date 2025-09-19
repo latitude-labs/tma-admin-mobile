@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
@@ -12,6 +11,7 @@ import Colors from '@/constants/Colors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
+import { NumberInput } from './NumberInput';
 
 export const AttendanceStep: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -26,10 +26,8 @@ export const AttendanceStep: React.FC = () => {
   const { hasKids1Class, hasKids2Class, hasAdultsClass } = wizardState;
   const { kids_1_count = 0, kids_2_count = 0, adults_count = 0 } = wizardState.data;
 
-  const handleCountChange = (field: string, delta: number) => {
-    const currentValue = wizardState.data[field as keyof typeof wizardState.data] as number || 0;
-    const newValue = Math.max(0, currentValue + delta);
-    updateWizardData({ [field]: newValue });
+  const handleCountChange = (field: string) => (value: number) => {
+    updateWizardData({ [field]: value });
   };
 
   const renderCounter = (
@@ -49,30 +47,12 @@ export const AttendanceStep: React.FC = () => {
         </Text>
       </View>
 
-      <View style={styles.counterControls}>
-        <TouchableOpacity
-          onPress={() => handleCountChange(field, -1)}
-          style={[styles.counterButton, { backgroundColor: Theme.colors.secondary.light }]}
-        >
-          <Ionicons name="remove" size={24} color={Theme.colors.text.primary} />
-        </TouchableOpacity>
-
-        <View style={styles.counterValueContainer}>
-          <Text style={[styles.counterValue, { color: currentTheme.text }]}>
-            {value}
-          </Text>
-          <Text style={[styles.counterUnit, { color: Theme.colors.text.secondary }]}>
-            students
-          </Text>
-        </View>
-
-        <TouchableOpacity
-          onPress={() => handleCountChange(field, 1)}
-          style={[styles.counterButton, { backgroundColor: Theme.colors.primary }]}
-        >
-          <Ionicons name="add" size={24} color={Theme.colors.text.inverse} />
-        </TouchableOpacity>
-      </View>
+      <NumberInput
+        value={value}
+        onChange={handleCountChange(field)}
+        unit="students"
+        color={color}
+      />
     </Card>
   );
 
@@ -173,29 +153,6 @@ const styles = StyleSheet.create({
   counterLabel: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-  },
-  counterControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  counterButton: {
-    width: 48,
-    height: 48,
-    borderRadius: Theme.borderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  counterValueContainer: {
-    alignItems: 'center',
-  },
-  counterValue: {
-    fontSize: Theme.typography.sizes.xxxl,
-    fontFamily: Theme.typography.fonts.bold,
-  },
-  counterUnit: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
   },
   totalCard: {
     backgroundColor: Theme.colors.primary + '10',

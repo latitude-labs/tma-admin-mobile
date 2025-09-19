@@ -1,24 +1,28 @@
-import React from 'react';
-import { View } from 'react-native';
-import { Drawer } from 'expo-router/drawer';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { Redirect } from 'expo-router';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Theme } from '@/constants/Theme';
-import Colors from '@/constants/Colors';
-import { useAuthStore } from '@/store/authStore';
-import { CustomDrawer } from '@/components/navigation/CustomDrawer';
-import { getNavigationItems } from '@/config/navigation';
 import { Logo } from '@/components/Logo';
-import { Pressable } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { CustomDrawer } from '@/components/navigation/CustomDrawer';
+import { useColorScheme } from '@/components/useColorScheme';
+import { getNavigationItems } from '@/config/navigation';
+import Colors from '@/constants/Colors';
+import { Theme } from '@/constants/Theme';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { DrawerToggleButton } from '@react-navigation/drawer';
-import { NetworkStatusBanner } from '@/components/NetworkStatusBanner';
+import { Redirect } from 'expo-router';
+import { Drawer } from 'expo-router/drawer';
+import React from 'react';
+import { View, TouchableOpacity, StyleSheet } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
+import Animated, { useAnimatedStyle, withSpring } from 'react-native-reanimated';
 
 export default function DrawerLayout() {
   const colorScheme = useColorScheme();
   const { isAuthenticated, user } = useAuthStore();
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
   const currentTheme = Colors[colorScheme ?? 'light'] || Colors.light;
+  const router = useRouter();
 
   if (!isAuthenticated) {
     return <Redirect href="/login" />;
@@ -29,22 +33,32 @@ export default function DrawerLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <View style={{ flex: 1 }}>
-        <NetworkStatusBanner />
         <Drawer
           drawerContent={CustomDrawer}
           screenOptions={{
           drawerType: 'slide',
-          overlayColor: 'rgba(0, 0, 0, 0.4)',
+          overlayColor: 'rgba(0, 0, 0, 0.5)',
           drawerStyle: {
-            width: 280,
+            width: 300,
             backgroundColor: currentTheme.background,
+            borderTopRightRadius: 24,
+            borderBottomRightRadius: 24,
+            shadowColor: '#000',
+            shadowOffset: { width: 4, height: 0 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 5,
           },
+          swipeEdgeWidth: 100,
+          swipeMinDistance: 50,
           headerStyle: {
             backgroundColor: currentTheme.background,
-            elevation: 0,
-            shadowOpacity: 0,
-            borderBottomWidth: 1,
-            borderBottomColor: Theme.colors.border.light,
+            elevation: 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.05,
+            shadowRadius: 4,
+            borderBottomWidth: 0,
           },
           headerTintColor: currentTheme.text,
           headerTitleStyle: {
@@ -58,9 +72,24 @@ export default function DrawerLayout() {
           headerLeft: () => (
             <DrawerToggleButton tintColor={currentTheme.text} />
           ),
-          sceneContainerStyle: {
-            backgroundColor: currentTheme.background,
-          },
+          headerRight: () => (
+            <TouchableOpacity
+              onPress={() => router.push('/notifications')}
+              style={styles.notificationButton}
+              activeOpacity={0.7}
+            >
+              <Animated.View style={useAnimatedStyle(() => ({
+                transform: [{ scale: withSpring(1, { damping: 20, stiffness: 300 }) }]
+              }))}>
+                <Ionicons
+                  name="notifications-outline"
+                  size={24}
+                  color={currentTheme.text}
+                />
+                <NotificationBadge count={unreadCount} size="small" />
+              </Animated.View>
+            </TouchableOpacity>
+          ),
           drawerActiveTintColor: Theme.colors.primary,
           drawerInactiveTintColor: Theme.colors.text.secondary,
         }}
@@ -103,6 +132,13 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
+          name="notifications"
+          options={{
+            title: 'Notifications',
+            drawerLabel: 'Notifications',
+          }}
+        />
+        <Drawer.Screen
           name="eod-reports"
           options={{
             title: 'End of Day',
@@ -132,3 +168,12 @@ export default function DrawerLayout() {
     </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  notificationButton: {
+    marginRight: 16,
+    position: 'relative',
+    padding: 8,
+    borderRadius: Theme.borderRadius.md,
+  },
+});

@@ -18,7 +18,10 @@ export const Theme = {
       md: 16,
       lg: 18,
       xl: 24,
+      xxl: 28,
       '2xl': 32,
+      xxxl: 36,
+      '3xl': 40,
     },
     weights: {
       regular: '400' as const,
@@ -33,6 +36,7 @@ export const Theme = {
     md: 12,
     lg: 16,
     xl: 24,
+    xxl: 28,
     '2xl': 32,
     '3xl': 48,
   },

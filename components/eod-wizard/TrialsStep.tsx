@@ -3,7 +3,6 @@ import {
   View,
   Text,
   StyleSheet,
-  TouchableOpacity,
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
@@ -12,6 +11,7 @@ import Colors from '@/constants/Colors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
+import { NumberInput } from './NumberInput';
 
 export const TrialsStep: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -30,10 +30,8 @@ export const TrialsStep: React.FC = () => {
     adults_trials = 0,
   } = wizardState.data;
 
-  const handleCountChange = (field: string, delta: number) => {
-    const currentValue = wizardState.data[field as keyof typeof wizardState.data] as number || 0;
-    const newValue = Math.max(0, currentValue + delta);
-    updateWizardData({ [field]: newValue });
+  const handleCountChange = (field: string) => (value: number) => {
+    updateWizardData({ [field]: value });
   };
 
   const renderTrialCounter = (
@@ -52,25 +50,12 @@ export const TrialsStep: React.FC = () => {
         </Text>
       </View>
 
-      <View style={styles.counterControls}>
-        <TouchableOpacity
-          onPress={() => handleCountChange(field, -1)}
-          style={[styles.counterButton, { backgroundColor: Theme.colors.secondary.light }]}
-        >
-          <Ionicons name="remove" size={20} color={Theme.colors.text.primary} />
-        </TouchableOpacity>
-
-        <Text style={[styles.counterValue, { color: currentTheme.text }]}>
-          {value}
-        </Text>
-
-        <TouchableOpacity
-          onPress={() => handleCountChange(field, 1)}
-          style={[styles.counterButton, { backgroundColor: Theme.colors.primary }]}
-        >
-          <Ionicons name="add" size={20} color={Theme.colors.text.inverse} />
-        </TouchableOpacity>
-      </View>
+      <NumberInput
+        value={value}
+        onChange={handleCountChange(field)}
+        unit="trials"
+        color={color}
+      />
     </Card>
   );
 
@@ -189,25 +174,6 @@ const styles = StyleSheet.create({
   trialLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-  },
-  counterControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  counterButton: {
-    width: 36,
-    height: 36,
-    borderRadius: Theme.borderRadius.full,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  counterValue: {
-    fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
-    marginHorizontal: Theme.spacing.xl,
-    minWidth: 40,
-    textAlign: 'center',
   },
   summaryCard: {
     backgroundColor: Theme.colors.primary + '10',

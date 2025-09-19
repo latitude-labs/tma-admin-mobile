@@ -124,14 +124,9 @@ export default function EoDWizardScreen() {
           </Text>
         </View>
 
-        <ScrollView
-          style={styles.content}
-          contentContainerStyle={styles.contentContainer}
-          showsVerticalScrollIndicator={false}
-          keyboardShouldPersistTaps="handled"
-        >
+        <View style={styles.content}>
           {renderStepContent()}
-        </ScrollView>
+        </View>
       </SafeAreaView>
     </>
   );
@@ -154,9 +149,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
-  },
-  contentContainer: {
     paddingHorizontal: Theme.spacing.lg,
-    paddingBottom: Theme.spacing.xl,
   },
 });

@@ -1,24 +1,42 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import {
-  View,
-  Text,
-  FlatList,
-  StyleSheet,
-  RefreshControl,
-  TouchableOpacity,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useAuthStore } from '@/store/authStore';
-import { useEndOfDayStore } from '@/store/endOfDayStore';
-import { useClubStore } from '@/store/clubStore';
-import { Theme } from '@/constants/Theme';
-import { Button } from '@/components/ui/Button';
-import { Ionicons } from '@expo/vector-icons';
 import { Card } from '@/components/ui/Card';
+import { Chip } from '@/components/ui/Chip';
+import { Theme } from '@/constants/Theme';
+import { useAuthStore } from '@/store/authStore';
+import { useClubStore } from '@/store/clubStore';
+import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { EndOfDayReport } from '@/types/endOfDay';
+import { Ionicons } from '@expo/vector-icons';
+import { format, isToday, parseISO } from 'date-fns';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import { format, parseISO, isToday } from 'date-fns';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Platform,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
+import Animated, {
+  Easing,
+  FadeIn,
+  FadeInDown,
+  Layout,
+  SlideInRight,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming
+} from 'react-native-reanimated';
+
+const AnimatedCard = Animated.createAnimatedComponent(Card);
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function EoDReportsScreen() {
   const { user } = useAuthStore();
@@ -34,6 +52,7 @@ export default function EoDReportsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [selectedClub, setSelectedClub] = useState<number | null>(null);
   const [canCreateReport, setCanCreateReport] = useState(false);
+  const pulseOpacity = useSharedValue(0.3);
 
   const isAdmin = user?.is_admin ?? false;
 
@@ -81,6 +100,9 @@ export default function EoDReportsScreen() {
   }, [selectedClub, isAdmin]);
 
   const handleCreateReport = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     if (selectedClub) {
       initializeWizard(selectedClub);
       router.push('/eod-wizard');
@@ -90,13 +112,17 @@ export default function EoDReportsScreen() {
   };
 
   const handleReportPress = (report: EndOfDayReport) => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     router.push({
       pathname: '/eod-report-detail',
       params: { id: report.id },
     });
   };
 
-  const renderReportItem = ({ item }: { item: EndOfDayReport }) => {
+  const ReportItem = React.memo(({ item, index }: { item: EndOfDayReport; index: number }) => {
+    const scaleValue = useSharedValue(1);
     const reportDate = parseISO(item.report_date);
     const isTodayReport = isToday(reportDate);
     const totalAttendance = item.kids_1_count + item.kids_2_count + item.adults_count;
@@ -110,127 +136,158 @@ export default function EoDReportsScreen() {
       item.returning_adults_paid_kit_and_signed_dd_count +
       item.returning_adults_signed_dd_no_kit_count;
 
+    const animatedStyle = useAnimatedStyle(() => ({
+      transform: [{ scale: scaleValue.value }],
+    }));
+
     return (
-      <TouchableOpacity onPress={() => handleReportPress(item)} activeOpacity={0.7}>
-        <Card variant="elevated" style={[styles.reportCard, isTodayReport && styles.todayCard]}>
+      <AnimatedPressable
+        onPressIn={() => {
+          scaleValue.value = withSpring(0.98, {
+            damping: 20,
+            stiffness: 500,
+          });
+        }}
+        onPressOut={() => {
+          scaleValue.value = withSpring(1, {
+            damping: 20,
+            stiffness: 500,
+          });
+        }}
+        onPress={() => handleReportPress(item)}
+        style={animatedStyle}
+      >
+        <AnimatedCard
+          variant="elevated"
+          style={[styles.reportCard, isTodayReport && styles.todayCard]}
+          entering={FadeInDown.delay(index * 80).duration(400).springify()}
+          layout={Layout.springify()}
+        >
+          {/* Report Header */}
           <View style={styles.reportHeader}>
             <View style={styles.reportHeaderInfo}>
-              <Text style={styles.reportDate}>
-                {format(reportDate, 'EEEE, MMM d, yyyy')}
-              </Text>
+              <View style={styles.dateContainer}>
+                <View style={styles.dateIconContainer}>
+                  <Ionicons name="calendar" size={20} color={Theme.colors.primary} />
+                </View>
+                <View>
+                  <Text style={styles.reportDate}>
+                    {format(reportDate, 'EEEE, MMM d')}
+                  </Text>
+                  <Text style={styles.reportYear}>
+                    {format(reportDate, 'yyyy')}
+                  </Text>
+                </View>
+              </View>
+
               {item.club && (
-                <Text style={styles.clubName}>
-                  {item.club.name}
-                </Text>
+                <View style={styles.clubInfo}>
+                  <View style={styles.clubIconContainer}>
+                    <Ionicons name="business" size={14} color={Theme.colors.status.info} />
+                  </View>
+                  <Text style={styles.clubName}>{item.club.name}</Text>
+                </View>
               )}
+
               {(item.coach || item.user) && (
                 <View style={styles.coachInfo}>
-                  <Ionicons name="person-circle-outline" size={14} color={Theme.colors.text.secondary} />
+                  <View style={styles.coachIconContainer}>
+                    <Ionicons name="person" size={12} color={Theme.colors.text.secondary} />
+                  </View>
                   <Text style={styles.coachName}>
                     {item.coach?.name || item.user?.name}
                   </Text>
                 </View>
               )}
             </View>
+
             {isTodayReport && (
-              <View style={styles.todayBadge}>
+              <Animated.View
+                entering={FadeIn.duration(300)}
+                style={styles.todayBadge}
+              >
+                <Ionicons name="star" size={14} color="#FFF" />
                 <Text style={styles.todayText}>TODAY</Text>
-              </View>
+              </Animated.View>
             )}
           </View>
 
-          <View style={styles.metricsContainer}>
-            <View style={styles.metricRow}>
-              <Ionicons name="people-outline" size={18} color={Theme.colors.primary} />
-              <Text style={styles.metricLabel}>Attendance:</Text>
-              <Text style={styles.metricValue}>
-                {totalAttendance}
-              </Text>
+          {/* Metrics Grid */}
+          <View style={styles.metricsGrid}>
+            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.primary}10` }]}>
+              <Ionicons name="people" size={24} color={Theme.colors.primary} />
+              <Text style={styles.metricValue}>{totalAttendance}</Text>
+              <Text style={styles.metricLabel}>Attended</Text>
             </View>
 
-            <View style={styles.metricRow}>
-              <Ionicons name="star-outline" size={18} color={Theme.colors.status.warning} />
-              <Text style={styles.metricLabel}>Trials:</Text>
-              <Text style={styles.metricValue}>
-                {totalTrials}
-              </Text>
+            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.status.warning}10` }]}>
+              <Ionicons name="star" size={24} color={Theme.colors.status.warning} />
+              <Text style={styles.metricValue}>{totalTrials}</Text>
+              <Text style={styles.metricLabel}>Trials</Text>
             </View>
 
-            <View style={styles.metricRow}>
-              <Ionicons name="person-add-outline" size={18} color={Theme.colors.status.success} />
-              <Text style={styles.metricLabel}>Sign-ups:</Text>
-              <Text style={styles.metricValue}>
-                {totalSignups}
-              </Text>
-            </View>
-
-            <View style={styles.metricRow}>
-              <Ionicons name="cash-outline" size={18} color={Theme.colors.status.success} />
-              <Text style={styles.metricLabel}>Cash Collected:</Text>
-              <Text style={[styles.metricValue, { color: Theme.colors.status.success }]}>
-                £{item.total_cash_taken.toFixed(2)}
-              </Text>
+            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.status.success}10` }]}>
+              <Ionicons name="person-add" size={24} color={Theme.colors.status.success} />
+              <Text style={styles.metricValue}>{totalSignups}</Text>
+              <Text style={styles.metricLabel}>Sign-ups</Text>
             </View>
           </View>
-        </Card>
-      </TouchableOpacity>
+
+          {/* Cash Collection */}
+          <View style={styles.cashContainer}>
+            <View style={styles.cashIconContainer}>
+              <Ionicons name="cash" size={18} color={Theme.colors.status.success} />
+            </View>
+            <Text style={styles.cashLabel}>Cash Collected</Text>
+            <Text style={styles.cashValue}>£{item.total_cash_taken.toFixed(2)}</Text>
+          </View>
+        </AnimatedCard>
+      </AnimatedPressable>
     );
-  };
+  });
 
   const renderClubFilter = () => {
     if (!clubs || clubs.length === 0) return null;
 
     return (
-      <View style={styles.filterContainer}>
-        <FlatList
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          data={[{ id: null, name: 'All Clubs' }, ...clubs]}
-          keyExtractor={(item) => item.id?.toString() || 'all'}
-          renderItem={({ item }) => (
-            <TouchableOpacity
-              onPress={() => setSelectedClub(item.id)}
-              style={[
-                styles.filterChip,
-                {
-                  backgroundColor:
-                    selectedClub === item.id
-                      ? Theme.colors.primary
-                      : Theme.colors.secondary.light,
-                },
-              ]}
+      <Animated.View
+        entering={FadeInDown.delay(100).duration(400).springify()}
+        style={styles.filterContainer}
+      >
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {[{ id: null, name: 'All Clubs' }, ...clubs].map((club, index) => (
+            <Animated.View
+              key={club.id?.toString() || 'all'}
+              entering={SlideInRight.delay(index * 50).duration(300).springify()}
             >
-              <Text
-                style={[
-                  styles.filterChipText,
-                  {
-                    color:
-                      selectedClub === item.id
-                        ? Theme.colors.text.inverse
-                        : Theme.colors.text.primary,
-                  },
-                ]}
-              >
-                {item.name}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      </View>
+              <Chip
+                label={club.name}
+                selected={selectedClub === club.id}
+                onPress={() => {
+                  setSelectedClub(club.id);
+                  if (Platform.OS === 'ios') {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  }
+                }}
+                style={styles.filterChip}
+              />
+            </Animated.View>
+          ))}
+        </ScrollView>
+      </Animated.View>
     );
   };
 
   const renderEmptyState = () => (
-    <View style={styles.emptyState}>
-      <Ionicons
-        name="document-text-outline"
-        size={64}
-        color={Theme.colors.text.secondary}
-      />
-      <Text style={styles.emptyStateTitle}>
-        No Reports Yet
-      </Text>
-      <Text style={[styles.emptyStateText, { color: Theme.colors.text.secondary }]}>
+    <Animated.View
+      entering={FadeIn.duration(400)}
+      style={styles.emptyState}
+    >
+      <View style={styles.emptyIconContainer}>
+        <Ionicons name="document-text-outline" size={64} color={Theme.colors.text.tertiary} />
+      </View>
+      <Text style={styles.emptyTitle}>No Reports Yet</Text>
+      <Text style={styles.emptyText}>
         {isAdmin
           ? 'No end of day reports have been submitted yet.'
           : selectedClub
@@ -238,52 +295,83 @@ export default function EoDReportsScreen() {
           : 'Select a club and create your first report.'}
       </Text>
       {!isAdmin && canCreateReport && selectedClub && (
-        <Button
-          variant="primary"
+        <Pressable
+          style={styles.createButton}
           onPress={handleCreateReport}
-          style={{ marginTop: Theme.spacing.lg }}
         >
-          Create Today's Report
-        </Button>
+          <Ionicons name="add" size={20} color={Theme.colors.text.inverse} />
+          <Text style={styles.createButtonText}>Create Today's Report</Text>
+        </Pressable>
       )}
-    </View>
+    </Animated.View>
   );
 
+  useEffect(() => {
+    if (loading && reports.length === 0) {
+      pulseOpacity.value = withSequence(
+        withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) })
+      );
+    }
+  }, [loading, reports.length]);
+
+  const loadingAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
+  // Loading state
   if (loading && reports.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
-        <ActivityIndicator size="large" color={Theme.colors.primary} />
+        <Animated.View style={loadingAnimatedStyle}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={Theme.colors.primary} />
+            <Text style={styles.loadingText}>Loading reports...</Text>
+          </View>
+        </Animated.View>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      {!isAdmin && (
-        <View style={styles.header}>
+      {/* Header */}
+      <Animated.View
+        entering={FadeInDown.duration(400).springify()}
+        style={styles.header}
+      >
+        <View>
           <Text style={styles.headerTitle}>
-            My End of Day Reports
+            {isAdmin ? 'All Reports' : 'My Reports'}
           </Text>
-          {canCreateReport && selectedClub && (
-            <Button variant="primary" size="sm" onPress={handleCreateReport}>
-              <Ionicons name="add" size={20} color={Theme.colors.text.inverse} />
-              Create Report
-            </Button>
-          )}
+          <Text style={styles.headerSubtitle}>End of Day Reports</Text>
         </View>
-      )}
+        {!isAdmin && canCreateReport && selectedClub && (
+          <AnimatedPressable
+            onPress={handleCreateReport}
+            style={({ pressed }) => [
+              styles.createHeaderButton,
+              pressed && styles.createHeaderButtonPressed
+            ]}
+          >
+            <Ionicons name="add-circle" size={24} color={Theme.colors.text.inverse} />
+            <Text style={styles.createHeaderButtonText}>New</Text>
+          </AnimatedPressable>
+        )}
+      </Animated.View>
 
       {renderClubFilter()}
 
       <FlatList
         data={reports}
         keyExtractor={(item) => item.id.toString()}
-        renderItem={renderReportItem}
+        renderItem={({ item, index }) => <ReportItem item={item} index={index} />}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
             colors={[Theme.colors.primary]}
+            tintColor={Theme.colors.primary}
           />
         }
         contentContainerStyle={[
@@ -291,6 +379,7 @@ export default function EoDReportsScreen() {
           reports.length === 0 && styles.emptyListContent,
         ]}
         ListEmptyComponent={renderEmptyState()}
+        showsVerticalScrollIndicator={false}
       />
     </View>
   );
@@ -305,33 +394,64 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    backgroundColor: Theme.colors.background.primary,
+    borderRadius: Theme.borderRadius.xl,
+    ...Theme.shadows.md,
+  },
+  loadingText: {
+    marginTop: Theme.spacing.lg,
+    fontSize: Theme.typography.sizes.md,
+    color: Theme.colors.text.secondary,
+    fontFamily: Theme.typography.fonts.medium,
+  },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Theme.spacing.lg,
-    paddingVertical: Theme.spacing.md,
+    paddingTop: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.md,
   },
   headerTitle: {
-    fontSize: Theme.typography.sizes.xl,
+    fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
     color: Theme.colors.text.primary,
   },
-  filterContainer: {
+  headerSubtitle: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    color: Theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  createHeaderButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.xs,
+    backgroundColor: Theme.colors.primary,
+    paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.full,
+    ...Theme.shadows.sm,
+  },
+  createHeaderButtonPressed: {
+    opacity: 0.8,
+  },
+  createHeaderButtonText: {
+    color: Theme.colors.text.inverse,
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.semibold,
+  },
+  filterContainer: {
+    paddingVertical: Theme.spacing.md,
     paddingLeft: Theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: Theme.colors.border.light,
   },
   filterChip: {
-    paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.full,
     marginRight: Theme.spacing.sm,
-  },
-  filterChipText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
   },
   listContent: {
     padding: Theme.spacing.lg,
@@ -340,7 +460,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   reportCard: {
-    marginBottom: Theme.spacing.lg,
+    marginBottom: 0,
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   todayCard: {
     borderColor: Theme.colors.primary,
@@ -355,61 +477,131 @@ const styles = StyleSheet.create({
   reportHeaderInfo: {
     flex: 1,
   },
+  dateContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.md,
+    marginBottom: Theme.spacing.md,
+  },
+  dateIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: Theme.borderRadius.lg,
+    backgroundColor: `${Theme.colors.primary}10`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   reportDate: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
     color: Theme.colors.text.primary,
+  },
+  reportYear: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    color: Theme.colors.text.secondary,
+  },
+  clubInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.xs,
     marginBottom: Theme.spacing.xs,
   },
+  clubIconContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: Theme.borderRadius.sm,
+    backgroundColor: `${Theme.colors.status.info}15`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   clubName: {
-    fontSize: Theme.typography.sizes.md,
+    fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
     color: Theme.colors.text.secondary,
-    marginBottom: Theme.spacing.xs,
   },
   coachInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.xs,
   },
+  coachIconContainer: {
+    width: 20,
+    height: 20,
+    borderRadius: Theme.borderRadius.sm,
+    backgroundColor: Theme.colors.background.secondary,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   coachName: {
-    fontSize: Theme.typography.sizes.sm,
+    fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: Theme.colors.text.tertiary,
   },
   todayBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.xs,
     backgroundColor: Theme.colors.primary,
-    paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: Theme.spacing.xs,
-    borderRadius: Theme.borderRadius.sm,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.full,
+    ...Theme.shadows.sm,
   },
   todayText: {
     color: Theme.colors.text.inverse,
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.bold,
   },
-  metricsContainer: {
-    gap: Theme.spacing.sm,
-  },
-  metricRow: {
+  metricsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Theme.colors.background.secondary,
-    padding: Theme.spacing.sm,
-    paddingHorizontal: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.sm,
     gap: Theme.spacing.sm,
+    marginBottom: Theme.spacing.lg,
+  },
+  metricCard: {
+    flex: 1,
+    alignItems: 'center',
+    padding: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+  },
+  metricValue: {
+    fontSize: Theme.typography.sizes.xl,
+    fontFamily: Theme.typography.fonts.bold,
+    color: Theme.colors.text.primary,
+    marginTop: Theme.spacing.xs,
   },
   metricLabel: {
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: Theme.typography.fonts.medium,
+    color: Theme.colors.text.secondary,
+    marginTop: 2,
+  },
+  cashContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: `${Theme.colors.status.success}10`,
+    padding: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    gap: Theme.spacing.md,
+  },
+  cashIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: Theme.borderRadius.md,
+    backgroundColor: `${Theme.colors.status.success}20`,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cashLabel: {
+    flex: 1,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
     color: Theme.colors.text.secondary,
-    flex: 1,
   },
-  metricValue: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+  cashValue: {
+    fontSize: Theme.typography.sizes.lg,
+    fontFamily: Theme.typography.fonts.bold,
+    color: Theme.colors.status.success,
   },
   emptyState: {
     flex: 1,
@@ -417,17 +609,40 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: Theme.spacing.xl,
   },
-  emptyStateTitle: {
+  emptyIconContainer: {
+    padding: Theme.spacing.xl,
+    backgroundColor: `${Theme.colors.text.tertiary}10`,
+    borderRadius: Theme.borderRadius.full,
+    marginBottom: Theme.spacing.xl,
+  },
+  emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: Theme.typography.fonts.bold,
     color: Theme.colors.text.primary,
-    marginTop: Theme.spacing.lg,
     marginBottom: Theme.spacing.sm,
   },
-  emptyStateText: {
+  emptyText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
+    color: Theme.colors.text.secondary,
     textAlign: 'center',
-    lineHeight: Theme.typography.sizes.md * 1.5,
+    maxWidth: 280,
+    lineHeight: 22,
+    marginBottom: Theme.spacing.xl,
+  },
+  createButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.sm,
+    backgroundColor: Theme.colors.primary,
+    paddingHorizontal: Theme.spacing.xl,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.full,
+    ...Theme.shadows.sm,
+  },
+  createButtonText: {
+    color: Theme.colors.text.inverse,
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
   },
 });
