@@ -1,6 +1,7 @@
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { useClubStore } from '@/store/clubStore';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
@@ -9,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, parseISO } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -39,6 +40,8 @@ const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function EoDReportsScreen() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const { user } = useAuthStore();
   const { clubs } = useClubStore();
   const {
@@ -168,7 +171,7 @@ export default function EoDReportsScreen() {
             <View style={styles.reportHeaderInfo}>
               <View style={styles.dateContainer}>
                 <View style={styles.dateIconContainer}>
-                  <Ionicons name="calendar" size={20} color={Theme.colors.primary} />
+                  <Ionicons name="calendar" size={20} color={palette.tint} />
                 </View>
                 <View>
                   <Text style={styles.reportDate}>
@@ -183,7 +186,7 @@ export default function EoDReportsScreen() {
               {item.club && (
                 <View style={styles.clubInfo}>
                   <View style={styles.clubIconContainer}>
-                    <Ionicons name="business" size={14} color={Theme.colors.status.info} />
+                    <Ionicons name="business" size={14} color={palette.statusInfo} />
                   </View>
                   <Text style={styles.clubName}>{item.club.name}</Text>
                 </View>
@@ -192,7 +195,7 @@ export default function EoDReportsScreen() {
               {(item.coach || item.user) && (
                 <View style={styles.coachInfo}>
                   <View style={styles.coachIconContainer}>
-                    <Ionicons name="person" size={12} color={Theme.colors.text.secondary} />
+                    <Ionicons name="person" size={12} color={palette.textSecondary} />
                   </View>
                   <Text style={styles.coachName}>
                     {item.coach?.name || item.user?.name}
@@ -214,20 +217,20 @@ export default function EoDReportsScreen() {
 
           {/* Metrics Grid */}
           <View style={styles.metricsGrid}>
-            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.primary}10` }]}>
-              <Ionicons name="people" size={24} color={Theme.colors.primary} />
+            <View style={[styles.metricCard, { backgroundColor: `${palette.tint}10` }]}>
+              <Ionicons name="people" size={24} color={palette.tint} />
               <Text style={styles.metricValue}>{totalAttendance}</Text>
               <Text style={styles.metricLabel}>Attended</Text>
             </View>
 
-            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.status.warning}10` }]}>
-              <Ionicons name="star" size={24} color={Theme.colors.status.warning} />
+            <View style={[styles.metricCard, { backgroundColor: `${palette.statusWarning}10` }]}>
+              <Ionicons name="star" size={24} color={palette.statusWarning} />
               <Text style={styles.metricValue}>{totalTrials}</Text>
               <Text style={styles.metricLabel}>Trials</Text>
             </View>
 
-            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.status.success}10` }]}>
-              <Ionicons name="person-add" size={24} color={Theme.colors.status.success} />
+            <View style={[styles.metricCard, { backgroundColor: `${palette.statusSuccess}10` }]}>
+              <Ionicons name="person-add" size={24} color={palette.statusSuccess} />
               <Text style={styles.metricValue}>{totalSignups}</Text>
               <Text style={styles.metricLabel}>Sign-ups</Text>
             </View>
@@ -236,7 +239,7 @@ export default function EoDReportsScreen() {
           {/* Cash Collection */}
           <View style={styles.cashContainer}>
             <View style={styles.cashIconContainer}>
-              <Ionicons name="cash" size={18} color={Theme.colors.status.success} />
+              <Ionicons name="cash" size={18} color={palette.statusSuccess} />
             </View>
             <Text style={styles.cashLabel}>Cash Collected</Text>
             <Text style={styles.cashValue}>£{item.total_cash_taken.toFixed(2)}</Text>
@@ -284,7 +287,7 @@ export default function EoDReportsScreen() {
       style={styles.emptyState}
     >
       <View style={styles.emptyIconContainer}>
-        <Ionicons name="document-text-outline" size={64} color={Theme.colors.text.tertiary} />
+        <Ionicons name="document-text-outline" size={64} color={palette.textTertiary} />
       </View>
       <Text style={styles.emptyTitle}>No Reports Yet</Text>
       <Text style={styles.emptyText}>
@@ -299,7 +302,7 @@ export default function EoDReportsScreen() {
           style={styles.createButton}
           onPress={handleCreateReport}
         >
-          <Ionicons name="add" size={20} color={Theme.colors.text.inverse} />
+          <Ionicons name="add" size={20} color={palette.textInverse} />
           <Text style={styles.createButtonText}>Create Today's Report</Text>
         </Pressable>
       )}
@@ -325,7 +328,7 @@ export default function EoDReportsScreen() {
       <View style={[styles.container, styles.centerContent]}>
         <Animated.View style={loadingAnimatedStyle}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Theme.colors.primary} />
+            <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading reports...</Text>
           </View>
         </Animated.View>
@@ -354,7 +357,7 @@ export default function EoDReportsScreen() {
               pressed && styles.createHeaderButtonPressed
             ]}
           >
-            <Ionicons name="add-circle" size={24} color={Theme.colors.text.inverse} />
+            <Ionicons name="add-circle" size={24} color={palette.textInverse} />
             <Text style={styles.createHeaderButtonText}>New</Text>
           </AnimatedPressable>
         )}
@@ -370,8 +373,8 @@ export default function EoDReportsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[Theme.colors.primary]}
-            tintColor={Theme.colors.primary}
+            colors={[palette.tint]}
+            tintColor={palette.tint}
           />
         }
         contentContainerStyle={[
@@ -385,10 +388,10 @@ export default function EoDReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   centerContent: {
     justifyContent: 'center',
@@ -397,14 +400,14 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     fontFamily: Theme.typography.fonts.medium,
   },
   header: {
@@ -418,19 +421,19 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   headerSubtitle: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: 2,
   },
   createHeaderButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.xs,
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
@@ -440,7 +443,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   createHeaderButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
   },
@@ -448,7 +451,7 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     paddingLeft: Theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   filterChip: {
     marginRight: Theme.spacing.sm,
@@ -465,7 +468,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   todayCard: {
-    borderColor: Theme.colors.primary,
+    borderColor: palette.tint,
     borderWidth: 2,
   },
   reportHeader: {
@@ -487,19 +490,19 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: `${Theme.colors.primary}10`,
+    backgroundColor: `${palette.tint}10`,
     justifyContent: 'center',
     alignItems: 'center',
   },
   reportDate: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   reportYear: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   clubInfo: {
     flexDirection: 'row',
@@ -511,14 +514,14 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: Theme.borderRadius.sm,
-    backgroundColor: `${Theme.colors.status.info}15`,
+    backgroundColor: `${palette.statusInfo}15`,
     justifyContent: 'center',
     alignItems: 'center',
   },
   clubName: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   coachInfo: {
     flexDirection: 'row',
@@ -529,27 +532,27 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: Theme.borderRadius.sm,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   coachName: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
   },
   todayBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.xs,
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
     ...Theme.shadows.sm,
   },
   todayText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.bold,
   },
@@ -567,19 +570,19 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginTop: Theme.spacing.xs,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: 2,
   },
   cashContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: `${Theme.colors.status.success}10`,
+    backgroundColor: `${palette.statusSuccess}10`,
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
     gap: Theme.spacing.md,
@@ -588,7 +591,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Theme.borderRadius.md,
-    backgroundColor: `${Theme.colors.status.success}20`,
+    backgroundColor: `${palette.statusSuccess}20`,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -596,12 +599,12 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   cashValue: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.status.success,
+    color: palette.statusSuccess,
   },
   emptyState: {
     flex: 1,
@@ -611,20 +614,20 @@ const styles = StyleSheet.create({
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,
-    backgroundColor: `${Theme.colors.text.tertiary}10`,
+    backgroundColor: `${palette.textTertiary}10`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.xl,
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,
@@ -634,14 +637,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.sm,
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
     ...Theme.shadows.sm,
   },
   createButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
   },

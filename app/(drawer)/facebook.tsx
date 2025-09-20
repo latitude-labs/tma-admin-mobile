@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { FacebookCardSkeleton } from '@/components/FacebookCardSkeleton';
 import { useFacebookStore } from '@/store/facebookStore';
@@ -87,6 +88,8 @@ const timeRangeOptions: TimeRangeOption[] = [
 ];
 
 export default function FacebookScreen() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const { user } = useAuthStore();
   const {
     isLoading,
@@ -166,7 +169,7 @@ export default function FacebookScreen() {
       <View style={[styles.container, styles.centerContent]}>
         <Animated.View style={loadingAnimatedStyle}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Theme.colors.primary} />
+            <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading ad performance...</Text>
           </View>
         </Animated.View>
@@ -183,7 +186,7 @@ export default function FacebookScreen() {
           style={styles.errorContainer}
         >
           <View style={styles.errorIconContainer}>
-            <Ionicons name="alert-circle" size={56} color={Theme.colors.status.error} />
+            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
           </View>
           <Text style={styles.errorTitle}>Unable to load ads</Text>
           <Text style={styles.errorMessage}>{error}</Text>
@@ -214,17 +217,17 @@ export default function FacebookScreen() {
 
   const searchAnimatedStyle = useAnimatedStyle(() => ({
     borderColor: withSpring(
-      searchFocused.value ? Theme.colors.primary : Theme.colors.border.default,
+      searchFocused.value ? palette.tint : palette.borderDefault,
       { damping: 15, stiffness: 150 }
     ),
     borderWidth: withSpring(searchFocused.value ? 2 : 1),
   }));
 
   const getPerformanceColor = (costPerBooking: number | null) => {
-    if (costPerBooking === null) return Theme.colors.status.error; // No bookings
-    if (costPerBooking < 10) return Theme.colors.status.success;
-    if (costPerBooking < 20) return Theme.colors.status.warning;
-    return Theme.colors.status.error;
+    if (costPerBooking === null) return palette.statusError; // No bookings
+    if (costPerBooking < 10) return palette.statusSuccess;
+    if (costPerBooking < 20) return palette.statusWarning;
+    return palette.statusError;
   };
 
   return (
@@ -235,8 +238,8 @@ export default function FacebookScreen() {
           <RefreshControl
             refreshing={isLoading}
             onRefresh={refreshPages}
-            colors={[Theme.colors.primary]}
-            tintColor={Theme.colors.primary}
+            colors={[palette.tint]}
+            tintColor={palette.tint}
           />
         }>
         <View style={styles.content}>
@@ -280,11 +283,11 @@ export default function FacebookScreen() {
             entering={FadeInDown.delay(100).duration(400).springify()}
             style={[styles.searchContainer, searchAnimatedStyle]}
           >
-            <Ionicons name="search" size={20} color={Theme.colors.text.secondary} />
+            <Ionicons name="search" size={20} color={palette.textSecondary} />
             <AnimatedTextInput
               style={styles.searchInput}
               placeholder="Search Facebook pages..."
-              placeholderTextColor={Theme.colors.text.tertiary}
+              placeholderTextColor={palette.textTertiary}
               value={localSearchQuery}
               onChangeText={setLocalSearchQuery}
               onFocus={() => {
@@ -304,7 +307,7 @@ export default function FacebookScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="close-circle" size={20} color={Theme.colors.text.secondary} />
+                  <Ionicons name="close-circle" size={20} color={palette.textSecondary} />
                 </TouchableOpacity>
               </Animated.View>
             )}
@@ -344,7 +347,7 @@ export default function FacebookScreen() {
               style={styles.emptyState}
             >
               <View style={styles.emptyIconContainer}>
-                <Ionicons name="search-outline" size={64} color={Theme.colors.text.tertiary} />
+                <Ionicons name="search-outline" size={64} color={palette.textTertiary} />
               </View>
               <Text style={styles.emptyTitle}>No pages found</Text>
               <Text style={styles.emptyMessage}>
@@ -384,8 +387,8 @@ export default function FacebookScreen() {
                               style={[
                                 styles.statusDot,
                                 { backgroundColor: page.status === 'active'
-                                  ? Theme.colors.status.success
-                                  : Theme.colors.text.tertiary
+                                  ? palette.statusSuccess
+                                  : palette.textTertiary
                                 }
                               ]}
                             />
@@ -416,16 +419,16 @@ export default function FacebookScreen() {
                       {page.metrics ? (
                         <>
                           <View style={styles.metricsGrid}>
-                            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.primary}10` }]}>
-                              <Ionicons name="cash" size={20} color={Theme.colors.primary} />
+                            <View style={[styles.metricCard, { backgroundColor: `${palette.tint}10` }]}>
+                              <Ionicons name="cash" size={20} color={palette.tint} />
                               <Text style={styles.metricValue}>
                                 {formatCurrency(page.metrics.total_spend)}
                               </Text>
                               <Text style={styles.metricLabel}>Ad Spend</Text>
                             </View>
 
-                            <View style={[styles.metricCard, { backgroundColor: `${Theme.colors.status.success}10` }]}>
-                              <Ionicons name="calendar" size={20} color={Theme.colors.status.success} />
+                            <View style={[styles.metricCard, { backgroundColor: `${palette.statusSuccess}10` }]}>
+                              <Ionicons name="calendar" size={20} color={palette.statusSuccess} />
                               <Text style={styles.metricValue}>
                                 {page.metrics.total_bookings}
                               </Text>
@@ -461,7 +464,7 @@ export default function FacebookScreen() {
                             >
                               <View style={styles.clubBreakdownHeader}>
                                 <View style={styles.clubBreakdownIconContainer}>
-                                  <Ionicons name="business" size={16} color={Theme.colors.status.info} />
+                                  <Ionicons name="business" size={16} color={palette.statusInfo} />
                                 </View>
                                 <Text style={styles.clubBreakdownTitle}>Bookings by Club</Text>
                               </View>
@@ -482,7 +485,7 @@ export default function FacebookScreen() {
                         </>
                       ) : (
                         <View style={styles.noMetrics}>
-                          <Ionicons name="bar-chart-outline" size={32} color={Theme.colors.text.tertiary} />
+                          <Ionicons name="bar-chart-outline" size={32} color={palette.textTertiary} />
                           <Text style={styles.noMetricsText}>No metrics available for this period</Text>
                         </View>
                       )}
@@ -498,10 +501,10 @@ export default function FacebookScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   centerContent: {
     flex: 1,
@@ -512,53 +515,53 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     fontFamily: Theme.typography.fonts.medium,
   },
   errorContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
     maxWidth: 320,
   },
   errorIconContainer: {
     padding: Theme.spacing.lg,
-    backgroundColor: `${Theme.colors.status.error}15`,
+    backgroundColor: `${palette.statusError}15`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.lg,
   },
   errorTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   errorMessage: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     marginBottom: Theme.spacing.xl,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
     ...Theme.shadows.sm,
   },
   retryButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
   },
@@ -577,18 +580,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   subtitle: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: 2,
   },
   offlineBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.status.warning,
+    backgroundColor: palette.statusWarning,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
@@ -602,14 +605,14 @@ const styles = StyleSheet.create({
   },
   syncText: {
     fontSize: Theme.typography.sizes.xs,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     fontFamily: Theme.typography.fonts.regular,
     marginBottom: Theme.spacing.lg,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.lg,
     paddingHorizontal: Theme.spacing.md,
     marginBottom: Theme.spacing.lg,
@@ -620,7 +623,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Theme.spacing.sm,
     fontSize: Theme.typography.sizes.md,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     fontFamily: Theme.typography.fonts.regular,
   },
   timeRangeContainer: {
@@ -646,7 +649,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: `${Theme.colors.status.info}10`,
+    backgroundColor: `${palette.statusInfo}10`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Theme.spacing.md,
@@ -657,7 +660,7 @@ const styles = StyleSheet.create({
   pageName: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   statusContainer: {
@@ -672,7 +675,7 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: Theme.typography.sizes.sm,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     fontFamily: Theme.typography.fonts.medium,
   },
   performanceIndicator: {
@@ -696,13 +699,13 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginTop: Theme.spacing.xs,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: 2,
   },
   noMetrics: {
@@ -711,7 +714,7 @@ const styles = StyleSheet.create({
   },
   noMetricsText: {
     fontSize: Theme.typography.sizes.sm,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     fontFamily: Theme.typography.fonts.regular,
     marginTop: Theme.spacing.md,
   },
@@ -721,20 +724,20 @@ const styles = StyleSheet.create({
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,
-    backgroundColor: `${Theme.colors.text.tertiary}10`,
+    backgroundColor: `${palette.textTertiary}10`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.xl,
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyMessage: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,
@@ -742,7 +745,7 @@ const styles = StyleSheet.create({
   clubBreakdownContainer: {
     paddingTop: Theme.spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: palette.borderLight,
   },
   clubBreakdownHeader: {
     flexDirection: 'row',
@@ -753,7 +756,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: Theme.borderRadius.sm,
-    backgroundColor: `${Theme.colors.status.info}10`,
+    backgroundColor: `${palette.statusInfo}10`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Theme.spacing.sm,
@@ -761,7 +764,7 @@ const styles = StyleSheet.create({
   clubBreakdownTitle: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   clubGrid: {
     flexDirection: 'row',
@@ -771,7 +774,7 @@ const styles = StyleSheet.create({
   clubPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     paddingLeft: Theme.spacing.md,
     paddingRight: Theme.spacing.xs,
     paddingVertical: Theme.spacing.sm,
@@ -781,10 +784,10 @@ const styles = StyleSheet.create({
   clubName: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   clubBookingBadge: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.sm,
     paddingVertical: 2,
     borderRadius: Theme.borderRadius.full,
@@ -794,6 +797,6 @@ const styles = StyleSheet.create({
   clubBookingsCount: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
   },
 });

@@ -12,7 +12,8 @@ import {
 import { Theme } from '@/constants/Theme';
 import { Ionicons } from '@expo/vector-icons';
 import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import ColorPalette from '@/constants/Colors';
+import { getThemeShadows } from '@/constants/Theme';
 
 export interface DropdownOption {
   label: string;
@@ -39,7 +40,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   label,
 }) => {
   const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const colors = ColorPalette[colorScheme ?? 'light'];
+  const shadows = getThemeShadows(colorScheme);
   const [showModal, setShowModal] = useState(false);
 
   const handleSelect = (optionValue: string) => {
@@ -73,7 +75,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   return (
     <View style={styles.container}>
       {label && (
-        <Text style={[styles.label, { color: currentTheme.text }]}>
+        <Text style={[styles.label, { color: colors.textPrimary }]}>
           {label}
         </Text>
       )}
@@ -82,17 +84,26 @@ export const Dropdown: React.FC<DropdownProps> = ({
         onPress={showPicker}
         style={[
           styles.button,
-          error && styles.buttonError,
-          disabled && styles.buttonDisabled,
-          { borderColor: error ? Theme.colors.error : Theme.colors.border.light }
+          {
+            backgroundColor: colors.background,
+            borderColor: error ? colors.statusError : colors.borderLight,
+          },
+          disabled && {
+            backgroundColor: colors.backgroundSecondary,
+            opacity: 0.6,
+          },
         ]}
         disabled={disabled}
       >
         <Text
           style={[
             styles.buttonText,
-            { color: selectedOption ? currentTheme.text : Theme.colors.text.secondary },
-            disabled && styles.buttonTextDisabled
+            {
+              color: selectedOption
+                ? colors.textPrimary
+                : colors.textSecondary,
+            },
+            disabled && { color: colors.textTertiary },
           ]}
         >
           {selectedOption ? selectedOption.label : placeholder}
@@ -100,12 +111,12 @@ export const Dropdown: React.FC<DropdownProps> = ({
         <Ionicons
           name="chevron-down"
           size={20}
-          color={disabled ? Theme.colors.text.tertiary : Theme.colors.text.secondary}
+          color={disabled ? colors.textTertiary : colors.textSecondary}
         />
       </TouchableOpacity>
 
       {error && (
-        <Text style={styles.errorText}>{error}</Text>
+        <Text style={[styles.errorText, { color: colors.statusError }]}>{error}</Text>
       )}
 
       {Platform.OS === 'android' && (
@@ -116,26 +127,40 @@ export const Dropdown: React.FC<DropdownProps> = ({
           onRequestClose={() => setShowModal(false)}
         >
           <TouchableOpacity
-            style={styles.modalOverlay}
+            style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
             activeOpacity={1}
             onPress={() => setShowModal(false)}
           >
-            <View style={[styles.modalContent, { backgroundColor: currentTheme.background }]}>
+            <View
+              style={[
+                styles.modalContent,
+                { backgroundColor: colors.background },
+                shadows.lg,
+              ]}
+            >
               <ScrollView style={styles.modalScroll}>
                 {options.map((option) => (
                   <TouchableOpacity
                     key={option.value}
                     style={[
                       styles.option,
-                      value === option.value && styles.optionSelected
+                      {
+                        borderBottomColor: colors.borderLight,
+                      },
+                      value === option.value && {
+                        backgroundColor: colors.tint + '10',
+                      },
                     ]}
                     onPress={() => handleSelect(option.value)}
                   >
                     <Text
                       style={[
                         styles.optionText,
-                        { color: currentTheme.text },
-                        value === option.value && styles.optionTextSelected
+                        { color: colors.textPrimary },
+                        value === option.value && {
+                          fontFamily: Theme.typography.fonts.semibold,
+                          color: colors.tint,
+                        },
                       ]}
                     >
                       {option.label}
@@ -164,37 +189,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background.primary,
     borderRadius: Theme.borderRadius.md,
     borderWidth: 1,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.md,
     minHeight: 48,
   },
-  buttonError: {
-    borderColor: Theme.colors.error,
-  },
-  buttonDisabled: {
-    backgroundColor: Theme.colors.background.secondary,
-    opacity: 0.6,
-  },
   buttonText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
     flex: 1,
   },
-  buttonTextDisabled: {
-    color: Theme.colors.text.tertiary,
-  },
   errorText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.error,
     marginTop: Theme.spacing.xs,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -203,11 +215,6 @@ const styles = StyleSheet.create({
     width: '80%',
     maxHeight: '60%',
     padding: Theme.spacing.sm,
-    elevation: 5,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
   },
   modalScroll: {
     maxHeight: 300,
@@ -216,17 +223,9 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     paddingHorizontal: Theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
-  },
-  optionSelected: {
-    backgroundColor: Theme.colors.primary + '10',
   },
   optionText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-  },
-  optionTextSelected: {
-    fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.primary,
   },
 });

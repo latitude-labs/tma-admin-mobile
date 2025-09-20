@@ -12,6 +12,7 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
+  useColorScheme,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,6 +23,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
 import { Theme } from '@/constants/Theme';
+import ColorPalette from '@/constants/Colors';
 import { remindersService } from '@/services/api/reminders.service';
 import { useAuthStore } from '@/store/authStore';
 
@@ -43,6 +45,8 @@ type FilterPriority = 'all' | 'low' | 'medium' | 'high' | 'urgent';
 
 export default function RemindersScreen() {
   const { user } = useAuthStore();
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -407,7 +411,7 @@ export default function RemindersScreen() {
                   >
                     <Text style={[
                       styles.priorityButtonText,
-                      { color: newReminder.priority === priority ? '#FFF' : getPriorityColor(priority) },
+                      { color: newReminder.priority === priority ? colors.textInverse : getPriorityColor(priority) },
                     ]}>
                       {priority}
                     </Text>
@@ -509,8 +513,8 @@ export default function RemindersScreen() {
         }}
       />
 
-      <View style={styles.container}>
-        <View style={styles.filterSection}>
+      <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
+        <View style={[styles.filterSection, { backgroundColor: colors.background, borderBottomColor: colors.borderLight }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.filterGroup}>
               <Text style={styles.filterLabel}>Status:</Text>
@@ -580,7 +584,7 @@ const styles = StyleSheet.create({
     padding: Theme.spacing.sm,
   },
   filterSection: {
-    backgroundColor: '#FFF',
+    backgroundColor: ColorPalette.light.background,
     paddingVertical: Theme.spacing.sm,
     paddingHorizontal: Theme.spacing.lg,
     borderBottomWidth: 1,
@@ -711,11 +715,11 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: ColorPalette.light.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFF',
+    backgroundColor: ColorPalette.light.background,
     borderTopLeftRadius: Theme.borderRadius.xl,
     borderTopRightRadius: Theme.borderRadius.xl,
     paddingHorizontal: Theme.spacing.lg,

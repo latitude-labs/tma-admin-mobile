@@ -1,13 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { Text, StyleSheet, useColorScheme } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withSpring,
   useSharedValue,
   withTiming,
-  runOnJS,
 } from 'react-native-reanimated';
-import { Colors } from '@/constants/Colors';
+import ColorPalette from '@/constants/Colors';
 
 interface NotificationBadgeProps {
   count: number;
@@ -21,6 +20,8 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   animate = true,
 }) => {
   const scale = useSharedValue(1);
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
 
   React.useEffect(() => {
     if (animate && count > 0) {
@@ -60,8 +61,20 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   };
 
   return (
-    <Animated.View style={[styles.container, sizeStyles[size], animatedStyle]}>
-      <Text style={[styles.text, { fontSize: sizeStyles[size].fontSize }]}>
+    <Animated.View
+      style={[
+        styles.container,
+        sizeStyles[size],
+        { backgroundColor: colors.statusError },
+        animatedStyle,
+      ]}
+    >
+      <Text
+        style={[
+          styles.text,
+          { fontSize: sizeStyles[size].fontSize, color: colors.textInverse },
+        ]}
+      >
         {displayCount}
       </Text>
     </Animated.View>
@@ -70,7 +83,6 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.status.error,
     borderRadius: 100,
     justifyContent: 'center',
     alignItems: 'center',
@@ -79,7 +91,6 @@ const styles = StyleSheet.create({
     right: -8,
   },
   text: {
-    color: Colors.text.inverse,
     fontFamily: 'Manrope_700Bold',
     textAlign: 'center',
   },

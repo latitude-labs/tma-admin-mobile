@@ -3,7 +3,16 @@ import { Theme } from '@/constants/Theme';
 import { Ionicons } from '@expo/vector-icons';
 import { format, formatDistanceToNow, isPast, isToday, isTomorrow } from 'date-fns';
 import React, { useState } from 'react';
-import { Alert, Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  Alert,
+  Animated,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+  useColorScheme,
+} from 'react-native';
+import ColorPalette from '@/constants/Colors';
 
 interface Reminder {
   id: number;
@@ -36,6 +45,9 @@ export function RemindersSection({
   const [animatedValues] = useState(() =>
     new Array(2).fill(null).map(() => new Animated.Value(1))
   );
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // Filter and sort reminders
   const activeReminders = reminders
@@ -108,7 +120,7 @@ export function RemindersSection({
       return {
         icon: 'alert-circle',
         text: 'Overdue',
-        color: Theme.colors.status.error,
+        color: colors.statusError,
         subtext: formatDistanceToNow(date, { addSuffix: true })
       };
     }
@@ -117,7 +129,7 @@ export function RemindersSection({
       return {
         icon: 'time',
         text: 'Today',
-        color: Theme.colors.status.warning,
+        color: colors.statusWarning,
         subtext: format(date, 'h:mm a')
       };
     }
@@ -126,7 +138,7 @@ export function RemindersSection({
       return {
         icon: 'calendar',
         text: 'Tomorrow',
-        color: Theme.colors.status.info,
+        color: colors.statusInfo,
         subtext: format(date, 'h:mm a')
       };
     }
@@ -134,7 +146,7 @@ export function RemindersSection({
     return {
       icon: 'calendar-outline',
       text: format(date, 'MMM d'),
-      color: Theme.colors.text.secondary,
+      color: colors.textSecondary,
       subtext: format(date, 'h:mm a')
     };
   };
@@ -142,13 +154,13 @@ export function RemindersSection({
   const getPriorityIndicator = (priority: string) => {
     switch (priority) {
       case 'urgent':
-        return { color: Theme.colors.status.error, icon: 'alert' };
+        return { color: colors.statusError, icon: 'alert' };
       case 'high':
-        return { color: Theme.colors.status.warning, icon: 'warning' };
+        return { color: colors.statusWarning, icon: 'warning' };
       case 'medium':
-        return { color: Theme.colors.status.info, icon: 'information-circle' };
+        return { color: colors.statusInfo, icon: 'information-circle' };
       default:
-        return { color: Theme.colors.text.tertiary, icon: 'ellipse' };
+        return { color: colors.textTertiary, icon: 'ellipse' };
     }
   };
 
@@ -183,7 +195,7 @@ export function RemindersSection({
           <Ionicons
             name={isOverdue ? 'alert-circle' : 'notifications'}
             size={18}
-            color={isOverdue ? Theme.colors.status.error : Theme.colors.primary}
+            color={isOverdue ? colors.statusError : colors.tint}
           />
         </View>
 
@@ -203,7 +215,7 @@ export function RemindersSection({
             style={styles.toastButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="checkmark" size={18} color={Theme.colors.status.success} />
+            <Ionicons name="checkmark" size={18} color={colors.statusSuccess} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -211,7 +223,7 @@ export function RemindersSection({
             style={styles.toastButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="time-outline" size={18} color={Theme.colors.text.secondary} />
+            <Ionicons name="time-outline" size={18} color={colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -219,7 +231,7 @@ export function RemindersSection({
             style={styles.toastButton}
             activeOpacity={0.7}
           >
-            <Ionicons name="arrow-forward" size={18} color={Theme.colors.primary} />
+            <Ionicons name="arrow-forward" size={18} color={colors.tint} />
           </TouchableOpacity>
         </View>
       </View>
@@ -227,77 +239,80 @@ export function RemindersSection({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    marginHorizontal: Theme.spacing.lg,
-    marginBottom: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.md,
-    backgroundColor: Theme.colors.primary + '08',
-    borderWidth: 1,
-    borderColor: Theme.colors.primary + '20',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  content: {
-    padding: 0,
-  },
-  loadingContainer: {
-    padding: Theme.spacing.lg,
-  },
-  shimmer: {
-    height: 16,
-    backgroundColor: Theme.colors.background.secondary,
-    borderRadius: Theme.borderRadius.sm,
-    width: '80%',
-  },
-  toastContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: Theme.spacing.sm,
-    paddingHorizontal: Theme.spacing.md,
-    position: 'relative',
-  },
-  priorityBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-    borderTopLeftRadius: Theme.borderRadius.md,
-    borderBottomLeftRadius: Theme.borderRadius.md,
-  },
-  toastLeft: {
-    marginLeft: Theme.spacing.sm,
-    marginRight: Theme.spacing.md,
-  },
-  toastMiddle: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  toastTitle: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
-    marginBottom: 2,
-  },
-  toastTime: {
-    fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
-  },
-  toastActions: {
-    flexDirection: 'row',
-    gap: Theme.spacing.xs,
-  },
-  toastButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: Theme.colors.background.secondary,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-});
+type Palette = (typeof ColorPalette)['light'];
+
+const createStyles = (palette: Palette) =>
+  StyleSheet.create({
+    container: {
+      marginHorizontal: Theme.spacing.lg,
+      marginBottom: Theme.spacing.md,
+      borderRadius: Theme.borderRadius.md,
+      backgroundColor: palette.tint + '08',
+      borderWidth: 1,
+      borderColor: palette.tint + '20',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
+    },
+    content: {
+      padding: 0,
+    },
+    loadingContainer: {
+      padding: Theme.spacing.lg,
+    },
+    shimmer: {
+      height: 16,
+      backgroundColor: palette.backgroundSecondary,
+      borderRadius: Theme.borderRadius.sm,
+      width: '80%',
+    },
+    toastContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      paddingVertical: Theme.spacing.sm,
+      paddingHorizontal: Theme.spacing.md,
+      position: 'relative',
+    },
+    priorityBar: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 3,
+      borderTopLeftRadius: Theme.borderRadius.md,
+      borderBottomLeftRadius: Theme.borderRadius.md,
+    },
+    toastLeft: {
+      marginLeft: Theme.spacing.sm,
+      marginRight: Theme.spacing.md,
+    },
+    toastMiddle: {
+      flex: 1,
+      justifyContent: 'center',
+    },
+    toastTitle: {
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.semibold,
+      color: palette.textPrimary,
+      marginBottom: 2,
+    },
+    toastTime: {
+      fontSize: Theme.typography.sizes.xs,
+      fontFamily: Theme.typography.fonts.regular,
+      color: palette.textSecondary,
+    },
+    toastActions: {
+      flexDirection: 'row',
+      gap: Theme.spacing.xs,
+    },
+    toastButton: {
+      width: 32,
+      height: 32,
+      borderRadius: 16,
+      backgroundColor: palette.backgroundSecondary,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+  });

@@ -1,4 +1,4 @@
-import { Colors } from '@/constants/Colors';
+import ColorPalette from '@/constants/Colors';
 import { Notification, NotificationType } from '@/types/notification';
 import { Ionicons } from '@expo/vector-icons';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
@@ -10,6 +10,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  useColorScheme,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -33,6 +34,9 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 }) => {
   const swipeX = useSharedValue(0);
   const opacity = useSharedValue(1);
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
+  const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   const getNotificationIcon = (type: NotificationType) => {
     const iconMap = {
@@ -47,15 +51,15 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   };
 
   const getIconColor = (type: NotificationType) => {
-    const colorMap = {
-      system: Colors.text.secondary,
-      message: Colors.primary,
-      reminder: Colors.status.info,
-      achievement: Colors.status.success,
-      warning: Colors.status.warning,
-      info: Colors.status.info,
+    const colorMap: Record<NotificationType, string> = {
+      system: colors.textSecondary,
+      message: colors.tint,
+      reminder: colors.statusInfo,
+      achievement: colors.statusSuccess,
+      warning: colors.statusWarning,
+      info: colors.statusInfo,
     };
-    return colorMap[type] || Colors.primary;
+    return colorMap[type] ?? colors.tint;
   };
 
   const formatTimestamp = (date: Date) => {
@@ -87,7 +91,11 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       onPress={handlePress}
       style={[
         styles.container,
-        !notification.read && styles.unread,
+        !notification.read && {
+          backgroundColor: colors.notificationUnread,
+          borderLeftWidth: 3,
+          borderLeftColor: colors.tint,
+        },
         animatedStyle,
       ]}
     >
@@ -119,7 +127,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             </Text>
             {notification.priority === 'high' && (
               <View style={styles.priorityBadge}>
-                <Ionicons name="alert-circle" size={14} color={Colors.status.error} />
+                <Ionicons name="alert-circle" size={14} color={colors.statusError} />
               </View>
             )}
           </View>
@@ -147,7 +155,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             style={styles.clearButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="close" size={20} color={Colors.text.tertiary} />
+            <Ionicons name="close" size={20} color={colors.textTertiary} />
           </TouchableOpacity>
         )}
       </View>
@@ -155,106 +163,104 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: Colors.background.primary,
-    marginHorizontal: 16,
-    marginVertical: 4,
-    borderRadius: 12,
-    padding: 12,
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
+type Palette = (typeof ColorPalette)['light'];
+
+const createStyles = (palette: Palette) =>
+  StyleSheet.create({
+    container: {
+      backgroundColor: palette.background,
+      marginHorizontal: 16,
+      marginVertical: 4,
+      borderRadius: 12,
+      padding: 12,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 2,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  unread: {
-    backgroundColor: '#FFF9F5',
-    borderLeftWidth: 3,
-    borderLeftColor: Colors.primary,
-  },
-  content: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  iconContainer: {
-    position: 'relative',
-    marginRight: 12,
-  },
-  iconCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.primary,
-    borderWidth: 2,
-    borderColor: Colors.background.primary,
-  },
-  textContainer: {
-    flex: 1,
-    marginRight: 8,
-  },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 15,
-    fontFamily: 'Manrope_600SemiBold',
-    color: Colors.text.primary,
-    flex: 1,
-  },
-  priorityBadge: {
-    marginLeft: 8,
-  },
-  message: {
-    fontSize: 14,
-    fontFamily: 'Manrope_400Regular',
-    color: Colors.text.secondary,
-    lineHeight: 20,
-    marginBottom: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  timestamp: {
-    fontSize: 12,
-    fontFamily: 'Manrope_400Regular',
-    color: Colors.text.tertiary,
-  },
-  actionButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: Colors.primary,
-    borderRadius: 16,
-  },
-  actionText: {
-    fontSize: 12,
-    fontFamily: 'Manrope_600SemiBold',
-    color: Colors.text.inverse,
-  },
-  clearButton: {
-    padding: 4,
-  },
-});
+    content: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    iconContainer: {
+      position: 'relative',
+      marginRight: 12,
+    },
+    iconCircle: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    avatar: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+    },
+    unreadDot: {
+      position: 'absolute',
+      top: 0,
+      right: 0,
+      width: 10,
+      height: 10,
+      borderRadius: 5,
+      backgroundColor: palette.tint,
+      borderWidth: 2,
+      borderColor: palette.background,
+    },
+    textContainer: {
+      flex: 1,
+      marginRight: 8,
+    },
+    headerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 4,
+    },
+    title: {
+      fontSize: 15,
+      fontFamily: 'Manrope_600SemiBold',
+      color: palette.textPrimary,
+      flex: 1,
+    },
+    priorityBadge: {
+      marginLeft: 8,
+    },
+    message: {
+      fontSize: 14,
+      fontFamily: 'Manrope_400Regular',
+      color: palette.textSecondary,
+      lineHeight: 20,
+      marginBottom: 8,
+    },
+    footer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    timestamp: {
+      fontSize: 12,
+      fontFamily: 'Manrope_400Regular',
+      color: palette.textTertiary,
+    },
+    actionButton: {
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      backgroundColor: palette.tint,
+      borderRadius: 16,
+    },
+    actionText: {
+      fontSize: 12,
+      fontFamily: 'Manrope_600SemiBold',
+      color: palette.textInverse,
+    },
+    clearButton: {
+      padding: 4,
+    },
+  });

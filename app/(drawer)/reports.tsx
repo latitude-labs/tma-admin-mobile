@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { Theme } from '@/constants/Theme';
 import { Card } from '@/components/ui';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 export default function ReportsScreen() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
+
   return (
     <ScrollView style={styles.container}>
       <View style={styles.content}>
@@ -16,10 +20,10 @@ export default function ReportsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   content: {
     padding: Theme.spacing.lg,
@@ -31,13 +35,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   subtitle: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
   },
 });

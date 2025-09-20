@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, StyleSheet, ViewProps } from 'react-native';
-import { Theme } from '@/constants/Theme';
+import { View, StyleSheet, ViewProps, useColorScheme } from 'react-native';
+import { Theme, getThemeShadows } from '@/constants/Theme';
+import ColorPalette from '@/constants/Colors';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
@@ -15,11 +16,34 @@ export const Card: React.FC<CardProps> = ({
   style,
   ...props
 }) => {
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
+  const shadows = getThemeShadows(colorScheme);
+
+  const dynamicStyles = StyleSheet.create({
+    base: {
+      backgroundColor: colors.background,
+      borderRadius: Theme.borderRadius.lg,
+    },
+    elevated: {
+      ...shadows.md,
+      backgroundColor: colors.background,
+    },
+    filled: {
+      backgroundColor: colors.backgroundSecondary,
+    },
+    outlined: {
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      backgroundColor: colors.background,
+    },
+  });
+
   return (
     <View
       style={[
-        styles.base,
-        styles[variant],
+        dynamicStyles.base,
+        dynamicStyles[variant],
         { padding: Theme.spacing[padding] },
         style,
       ]}
@@ -29,20 +53,3 @@ export const Card: React.FC<CardProps> = ({
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  base: {
-    backgroundColor: Theme.colors.background.primary,
-    borderRadius: Theme.borderRadius.lg,
-  },
-  elevated: {
-    ...Theme.shadows.md,
-  },
-  filled: {
-    backgroundColor: Theme.colors.background.secondary,
-  },
-  outlined: {
-    borderWidth: 1,
-    borderColor: Theme.colors.border.default,
-  },
-});

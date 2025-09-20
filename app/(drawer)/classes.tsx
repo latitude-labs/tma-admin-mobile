@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { Card, Badge, Chip } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { classTimesService } from '@/services/api/classTimes.service';
 import { ClassTime } from '@/types/api';
@@ -34,6 +35,8 @@ const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export default function ClassesScreen() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const [classTimes, setClassTimes] = useState<ClassTime[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -108,7 +111,7 @@ export default function ClassesScreen() {
       <View style={[styles.container, styles.centerContent]}>
         <Animated.View style={loadingAnimatedStyle}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Theme.colors.primary} />
+            <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading today's classes...</Text>
           </View>
         </Animated.View>
@@ -125,7 +128,7 @@ export default function ClassesScreen() {
           style={styles.errorContainer}
         >
           <View style={styles.errorIconContainer}>
-            <Ionicons name="alert-circle" size={56} color={Theme.colors.status.error} />
+            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
           </View>
           <Text style={styles.errorTitle}>Oops!</Text>
           <Text style={styles.errorMessage}>{error}</Text>
@@ -154,8 +157,8 @@ export default function ClassesScreen() {
         <RefreshControl
           refreshing={refreshing}
           onRefresh={onRefresh}
-          colors={[Theme.colors.primary]}
-          tintColor={Theme.colors.primary}
+          colors={[palette.tint]}
+          tintColor={palette.tint}
         />
       }
     >
@@ -170,7 +173,7 @@ export default function ClassesScreen() {
             <Text style={styles.subtitle}>Daily Schedule Overview</Text>
           </View>
           <View style={styles.classCountBadge}>
-            <Ionicons name="calendar" size={18} color={Theme.colors.text.inverse} />
+            <Ionicons name="calendar" size={18} color={palette.textInverse} />
             <Text style={styles.classCountText}>{todaysClasses.length}</Text>
           </View>
         </Animated.View>
@@ -178,9 +181,9 @@ export default function ClassesScreen() {
         {/* Stats Cards with animations - Stacked Layout */}
         <View style={styles.statsStack}>
           {[
-            { label: 'Kids Classes', value: kidsClasses.length, icon: 'happy', color: Theme.colors.status.warning },
-            { label: 'Adult Classes', value: adultsClasses.length, icon: 'fitness', color: Theme.colors.status.info },
-            { label: 'Total Bookings', value: totalBookings, icon: 'people', color: Theme.colors.primary },
+            { label: 'Kids Classes', value: kidsClasses.length, icon: 'happy', color: palette.statusWarning },
+            { label: 'Adult Classes', value: adultsClasses.length, icon: 'fitness', color: palette.statusInfo },
+            { label: 'Total Bookings', value: totalBookings, icon: 'people', color: palette.tint },
           ].map((stat, index) => (
             <Animated.View
               key={stat.label}
@@ -217,7 +220,7 @@ export default function ClassesScreen() {
               style={styles.sectionHeader}
             >
               <View style={styles.sectionIconContainer}>
-                <Ionicons name="time" size={20} color={Theme.colors.primary} />
+                <Ionicons name="time" size={20} color={palette.tint} />
               </View>
               <Text style={styles.sectionTitle}>Today's Schedule</Text>
             </Animated.View>
@@ -273,7 +276,7 @@ export default function ClassesScreen() {
                             {cls.club && (
                               <View style={styles.metaItem}>
                                 <View style={styles.metaIconContainer}>
-                                  <Ionicons name="business" size={12} color={Theme.colors.primary} />
+                                  <Ionicons name="business" size={12} color={palette.tint} />
                                 </View>
                                 <Text style={styles.metaText}>{cls.club.name}</Text>
                               </View>
@@ -281,7 +284,7 @@ export default function ClassesScreen() {
                             {cls.coaches && (
                               <View style={styles.metaItem}>
                                 <View style={styles.metaIconContainer}>
-                                  <Ionicons name="person" size={12} color={Theme.colors.status.info} />
+                                  <Ionicons name="person" size={12} color={palette.statusInfo} />
                                 </View>
                                 <Text style={styles.metaText} numberOfLines={1}>{cls.coaches}</Text>
                               </View>
@@ -312,7 +315,7 @@ export default function ClassesScreen() {
             style={styles.emptyState}
           >
             <View style={styles.emptyIconContainer}>
-              <Ionicons name="calendar-outline" size={64} color={Theme.colors.text.tertiary} />
+              <Ionicons name="calendar-outline" size={64} color={palette.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>No classes today</Text>
             <Text style={styles.emptyMessage}>Enjoy your rest day! Classes will resume tomorrow.</Text>
@@ -323,10 +326,10 @@ export default function ClassesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   scrollContent: {
     flexGrow: 1,
@@ -339,53 +342,53 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     fontFamily: Theme.typography.fonts.medium,
   },
   errorContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
     maxWidth: 320,
   },
   errorIconContainer: {
     padding: Theme.spacing.lg,
-    backgroundColor: `${Theme.colors.status.error}15`,
+    backgroundColor: `${palette.statusError}15`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.lg,
   },
   errorTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   errorMessage: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     marginBottom: Theme.spacing.xl,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
     ...Theme.shadows.sm,
   },
   retryButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
   },
@@ -402,16 +405,16 @@ const styles = StyleSheet.create({
   dateTitle: {
     fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   subtitle: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   classCountBadge: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.xs,
@@ -421,7 +424,7 @@ const styles = StyleSheet.create({
     ...Theme.shadows.sm,
   },
   classCountText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
   },
@@ -435,7 +438,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.lg,
     padding: Theme.spacing.md,
     ...Theme.shadows.sm,
@@ -460,7 +463,7 @@ const styles = StyleSheet.create({
   statRowLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   statRowValue: {
     fontSize: Theme.typography.sizes.xl,
@@ -475,7 +478,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Theme.borderRadius.md,
-    backgroundColor: `${Theme.colors.primary}10`,
+    backgroundColor: `${palette.tint}10`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Theme.spacing.md,
@@ -483,7 +486,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   classesContainer: {
     gap: Theme.spacing.md,
@@ -501,7 +504,7 @@ const styles = StyleSheet.create({
     paddingRight: Theme.spacing.lg,
     marginRight: Theme.spacing.lg,
     borderRightWidth: 2,
-    borderRightColor: `${Theme.colors.primary}30`,
+    borderRightColor: `${palette.tint}30`,
   },
   timeContainer: {
     alignItems: 'center',
@@ -510,12 +513,12 @@ const styles = StyleSheet.create({
   startTime: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   endTime: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     marginTop: 2,
   },
   classInfo: {
@@ -530,7 +533,7 @@ const styles = StyleSheet.create({
   className: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     flex: 1,
   },
   typeBadge: {
@@ -548,14 +551,14 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: Theme.borderRadius.sm,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   metaText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     flex: 1,
   },
   bookingSection: {
@@ -563,7 +566,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   bookingContainer: {
-    backgroundColor: `${Theme.colors.primary}10`,
+    backgroundColor: `${palette.tint}10`,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.lg,
@@ -573,12 +576,12 @@ const styles = StyleSheet.create({
   bookingNumber: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   bookingLabel: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
+    color: palette.tint,
     opacity: 0.8,
   },
   emptyState: {
@@ -587,20 +590,20 @@ const styles = StyleSheet.create({
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,
-    backgroundColor: `${Theme.colors.text.tertiary}10`,
+    backgroundColor: `${palette.textTertiary}10`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.xl,
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyMessage: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,

@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
+import { View, Text, Image, StyleSheet, ViewStyle, useColorScheme } from 'react-native';
 import { Theme } from '@/constants/Theme';
+import ColorPalette from '@/constants/Colors';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -17,6 +18,8 @@ export const Avatar: React.FC<AvatarProps> = ({
   size = 'md',
   style,
 }) => {
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
   const initials = name
     .split(' ')
     .map(n => n[0])
@@ -27,11 +30,24 @@ export const Avatar: React.FC<AvatarProps> = ({
   const sizeStyle = styles[size];
 
   return (
-    <View style={[styles.base, sizeStyle, style]}>
+    <View
+      style={[
+        styles.base,
+        { backgroundColor: colors.tint },
+        sizeStyle,
+        style,
+      ]}
+    >
       {source?.uri ? (
         <Image source={source} style={[styles.image, sizeStyle]} />
       ) : (
-        <Text style={[styles.initials, styles[`${size}Text`]]}>
+        <Text
+          style={[
+            styles.initials,
+            styles[`${size}Text`],
+            { color: colors.textInverse },
+          ]}
+        >
           {initials}
         </Text>
       )}
@@ -41,7 +57,6 @@ export const Avatar: React.FC<AvatarProps> = ({
 
 const styles = StyleSheet.create({
   base: {
-    backgroundColor: Theme.colors.primary,
     borderRadius: Theme.borderRadius.full,
     justifyContent: 'center',
     alignItems: 'center',
@@ -52,7 +67,6 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   initials: {
-    color: Theme.colors.text.inverse,
     fontFamily: Theme.typography.fonts.semibold,
   },
   sm: {

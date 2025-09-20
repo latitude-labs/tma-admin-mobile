@@ -2069,6 +2069,277 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '404':
           description: User not found
+  /v1/notifications:
+    get:
+      summary: Get list of notifications
+      description: Returns a list of notifications for the authenticated user with pagination and filtering support. Supports efficient polling via Last-Modified headers.
+      operationId: getNotifications
+      tags:
+        - Notifications
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Number of items per page
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: filter
+          in: query
+          description: Filter notifications by read status
+          schema:
+            type: string
+            enum:
+              - all
+              - read
+              - unread
+            default: all
+        - name: If-Modified-Since
+          in: header
+          description: Client's last known modification timestamp for efficient polling
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successful response with notifications list
+          headers:
+            Last-Modified:
+              description: RFC 7231 timestamp of the most recent notification update
+              schema:
+                type: string
+                format: date-time
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationListResponse'
+        '304':
+          description: Not Modified - no changes since the If-Modified-Since timestamp
+        '401':
+          description: Unauthorized - authentication required
+        '422':
+          description: Validation error
+    post:
+      summary: Create a new notification (Admin/Testing)
+      description: Creates a new notification. This endpoint is primarily for admin use and testing purposes.
+      operationId: createNotification
+      tags:
+        - Notifications
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user_id
+                - type
+                - priority
+                - title
+                - message
+              properties:
+                user_id:
+                  type: integer
+                  description: ID of the user to receive the notification
+                type:
+                  type: string
+                  enum:
+                    - system
+                    - message
+                    - reminder
+                    - achievement
+                    - warning
+                    - info
+                priority:
+                  type: string
+                  enum:
+                    - low
+                    - medium
+                    - high
+                title:
+                  type: string
+                  maxLength: 255
+                message:
+                  type: string
+                action_url:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                action_label:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+                metadata:
+                  type: object
+                  nullable: true
+                avatar_url:
+                  type: string
+                  nullable: true
+                  maxLength: 255
+                sender_name:
+                  type: string
+                  nullable: true
+                  maxLength: 100
+      responses:
+        '201':
+          description: Notification created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+        '422':
+          description: Validation error
+  /v1/notifications/unread-count:
+    get:
+      summary: Get unread notification count
+      description: Lightweight endpoint to get just the count of unread notifications. Cached for 30 seconds for efficient polling.
+      operationId: getUnreadNotificationCount
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: Successful response with unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - unreadCount
+                    properties:
+                      unreadCount:
+                        type: integer
+                        description: Number of unread notifications
+                        example: 3
+        '401':
+          description: Unauthorized - authentication required
+  /v1/notifications/{id}/read:
+    patch:
+      summary: Mark notification as read
+      description: Marks a single notification as read and returns the updated notification
+      operationId: markNotificationAsRead
+      tags:
+        - Notifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification marked as read successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Notification'
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
+  /v1/notifications/mark-all-read:
+    patch:
+      summary: Mark all notifications as read
+      description: Marks all unread notifications for the authenticated user as read
+      operationId: markAllNotificationsAsRead
+      tags:
+        - Notifications
+      responses:
+        '200':
+          description: All notifications marked as read successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - data
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    required:
+                      - updated
+                    properties:
+                      updated:
+                        type: integer
+                        description: Number of notifications that were marked as read
+                        example: 5
+        '401':
+          description: Unauthorized
+  /v1/notifications/{id}:
+    delete:
+      summary: Delete a notification
+      description: Deletes a single notification permanently
+      operationId: deleteNotification
+      tags:
+        - Notifications
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Notification ID
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Notification deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - success
+                  - message
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Notification deleted successfully
+        '401':
+          description: Unauthorized
+        '404':
+          description: Notification not found
 components:
   schemas:
     User:
@@ -2529,6 +2800,149 @@ components:
           type: string
           format: date-time
           example: '2025-01-15T10:00:00Z'
+    Notification:
+      type: object
+      required:
+        - id
+        - userId
+        - type
+        - priority
+        - title
+        - message
+        - timestamp
+        - read
+        - createdAt
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Unique identifier for the notification
+          example: 550e8400-e29b-41d4-a716-446655440000
+        userId:
+          type: string
+          description: ID of the user this notification belongs to
+          example: '1'
+        type:
+          type: string
+          enum:
+            - system
+            - message
+            - reminder
+            - achievement
+            - warning
+            - info
+          description: Type of notification
+          example: message
+        priority:
+          type: string
+          enum:
+            - low
+            - medium
+            - high
+          description: Priority level of the notification
+          example: medium
+        title:
+          type: string
+          description: Title of the notification
+          example: New Message
+        message:
+          type: string
+          description: Main content of the notification
+          example: You have received a new message from your coach
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the notification was created
+          example: '2025-09-19T10:30:00Z'
+        read:
+          type: boolean
+          description: Whether the notification has been read
+          example: false
+        readAt:
+          type: string
+          format: date-time
+          nullable: true
+          description: ISO 8601 timestamp when the notification was marked as read
+          example: '2025-09-19T11:00:00Z'
+        actionUrl:
+          type: string
+          nullable: true
+          description: Optional URL for an action associated with this notification
+          example: https://example.com/messages/123
+        actionLabel:
+          type: string
+          nullable: true
+          description: Label for the action button
+          example: View Message
+        metadata:
+          type: object
+          nullable: true
+          additionalProperties: true
+          description: Additional data associated with the notification
+          example:
+            source: system
+            reference_id: msg_123
+        avatarUrl:
+          type: string
+          nullable: true
+          description: URL to an avatar image for the notification sender
+          example: https://example.com/avatars/coach123.jpg
+        senderName:
+          type: string
+          nullable: true
+          description: Name of the notification sender
+          example: John Coach
+        createdAt:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp when the notification was created
+          example: '2025-09-19T10:30:00Z'
+    NotificationListResponse:
+      type: object
+      required:
+        - success
+        - data
+      properties:
+        success:
+          type: boolean
+          description: Whether the request was successful
+          example: true
+        data:
+          type: object
+          required:
+            - notifications
+            - unreadCount
+          properties:
+            notifications:
+              type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+              description: List of notifications
+            unreadCount:
+              type: integer
+              description: Total count of unread notifications
+              example: 5
+            lastModified:
+              type: string
+              format: date-time
+              nullable: true
+              description: ISO 8601 timestamp of the most recent notification update
+              example: '2025-09-19T12:00:00Z'
+        meta:
+          type: object
+          properties:
+            current_page:
+              type: integer
+              description: Current page number
+              example: 1
+            per_page:
+              type: integer
+              description: Number of items per page
+              example: 20
+            total:
+              type: integer
+              description: Total number of notifications (capped at 100)
+              example: 45
     ValidationError:
       description: Validation Error - Invalid input data
       content:

@@ -1,78 +1,110 @@
-import axios from 'axios';
 import { Notification } from '@/types/notification';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import apiClient from './api/client';
+
+interface NotificationListResponse {
+  success: boolean;
+  data: {
+    notifications: any[];
+    unreadCount: number;
+    lastModified?: string;
+  };
+  meta?: {
+    current_page: number;
+    per_page: number;
+    total: number;
+  };
+}
+
+interface UnreadCountResponse {
+  success: boolean;
+  data: {
+    unreadCount: number;
+  };
+}
 
 class NotificationService {
-  private apiBaseUrl = process.env.EXPO_PUBLIC_API_URL || '';
   private pollingInterval: NodeJS.Timeout | null = null;
+  private lastModified: string | null = null;
 
   /**
    * Initialize notification service and setup polling
    */
   async initialize() {
-    // Register for push notifications (if needed)
-    await this.registerForPushNotifications();
-
     // Start polling for notifications
     this.startPolling();
   }
 
-  /**
-   * Register device for push notifications
-   */
-  private async registerForPushNotifications() {
-    try {
-      // TODO: Implement push notification registration
-      // This would involve getting expo push token and sending it to backend
-      console.log('Push notifications registration placeholder');
-    } catch (error) {
-      console.error('Failed to register for push notifications:', error);
-    }
-  }
 
   /**
    * Fetch notifications from the API
    */
-  async fetchNotifications(userId: string): Promise<Notification[]> {
+  async fetchNotifications(filter: 'all' | 'unread' | 'read' = 'all', page: number = 1): Promise<{ notifications: Notification[], unreadCount: number }> {
     try {
-      const token = await AsyncStorage.getItem('authToken');
+      const headers: any = {};
 
-      const response = await axios.get(`${this.apiBaseUrl}/notifications`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        params: {
-          userId,
-          limit: 50,
-          sort: 'timestamp:desc',
-        },
-      });
+      // Add If-Modified-Since header for efficient polling
+      if (this.lastModified) {
+        headers['If-Modified-Since'] = this.lastModified;
+      }
 
-      return response.data.notifications;
-    } catch (error) {
+      const response = await apiClient.get<NotificationListResponse>(
+        '/v1/notifications',
+        {
+          headers,
+          params: {
+            page,
+            per_page: 50,
+            filter,
+          },
+        }
+      );
+
+      // Update lastModified from response headers
+      if (response.headers['last-modified']) {
+        this.lastModified = response.headers['last-modified'];
+      }
+
+      // Transform the backend response to match our frontend types
+      const notifications = response.data.data.notifications.map(this.transformNotification);
+
+      return {
+        notifications,
+        unreadCount: response.data.data.unreadCount,
+      };
+    } catch (error: any) {
+      // Handle 304 Not Modified response
+      if (error.response?.status === 304) {
+        return { notifications: [], unreadCount: 0 };
+      }
       console.error('Failed to fetch notifications:', error);
       throw error;
     }
   }
 
   /**
-   * Mark a notification as read/seen
+   * Get unread notification count (lightweight endpoint)
+   */
+  async getUnreadCount(): Promise<number> {
+    try {
+      const response = await apiClient.get<UnreadCountResponse>(
+        '/v1/notifications/unread-count'
+      );
+
+      return response.data.data.unreadCount;
+    } catch (error) {
+      console.error('Failed to get unread count:', error);
+      return 0;
+    }
+  }
+
+  /**
+   * Mark a notification as read
    */
   async markAsRead(notificationId: string): Promise<void> {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-
-      await axios.patch(
-        `${this.apiBaseUrl}/notifications/${notificationId}/read`,
-        {
-          readAt: new Date().toISOString(),
-          seenAt: new Date().toISOString(),
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await apiClient.patch(
+        `/v1/notifications/${notificationId}/read`,
+        {}
       );
     } catch (error) {
       console.error('Failed to mark notification as read:', error);
@@ -81,145 +113,84 @@ class NotificationService {
   }
 
   /**
-   * Mark multiple notifications as read
+   * Mark all notifications as read
    */
-  async markMultipleAsRead(notificationIds: string[]): Promise<void> {
+  async markAllAsRead(): Promise<void> {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-      const now = new Date().toISOString();
-
-      await axios.patch(
-        `${this.apiBaseUrl}/notifications/bulk-read`,
-        {
-          notificationIds,
-          readAt: now,
-          seenAt: now,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await apiClient.patch(
+        '/v1/notifications/mark-all-read',
+        {}
       );
     } catch (error) {
-      console.error('Failed to mark notifications as read:', error);
+      console.error('Failed to mark all notifications as read:', error);
       throw error;
     }
   }
 
   /**
-   * Clear/delete a notification
+   * Delete a notification
    */
-  async clearNotification(notificationId: string): Promise<void> {
+  async deleteNotification(notificationId: string): Promise<void> {
     try {
-      const token = await AsyncStorage.getItem('authToken');
-
-      await axios.delete(
-        `${this.apiBaseUrl}/notifications/${notificationId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
+      await apiClient.delete(
+        `/v1/notifications/${notificationId}`
       );
     } catch (error) {
-      console.error('Failed to clear notification:', error);
+      console.error('Failed to delete notification:', error);
       throw error;
     }
   }
 
   /**
-   * Clear all notifications for a user
+   * Transform backend notification to frontend format
    */
-  async clearAllNotifications(userId: string): Promise<void> {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-
-      await axios.delete(
-        `${this.apiBaseUrl}/notifications/clear-all`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            userId,
-          },
-        }
-      );
-    } catch (error) {
-      console.error('Failed to clear all notifications:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Get notification preferences
-   */
-  async getPreferences(userId: string) {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-
-      const response = await axios.get(
-        `${this.apiBaseUrl}/notifications/preferences`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            userId,
-          },
-        }
-      );
-
-      return response.data.preferences;
-    } catch (error) {
-      console.error('Failed to get notification preferences:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Update notification preferences
-   */
-  async updatePreferences(userId: string, preferences: any) {
-    try {
-      const token = await AsyncStorage.getItem('authToken');
-
-      await axios.put(
-        `${this.apiBaseUrl}/notifications/preferences`,
-        {
-          userId,
-          ...preferences,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-    } catch (error) {
-      console.error('Failed to update notification preferences:', error);
-      throw error;
-    }
+  private transformNotification(backendNotif: any): Notification {
+    return {
+      id: backendNotif.id,
+      type: backendNotif.type,
+      priority: backendNotif.priority,
+      title: backendNotif.title,
+      message: backendNotif.message,
+      timestamp: new Date(backendNotif.timestamp),
+      read: backendNotif.read,
+      readAt: backendNotif.readAt ? new Date(backendNotif.readAt) : undefined,
+      actionUrl: backendNotif.actionUrl,
+      actionLabel: backendNotif.actionLabel,
+      metadata: backendNotif.metadata,
+      avatarUrl: backendNotif.avatarUrl,
+      senderName: backendNotif.senderName,
+    };
   }
 
   /**
    * Start polling for new notifications
    */
-  startPolling(intervalMs: number = 30000) {
+  startPolling(onUpdate?: (unreadCount: number) => void, intervalMs: number = 30000) {
     if (this.pollingInterval) {
       this.stopPolling();
     }
 
-    this.pollingInterval = setInterval(async () => {
-      try {
-        // Get user from store and fetch notifications
-        // This would be connected to your notification store
-        console.log('Polling for new notifications...');
-      } catch (error) {
-        console.error('Polling error:', error);
-      }
+    // Poll immediately on start
+    this.pollUnreadCount(onUpdate);
+
+    // Then poll at intervals
+    this.pollingInterval = setInterval(() => {
+      this.pollUnreadCount(onUpdate);
     }, intervalMs);
+  }
+
+  /**
+   * Poll for unread count
+   */
+  private async pollUnreadCount(onUpdate?: (unreadCount: number) => void) {
+    try {
+      const count = await this.getUnreadCount();
+      if (onUpdate) {
+        onUpdate(count);
+      }
+    } catch (error) {
+      console.error('Polling error:', error);
+    }
   }
 
   /**
@@ -233,20 +204,10 @@ class NotificationService {
   }
 
   /**
-   * Subscribe to real-time notifications (WebSocket/SSE)
+   * Reset cached last modified timestamp
    */
-  subscribeToRealTime(userId: string, onNotification: (notification: Notification) => void) {
-    // TODO: Implement WebSocket or Server-Sent Events connection
-    // This is a placeholder for real-time notification support
-    console.log('Real-time notifications placeholder for user:', userId);
-  }
-
-  /**
-   * Unsubscribe from real-time notifications
-   */
-  unsubscribeFromRealTime() {
-    // TODO: Close WebSocket/SSE connection
-    console.log('Unsubscribe from real-time notifications');
+  resetCache() {
+    this.lastModified = null;
   }
 }
 

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -20,6 +20,7 @@ import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { useOffline } from '@/hooks/useOffline';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { bookingsService } from '@/services/api/bookings.service';
 import { classTimesService } from '@/services/api/classTimes.service';
 import { remindersService } from '@/services/api/reminders.service';
@@ -100,6 +101,8 @@ const CircularProgress: React.FC<{
 export default function CoachDashboardScreen() {
   const { user } = useAuthStore();
   const { isOffline } = useOffline();
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const {
     lastSyncTime,
     isSyncing,
@@ -114,7 +117,7 @@ export default function CoachDashboardScreen() {
   const [daysData, setDaysData] = useState<DayData[]>([]);
   const [reminders, setReminders] = useState<any[]>([]);
   const [remindersLoading, setRemindersLoading] = useState(true);
-  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([0])); // Only today expanded by default
+  const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set()); // All days collapsed by default
   const [showAllDays, setShowAllDays] = useState(false); // Show only 3 days by default
   const [currentTime, setCurrentTime] = useState(Date.now());
 
@@ -143,6 +146,32 @@ export default function CoachDashboardScreen() {
       setSyncing(false);
     };
   }, [user]);
+
+  // Track last update timestamp to detect booking changes
+  const [lastBookingUpdate, setLastBookingUpdate] = useState<number>(Date.now());
+
+  // Refresh dashboard when returning from booking screens
+  useEffect(() => {
+    const unsubscribe = useBookingStore.subscribe(
+      (state) => state.bookings,
+      () => {
+        // When bookings change, refresh today's data
+        setLastBookingUpdate(Date.now());
+      }
+    );
+    return unsubscribe;
+  }, []);
+
+  // Refresh today's data when bookings are updated
+  useEffect(() => {
+    if (lastBookingUpdate && daysData.some(d => d.isLoaded)) {
+      // Refresh today's data
+      const todayIndex = daysData.findIndex(d => d.dateString === new Date().toISOString().split('T')[0]);
+      if (todayIndex !== -1 && daysData[todayIndex].isLoaded && !daysData[todayIndex].isLoading) {
+        loadDayData(daysData[todayIndex], todayIndex);
+      }
+    }
+  }, [lastBookingUpdate]);
 
   // Update current time every minute for sync time display
   useEffect(() => {
@@ -339,8 +368,18 @@ export default function CoachDashboardScreen() {
             });
 
             const activeBookings = bookingsData.filter(booking => !booking.cancelled_at);
-            const pendingBookings = activeBookings.filter(b => !b.status || b.status === 'pending');
-            const processedBookings = activeBookings.filter(b => b.status && b.status !== 'pending');
+            // Pending = no conversion status or pending status, AND not marked as no-show or completed
+            const pendingBookings = activeBookings.filter(b => {
+              const hasConversionStatus = b.status && b.status !== 'pending';
+              const hasAttendanceStatus = b.attendance_status === 'no-show' || b.attendance_status === 'completed' || b.checked_in_at || b.no_show;
+              return !hasConversionStatus && !hasAttendanceStatus;
+            });
+            // Processed = has conversion status (not pending) OR marked as no-show/completed
+            const processedBookings = activeBookings.filter(b => {
+              const hasConversionStatus = b.status && b.status !== 'pending';
+              const hasAttendanceStatus = b.attendance_status === 'no-show' || b.attendance_status === 'completed' || b.checked_in_at || b.no_show;
+              return hasConversionStatus || hasAttendanceStatus;
+            });
 
             return {
               classTime,
@@ -481,10 +520,10 @@ export default function CoachDashboardScreen() {
 
   const getClassStatusColor = (classWithBookings: ClassWithBookings) => {
     const total = classWithBookings.bookings.length;
-    if (total === 0) return Theme.colors.text.tertiary;
-    if (classWithBookings.pendingBookings.length === 0) return Theme.colors.status.success;
-    if (classWithBookings.processedBookings.length === 0) return Theme.colors.status.warning;
-    return Theme.colors.status.info;
+    if (total === 0) return colors.textTertiary;
+    if (classWithBookings.pendingBookings.length === 0) return colors.statusSuccess;
+    if (classWithBookings.processedBookings.length === 0) return colors.statusWarning;
+    return colors.statusInfo;
   };
 
   const getTotalStats = () => {
@@ -509,7 +548,7 @@ export default function CoachDashboardScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Theme.colors.primary} />
+        <ActivityIndicator size="large" color={colors.tint} />
         <Text style={styles.loadingText}>Loading your dashboard...</Text>
       </View>
     );
@@ -549,7 +588,7 @@ export default function CoachDashboardScreen() {
                   <Ionicons
                     name={isOffline ? 'cloud-offline' : (isSyncing || isRefreshing) ? 'sync' : 'checkmark-circle'}
                     size={20}
-                    color={isOffline ? Theme.colors.status.error : Theme.colors.primary}
+                    color={isOffline ? colors.statusError : colors.tint}
                   />
                 </Animated.View>
                 {lastSyncTime && !isSyncing && !isRefreshing && (
@@ -585,8 +624,8 @@ export default function CoachDashboardScreen() {
                   percentage={stats.classes > 0 ? Math.min(100, stats.classes * 20) : 0}
                   size={70}
                   strokeWidth={7}
-                  color={Theme.colors.primary}
-                  bgColor={Theme.colors.primary + '15'}
+                  color={colors.tint}
+                  bgColor={`${colors.tint}15`}
                 >
                   <View style={styles.statContent}>
                     <Text style={styles.statNumber}>{stats.classes}</Text>
@@ -600,8 +639,8 @@ export default function CoachDashboardScreen() {
                   percentage={stats.bookings > 0 ? Math.min(100, (stats.bookings / 30) * 100) : 0}
                   size={70}
                   strokeWidth={7}
-                  color={Theme.colors.status.info}
-                  bgColor={Theme.colors.status.info + '15'}
+                  color={colors.statusInfo}
+                  bgColor={`${colors.statusInfo}15`}
                 >
                   <View style={styles.statContent}>
                     <Text style={styles.statNumber}>{stats.bookings}</Text>
@@ -616,14 +655,14 @@ export default function CoachDashboardScreen() {
                   size={70}
                   strokeWidth={7}
                   color={
-                    stats.percentage === 100 ? Theme.colors.status.success :
-                    stats.percentage >= 75 ? Theme.colors.status.warning :
-                    Theme.colors.status.info
+                    stats.percentage === 100 ? colors.statusSuccess :
+                    stats.percentage >= 75 ? colors.statusWarning :
+                    colors.statusInfo
                   }
                   bgColor={
-                    stats.percentage === 100 ? Theme.colors.status.success + '15' :
-                    stats.percentage >= 75 ? Theme.colors.status.warning + '15' :
-                    Theme.colors.status.info + '15'
+                    stats.percentage === 100 ? `${colors.statusSuccess}15` :
+                    stats.percentage >= 75 ? `${colors.statusWarning}15` :
+                    `${colors.statusInfo}15`
                   }
                 >
                   <View style={styles.statContent}>
@@ -653,7 +692,7 @@ export default function CoachDashboardScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={styles.viewMoreText}>View week</Text>
-                <Ionicons name="chevron-down" size={16} color={Theme.colors.primary} />
+                <Ionicons name="chevron-down" size={16} color={colors.tint} />
               </TouchableOpacity>
             )}
           </View>
@@ -698,7 +737,7 @@ export default function CoachDashboardScreen() {
                   <Ionicons
                     name={isExpanded ? 'chevron-up' : 'chevron-down'}
                     size={20}
-                    color={Theme.colors.text.secondary}
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
 
@@ -708,7 +747,7 @@ export default function CoachDashboardScreen() {
                       <SkeletonLoader height={80} style={styles.skeleton} />
                     ) : !hasClasses ? (
                       <View style={styles.emptyDay}>
-                        <Ionicons name="calendar-outline" size={32} color={Theme.colors.text.tertiary} />
+                        <Ionicons name="calendar-outline" size={32} color={colors.textTertiary} />
                         <Text style={styles.emptyDayText}>No classes scheduled</Text>
                       </View>
                     ) : (
@@ -733,9 +772,9 @@ export default function CoachDashboardScreen() {
                                   </Text>
                                 </View>
                                 <View style={styles.classStats}>
-                                  <View style={[styles.statDot, { backgroundColor: Theme.colors.status.warning }]} />
+                                  <View style={[styles.statDot, { backgroundColor: colors.statusWarning }]} />
                                   <Text style={styles.statText}>{classWithBookings.pendingBookings.length}</Text>
-                                  <View style={[styles.statDot, { backgroundColor: Theme.colors.status.success }]} />
+                                  <View style={[styles.statDot, { backgroundColor: colors.statusSuccess }]} />
                                   <Text style={styles.statText}>{classWithBookings.processedBookings.length}</Text>
                                 </View>
                               </View>
@@ -746,7 +785,7 @@ export default function CoachDashboardScreen() {
 
                               <View style={styles.classFooter}>
                                 <View style={styles.locationRow}>
-                                  <Ionicons name="location" size={14} color={Theme.colors.text.tertiary} />
+                                  <Ionicons name="location" size={14} color={colors.textTertiary} />
                                   <Text style={styles.locationText}>
                                     {classWithBookings.classTime.club?.name || 'Club'}
                                   </Text>
@@ -783,13 +822,13 @@ export default function CoachDashboardScreen() {
             <TouchableOpacity
               onPress={() => {
                 setShowAllDays(false);
-                setExpandedDays(new Set([0, 1, 2]));
+                setExpandedDays(new Set()); // Collapse all days
               }}
               style={styles.collapseButton}
               activeOpacity={0.7}
             >
               <Text style={styles.collapseText}>Show less</Text>
-              <Ionicons name="chevron-up" size={16} color={Theme.colors.primary} />
+              <Ionicons name="chevron-up" size={16} color={colors.tint} />
             </TouchableOpacity>
           )}
         </View>
@@ -803,7 +842,7 @@ export default function CoachDashboardScreen() {
           onPress={() => router.push('/clubs')}
           activeOpacity={0.9}
         >
-          <Ionicons name="business" size={22} color={Theme.colors.primary} />
+          <Ionicons name="business" size={22} color={colors.tint} />
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -821,10 +860,10 @@ export default function CoachDashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: palette.backgroundSecondary,
   },
   scrollContainer: {
     flex: 1,
@@ -833,11 +872,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: palette.backgroundSecondary,
   },
   loadingText: {
     fontSize: Theme.typography.sizes.md,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     fontFamily: Theme.typography.fonts.medium,
     marginTop: Theme.spacing.md,
   },
@@ -847,7 +886,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Theme.spacing.lg,
     paddingTop: Theme.spacing.xl,
     paddingBottom: Theme.spacing.lg,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: palette.background,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,
     shadowColor: '#000',
@@ -873,30 +912,30 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: 24,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   greetingSubtext: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: 2,
   },
   date: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   syncBadge: {
-    backgroundColor: Theme.colors.primary + '10',
+    backgroundColor: palette.tint + '10',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Theme.colors.primary + '20',
+    borderColor: palette.tint + '20',
   },
   syncBadgeOffline: {
-    backgroundColor: Theme.colors.status.error + '10',
-    borderColor: Theme.colors.status.error + '20',
+    backgroundColor: palette.statusError + '10',
+    borderColor: palette.statusError + '20',
   },
   syncBadgeContent: {
     flexDirection: 'row',
@@ -906,10 +945,10 @@ const styles = StyleSheet.create({
   syncTimeText: {
     fontSize: 12,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   syncTimeTextOffline: {
-    color: Theme.colors.status.error,
+    color: palette.statusError,
   },
 
   // Overview Styles
@@ -926,16 +965,16 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   celebrateEmoji: {
     fontSize: 24,
   },
   overviewCard: {
     borderRadius: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: palette.background,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -957,17 +996,17 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     lineHeight: Theme.typography.sizes.xl,
   },
   statLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: Theme.spacing.sm,
   },
   completionBadge: {
-    backgroundColor: Theme.colors.status.success + '10',
+    backgroundColor: palette.statusSuccess + '10',
     paddingVertical: 10,
     paddingHorizontal: Theme.spacing.lg,
     borderRadius: 12,
@@ -976,12 +1015,12 @@ const styles = StyleSheet.create({
     marginBottom: Theme.spacing.sm,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Theme.colors.status.success + '20',
+    borderColor: palette.statusSuccess + '20',
   },
   completionText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.status.success,
+    color: palette.statusSuccess,
   },
 
   // Classes Section Styles
@@ -1002,13 +1041,13 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: Theme.spacing.sm,
     paddingVertical: 4,
-    backgroundColor: Theme.colors.primary + '10',
+    backgroundColor: palette.tint + '10',
     borderRadius: Theme.borderRadius.full,
   },
   viewMoreText: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   collapseButton: {
     flexDirection: 'row',
@@ -1021,7 +1060,7 @@ const styles = StyleSheet.create({
   collapseText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   daySection: {
     marginBottom: Theme.spacing.md,
@@ -1039,7 +1078,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   dayBadge: {
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: 6,
     borderRadius: 12,
@@ -1048,32 +1087,32 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   todayBadge: {
-    backgroundColor: Theme.colors.primary + '15',
+    backgroundColor: palette.tint + '15',
     borderWidth: 1,
-    borderColor: Theme.colors.primary + '30',
+    borderColor: palette.tint + '30',
   },
   dayBadgeText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   todayBadgeText: {
-    color: Theme.colors.primary,
+    color: palette.tint,
     fontFamily: Theme.typography.fonts.bold,
   },
   dayDate: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   daySummary: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: 2,
   },
   pendingText: {
-    color: Theme.colors.status.warning,
+    color: palette.statusWarning,
     fontFamily: Theme.typography.fonts.medium,
   },
   dayContent: {
@@ -1082,17 +1121,17 @@ const styles = StyleSheet.create({
   emptyDay: {
     alignItems: 'center',
     paddingVertical: Theme.spacing.lg,
-    backgroundColor: Theme.colors.background.secondary + '50',
+    backgroundColor: palette.backgroundSecondary + '50',
     borderRadius: 12,
     marginBottom: Theme.spacing.sm,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
     borderStyle: 'dashed',
   },
   emptyDayText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     marginTop: Theme.spacing.sm,
   },
   skeleton: {
@@ -1105,7 +1144,7 @@ const styles = StyleSheet.create({
     marginBottom: Theme.spacing.sm,
   },
   classCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: palette.background,
     borderRadius: 12,
     padding: Theme.spacing.md,
     borderLeftWidth: 3,
@@ -1115,7 +1154,7 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 1,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
   },
   classHeader: {
     flexDirection: 'row',
@@ -1124,7 +1163,7 @@ const styles = StyleSheet.create({
     marginBottom: Theme.spacing.sm,
   },
   timeBadge: {
-    backgroundColor: Theme.colors.primary + '10',
+    backgroundColor: palette.tint + '10',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1132,7 +1171,7 @@ const styles = StyleSheet.create({
   timeBadgeText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   classStats: {
     flexDirection: 'row',
@@ -1147,12 +1186,12 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   className: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   classFooter: {
@@ -1168,7 +1207,7 @@ const styles = StyleSheet.create({
   locationText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
   },
   progressContainer: {
     flex: 1,
@@ -1176,7 +1215,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 3,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     borderRadius: 1.5,
     overflow: 'hidden',
   },
@@ -1198,11 +1237,11 @@ const styles = StyleSheet.create({
     maxWidth: 150,
   },
   actionGradient: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     borderRadius: Theme.borderRadius.xl,
     paddingVertical: Theme.spacing.lg,
     alignItems: 'center',
-    shadowColor: Theme.colors.primary,
+    shadowColor: palette.tint,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -1217,7 +1256,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
-    color: '#FFFFFF',
+    color: palette.textInverse,
     marginTop: Theme.spacing.xs,
   },
 
@@ -1243,15 +1282,15 @@ const styles = StyleSheet.create({
     elevation: 6,
   },
   fabPrimary: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     width: 64,
     height: 64,
     borderRadius: 32,
   },
   fabSecondary: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: palette.background,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
   },
   fabContent: {
     alignItems: 'center',
@@ -1260,7 +1299,7 @@ const styles = StyleSheet.create({
   fabLabel: {
     fontSize: 10,
     fontFamily: Theme.typography.fonts.bold,
-    color: '#FFFFFF',
+    color: palette.textInverse,
     marginTop: 2,
   },
 });

@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useMemo } from 'react';
 import { ScrollView, StyleSheet, Text, View, TouchableOpacity, RefreshControl, Animated, Alert } from 'react-native';
 import { Card, Badge, Button } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
 import { router } from 'expo-router';
@@ -16,6 +17,8 @@ import { clubsService } from '@/services/api/clubs.service';
 
 export default function DashboardScreen() {
   const { isOffline } = useOffline();
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const {
     lastSyncTime,
     isSyncing,
@@ -186,7 +189,7 @@ export default function DashboardScreen() {
         <RefreshControl
           refreshing={isRefreshing}
           onRefresh={handleRefresh}
-          colors={[Theme.colors.primary]}
+          colors={[palette.tint]}
         />
       }>
       <View style={styles.content}>
@@ -197,7 +200,7 @@ export default function DashboardScreen() {
               <Ionicons
                 name={isOffline ? 'cloud-offline' : (isSyncing || isRefreshing) ? 'sync' : 'cloud-done'}
                 size={20}
-                color={isOffline ? Theme.colors.status.error : (isSyncing || isRefreshing) ? Theme.colors.primary : Theme.colors.status.success}
+                color={isOffline ? palette.statusError : (isSyncing || isRefreshing) ? palette.tint : palette.statusSuccess}
               />
             </Animated.View>
             <Text style={styles.syncText}>
@@ -210,7 +213,7 @@ export default function DashboardScreen() {
           <Text style={styles.statsTitle}>Overview</Text>
           <View style={styles.statsContainer}>
             <View style={styles.statRow}>
-              <Ionicons name="calendar" size={20} color={Theme.colors.primary} />
+              <Ionicons name="calendar" size={20} color={palette.tint} />
               <Text style={styles.statRowLabel}>This Month:</Text>
               {statsLoading ? (
                 <SkeletonLoader width={60} height={20} style={styles.statRowSkeleton} />
@@ -220,7 +223,7 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.statRow}>
-              <Ionicons name="time" size={20} color={Theme.colors.status.success} />
+              <Ionicons name="time" size={20} color={palette.statusSuccess} />
               <Text style={styles.statRowLabel}>Today:</Text>
               {statsLoading ? (
                 <SkeletonLoader width={60} height={20} style={styles.statRowSkeleton} />
@@ -230,7 +233,7 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.statRow}>
-              <Ionicons name="trending-up" size={20} color={Theme.colors.status.warning} />
+              <Ionicons name="trending-up" size={20} color={palette.statusWarning} />
               <Text style={styles.statRowLabel}>Upcoming:</Text>
               {statsLoading ? (
                 <SkeletonLoader width={60} height={20} style={styles.statRowSkeleton} />
@@ -240,7 +243,7 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.statRow}>
-              <Ionicons name="business" size={20} color={Theme.colors.status.info} />
+              <Ionicons name="business" size={20} color={palette.statusInfo} />
               <Text style={styles.statRowLabel}>Total Clubs:</Text>
               {statsLoading ? (
                 <SkeletonLoader width={60} height={20} style={styles.statRowSkeleton} />
@@ -255,19 +258,19 @@ export default function DashboardScreen() {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.quickActions}>
             <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="person-add" size={24} color={Theme.colors.primary} />
+              <Ionicons name="person-add" size={24} color={palette.tint} />
               <Text style={styles.actionText}>Add Student</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="checkmark-done" size={24} color={Theme.colors.primary} />
+              <Ionicons name="checkmark-done" size={24} color={palette.tint} />
               <Text style={styles.actionText}>Take Attendance</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="calendar-outline" size={24} color={Theme.colors.primary} />
+              <Ionicons name="calendar-outline" size={24} color={palette.tint} />
               <Text style={styles.actionText}>View Schedule</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.actionButton}>
-              <Ionicons name="document-text" size={24} color={Theme.colors.primary} />
+              <Ionicons name="document-text" size={24} color={palette.tint} />
               <Text style={styles.actionText}>Lesson Plans</Text>
             </TouchableOpacity>
           </View>
@@ -369,10 +372,10 @@ export default function DashboardScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   content: {
     padding: Theme.spacing.lg,
@@ -383,7 +386,7 @@ const styles = StyleSheet.create({
   greeting: {
     fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   syncStatus: {
@@ -394,7 +397,7 @@ const styles = StyleSheet.create({
   syncText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   statsCard: {
     marginBottom: Theme.spacing.xl,
@@ -402,7 +405,7 @@ const styles = StyleSheet.create({
   statsTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.md,
   },
   statsContainer: {
@@ -413,19 +416,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   statRowLabel: {
     flex: 1,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginLeft: Theme.spacing.md,
   },
   statRowValue: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   statRowSkeleton: {
     marginLeft: 'auto',
@@ -442,7 +445,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.md,
   },
   quickActions: {
@@ -455,13 +458,13 @@ const styles = StyleSheet.create({
     minWidth: '45%',
     alignItems: 'center',
     padding: Theme.spacing.md,
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.md,
   },
   actionText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginTop: Theme.spacing.sm,
   },
   emptyState: {
@@ -471,13 +474,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
   },
   classItem: {
     flexDirection: 'row',
     paddingVertical: Theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   classTime: {
     width: 60,
@@ -487,7 +490,7 @@ const styles = StyleSheet.create({
   classTimeText: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   classDetails: {
     flex: 1,
@@ -496,13 +499,13 @@ const styles = StyleSheet.create({
   className: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   classInfo: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginBottom: Theme.spacing.sm,
   },
   classStats: {
@@ -513,13 +516,13 @@ const styles = StyleSheet.create({
   enrollmentText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   trialItem: {
     flexDirection: 'row',
     paddingVertical: Theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   trialDate: {
     width: 80,
@@ -529,7 +532,7 @@ const styles = StyleSheet.create({
   trialDateText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.status.success,
+    color: palette.statusSuccess,
     textAlign: 'center',
   },
   trialDetails: {
@@ -539,13 +542,13 @@ const styles = StyleSheet.create({
   trialName: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   trialParent: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginBottom: Theme.spacing.sm,
   },
   trialInfo: {
@@ -556,6 +559,6 @@ const styles = StyleSheet.create({
   trialClub: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
 });

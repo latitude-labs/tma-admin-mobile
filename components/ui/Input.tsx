@@ -6,8 +6,10 @@ import {
   StyleSheet,
   TextInputProps,
   TouchableOpacity,
+  useColorScheme,
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
+import ColorPalette from '@/constants/Colors';
 import { Ionicons } from '@expo/vector-icons';
 
 interface InputProps extends TextInputProps {
@@ -30,28 +32,74 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const [focused, setFocused] = useState(false);
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
+
+  const dynamicStyles = StyleSheet.create({
+    label: {
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.medium,
+      color: colors.textPrimary,
+      marginBottom: Theme.spacing.xs,
+    },
+    inputContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.borderDefault,
+      borderRadius: Theme.borderRadius.md,
+      backgroundColor: colors.background,
+      paddingHorizontal: Theme.spacing.md,
+      minHeight: 48,
+    },
+    focused: {
+      borderColor: colors.tint,
+    },
+    error: {
+      borderColor: colors.statusError,
+    },
+    input: {
+      flex: 1,
+      fontSize: Theme.typography.sizes.md,
+      fontFamily: Theme.typography.fonts.regular,
+      color: colors.textPrimary,
+      paddingVertical: Theme.spacing.sm,
+    },
+    errorText: {
+      fontSize: Theme.typography.sizes.xs,
+      fontFamily: Theme.typography.fonts.regular,
+      color: colors.statusError,
+      marginTop: Theme.spacing.xs,
+    },
+    helperText: {
+      fontSize: Theme.typography.sizes.xs,
+      fontFamily: Theme.typography.fonts.regular,
+      color: colors.textSecondary,
+      marginTop: Theme.spacing.xs,
+    },
+  });
 
   return (
     <View style={styles.container}>
-      {label && <Text style={styles.label}>{label}</Text>}
+      {label && <Text style={dynamicStyles.label}>{label}</Text>}
       <View
         style={[
-          styles.inputContainer,
-          focused && styles.focused,
-          error && styles.error,
+          dynamicStyles.inputContainer,
+          focused && dynamicStyles.focused,
+          error && dynamicStyles.error,
         ]}
       >
         {leftIcon && (
           <Ionicons
             name={leftIcon}
             size={20}
-            color={Theme.colors.text.secondary}
+            color={colors.textSecondary}
             style={styles.leftIcon}
           />
         )}
         <TextInput
-          style={[styles.input, style]}
-          placeholderTextColor={Theme.colors.text.tertiary}
+          style={[dynamicStyles.input, style]}
+          placeholderTextColor={colors.textTertiary}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           {...props}
@@ -64,15 +112,15 @@ export const Input: React.FC<InputProps> = ({
             <Ionicons
               name={rightIcon}
               size={20}
-              color={Theme.colors.text.secondary}
+              color={colors.textSecondary}
               style={styles.rightIcon}
             />
           </TouchableOpacity>
         )}
       </View>
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && <Text style={dynamicStyles.errorText}>{error}</Text>}
       {helperText && !error && (
-        <Text style={styles.helperText}>{helperText}</Text>
+        <Text style={dynamicStyles.helperText}>{helperText}</Text>
       )}
     </View>
   );
@@ -82,51 +130,10 @@ const styles = StyleSheet.create({
   container: {
     marginBottom: Theme.spacing.md,
   },
-  label: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.primary,
-    marginBottom: Theme.spacing.xs,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Theme.colors.border.default,
-    borderRadius: Theme.borderRadius.md,
-    backgroundColor: Theme.colors.background.primary,
-    paddingHorizontal: Theme.spacing.md,
-    minHeight: 48,
-  },
-  focused: {
-    borderColor: Theme.colors.primary,
-  },
-  error: {
-    borderColor: Theme.colors.status.error,
-  },
-  input: {
-    flex: 1,
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.primary,
-    paddingVertical: Theme.spacing.sm,
-  },
   leftIcon: {
     marginRight: Theme.spacing.sm,
   },
   rightIcon: {
     marginLeft: Theme.spacing.sm,
-  },
-  errorText: {
-    fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.status.error,
-    marginTop: Theme.spacing.xs,
-  },
-  helperText: {
-    fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
-    marginTop: Theme.spacing.xs,
   },
 });

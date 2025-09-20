@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   ScrollView,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
   Platform,
   Modal,
   TouchableOpacity,
-  Alert
+  Alert,
 } from 'react-native';
 import { Card, Button, Badge, Chip, Dropdown } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
@@ -36,6 +36,7 @@ import Animated, {
   SlideInRight
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -49,6 +50,8 @@ interface KitItem {
 }
 
 export default function TrialsScreen() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const searchFocused = useSharedValue(0);
@@ -90,10 +93,11 @@ export default function TrialsScreen() {
   }, [filterStatus, searchQuery]);
 
   const statusConfig: Record<string, { color: string; icon: string }> = {
-    scheduled: { color: Theme.colors.status.info, icon: 'calendar' },
-    completed: { color: Theme.colors.status.success, icon: 'checkmark-circle' },
-    'no-show': { color: Theme.colors.status.error, icon: 'close-circle' },
-    cancelled: { color: Theme.colors.status.warning, icon: 'alert-circle' },
+    
+    scheduled: { color: palette.statusInfo, icon: 'calendar' },
+    completed: { color: palette.statusSuccess, icon: 'checkmark-circle' },
+    'no-show': { color: palette.statusError, icon: 'close-circle' },
+    cancelled: { color: palette.statusWarning, icon: 'alert-circle' },
   };
 
   const sortedBookings = getFilteredBookings();
@@ -256,6 +260,18 @@ export default function TrialsScreen() {
     }
   };
 
+  const getStatusBadgeVariant = (status?: string) => {
+    if (!status || status === 'pending') return 'secondary';
+    switch (status) {
+      case 'paid_dd': return 'success';
+      case 'paid_awaiting_dd': return 'info';
+      case 'unpaid_dd':
+      case 'unpaid_coach_call': return 'warning';
+      case 'not_joining': return 'error';
+      default: return 'secondary';
+    }
+  };
+
   useEffect(() => {
     if (isLoading && bookings.length === 0) {
       pulseOpacity.value = withSequence(
@@ -275,7 +291,7 @@ export default function TrialsScreen() {
       <View style={[styles.container, styles.centerContent]}>
         <Animated.View style={loadingAnimatedStyle}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Theme.colors.primary} />
+            <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading trial bookings...</Text>
           </View>
         </Animated.View>
@@ -292,7 +308,7 @@ export default function TrialsScreen() {
           style={styles.errorContainer}
         >
           <View style={styles.errorIconContainer}>
-            <Ionicons name="alert-circle" size={56} color={Theme.colors.status.error} />
+            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
           </View>
           <Text style={styles.errorTitle}>Something went wrong</Text>
           <Text style={styles.errorMessage}>{error}</Text>
@@ -314,7 +330,7 @@ export default function TrialsScreen() {
 
   const searchAnimatedStyle = useAnimatedStyle(() => ({
     borderColor: withSpring(
-      searchFocused.value ? Theme.colors.primary : Theme.colors.border.default,
+      searchFocused.value ? palette.tint : palette.borderDefault,
       { damping: 15, stiffness: 150 }
     ),
     borderWidth: withSpring(searchFocused.value ? 2 : 1),
@@ -330,8 +346,8 @@ export default function TrialsScreen() {
         <RefreshControl
           refreshing={isLoading}
           onRefresh={refreshBookings}
-          colors={[Theme.colors.primary]}
-          tintColor={Theme.colors.primary}
+          colors={[palette.tint]}
+          tintColor={palette.tint}
         />
       }>
       <View style={styles.content}>
@@ -368,7 +384,7 @@ export default function TrialsScreen() {
               pressed && styles.addButtonPressed
             ]}
           >
-            <Ionicons name="add" size={20} color={Theme.colors.text.inverse} />
+            <Ionicons name="add" size={20} color={palette.textInverse} />
             <Text style={styles.addButtonText}>Add Trial</Text>
           </AnimatedPressable>
         </Animated.View>
@@ -395,13 +411,13 @@ export default function TrialsScreen() {
           <Ionicons
             name="search"
             size={20}
-            color={Theme.colors.text.secondary}
+            color={palette.textSecondary}
             style={styles.searchIcon}
           />
           <AnimatedTextInput
             style={styles.searchInput}
             placeholder="Search by name, email, or phone..."
-            placeholderTextColor={Theme.colors.text.tertiary}
+            placeholderTextColor={palette.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             onFocus={() => {
@@ -422,7 +438,7 @@ export default function TrialsScreen() {
                 }}
                 style={styles.clearButton}
               >
-                <Ionicons name="close-circle" size={20} color={Theme.colors.text.secondary} />
+                <Ionicons name="close-circle" size={20} color={palette.textSecondary} />
               </Pressable>
             </Animated.View>
           )}
@@ -500,15 +516,30 @@ export default function TrialsScreen() {
                             </View>
                           </View>
                         </View>
-                        {booking.class_time?.name && (
-                          <Badge
-                            variant={booking.class_time.name.toLowerCase().includes('kid') ? 'warning' : 'info'}
-                            size="sm"
-                            style={styles.classBadge}
-                          >
-                            {booking.class_time.name}
-                          </Badge>
-                        )}
+                        <View style={styles.badgeContainer}>
+                          {booking.status && (
+                            <Badge
+                              variant={getStatusBadgeVariant(booking.status)}
+                              size="sm"
+                              style={styles.classBadge}
+                            >
+                              {booking.status === 'paid_dd' && 'Paid DD'}
+                              {booking.status === 'paid_awaiting_dd' && 'Paid (Awaiting DD)'}
+                              {booking.status === 'unpaid_dd' && 'Unpaid DD'}
+                              {booking.status === 'unpaid_coach_call' && 'Follow Up'}
+                              {booking.status === 'not_joining' && 'Not Joining'}
+                            </Badge>
+                          )}
+                          {booking.class_time?.name && (
+                            <Badge
+                              variant={booking.class_time.name.toLowerCase().includes('kid') ? 'warning' : 'info'}
+                              size="sm"
+                              style={styles.classBadge}
+                            >
+                              {booking.class_time.name}
+                            </Badge>
+                          )}
+                        </View>
                       </View>
 
                       {/* Card Details */}
@@ -516,7 +547,7 @@ export default function TrialsScreen() {
                         <View style={styles.detailGrid}>
                           <View style={styles.detailItem}>
                             <View style={styles.detailIconContainer}>
-                              <Ionicons name="calendar" size={14} color={Theme.colors.primary} />
+                              <Ionicons name="calendar" size={14} color={palette.tint} />
                             </View>
                             <Text style={styles.detailText}>{formatDate(booking.start_time)}</Text>
                           </View>
@@ -524,7 +555,7 @@ export default function TrialsScreen() {
                           {booking.club && (
                             <View style={styles.detailItem}>
                               <View style={styles.detailIconContainer}>
-                                <Ionicons name="business" size={14} color={Theme.colors.status.info} />
+                                <Ionicons name="business" size={14} color={palette.statusInfo} />
                               </View>
                               <Text style={styles.detailText}>{booking.club.name}</Text>
                             </View>
@@ -533,7 +564,7 @@ export default function TrialsScreen() {
                           {booking.email && (
                             <View style={styles.detailItem}>
                               <View style={styles.detailIconContainer}>
-                                <Ionicons name="mail" size={14} color={Theme.colors.status.success} />
+                                <Ionicons name="mail" size={14} color={palette.statusSuccess} />
                               </View>
                               <Text style={styles.detailText}>{booking.email}</Text>
                             </View>
@@ -542,7 +573,7 @@ export default function TrialsScreen() {
                           {booking.phone && (
                             <View style={styles.detailItem}>
                               <View style={styles.detailIconContainer}>
-                                <Ionicons name="call" size={14} color={Theme.colors.status.warning} />
+                                <Ionicons name="call" size={14} color={palette.statusWarning} />
                               </View>
                               <Text style={styles.detailText}>{booking.phone}</Text>
                             </View>
@@ -564,8 +595,8 @@ export default function TrialsScreen() {
                             ]}
                             onPress={() => handleAttendanceStatusUpdate(booking.id, 'no-show')}
                           >
-                            <Ionicons name="close" size={16} color={Theme.colors.status.error} />
-                            <Text style={[styles.actionButtonText, { color: Theme.colors.status.error }]}>
+                            <Ionicons name="close" size={16} color={palette.statusError} />
+                            <Text style={[styles.actionButtonText, { color: palette.statusError }]}>
                               No Show
                             </Text>
                           </Pressable>
@@ -577,8 +608,8 @@ export default function TrialsScreen() {
                             ]}
                             onPress={() => handleBookingPress(booking)}
                           >
-                            <Ionicons name="checkmark" size={16} color={Theme.colors.status.success} />
-                            <Text style={[styles.actionButtonText, { color: Theme.colors.status.success }]}>
+                            <Ionicons name="checkmark" size={16} color={palette.statusSuccess} />
+                            <Text style={[styles.actionButtonText, { color: palette.statusSuccess }]}>
                               Check In
                             </Text>
                           </Pressable>
@@ -613,7 +644,7 @@ export default function TrialsScreen() {
                   <Ionicons
                     name="chevron-back"
                     size={20}
-                    color={pagination.currentPage === 1 ? Theme.colors.text.tertiary : Theme.colors.primary}
+                    color={pagination.currentPage === 1 ? palette.textTertiary : palette.tint}
                   />
                 </Pressable>
 
@@ -644,7 +675,7 @@ export default function TrialsScreen() {
                   <Ionicons
                     name="chevron-forward"
                     size={20}
-                    color={pagination.currentPage === pagination.totalPages ? Theme.colors.text.tertiary : Theme.colors.primary}
+                    color={pagination.currentPage === pagination.totalPages ? palette.textTertiary : palette.tint}
                   />
                 </Pressable>
               </Animated.View>
@@ -656,7 +687,7 @@ export default function TrialsScreen() {
             style={styles.emptyState}
           >
             <View style={styles.emptyIconContainer}>
-              <Ionicons name="calendar-outline" size={64} color={Theme.colors.text.tertiary} />
+              <Ionicons name="calendar-outline" size={64} color={palette.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>
               {searchQuery ? 'No results found' : 'No bookings yet'}
@@ -704,7 +735,7 @@ export default function TrialsScreen() {
                 onPress={() => setShowStatusModal(false)}
                 style={styles.modalCloseButton}
               >
-                <Ionicons name="close" size={24} color={Theme.colors.text.secondary} />
+                <Ionicons name="close" size={24} color={palette.textSecondary} />
               </Pressable>
             </View>
             <View style={styles.modalSubtitleContainer}>
@@ -724,14 +755,14 @@ export default function TrialsScreen() {
                 ]}
                 onPress={() => handleStatusSelect('paid_dd')}
               >
-                <View style={[styles.statusIconContainer, { backgroundColor: `${Theme.colors.status.success}15` }]}>
-                  <Ionicons name="checkmark-circle" size={20} color={Theme.colors.status.success} />
+                <View style={[styles.statusIconContainer, { backgroundColor: `${palette.statusSuccess}15` }]}>
+                  <Ionicons name="checkmark-circle" size={20} color={palette.statusSuccess} />
                 </View>
                 <View style={styles.statusTextContainer}>
                   <Text style={styles.statusOptionLabel}>Paid (Direct Debit)</Text>
                   <Text style={styles.statusOptionDescription}>Payment confirmed via DD</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Theme.colors.text.tertiary} />
+                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
               </Pressable>
 
               <Pressable
@@ -741,14 +772,14 @@ export default function TrialsScreen() {
                 ]}
                 onPress={() => handleStatusSelect('paid_awaiting_dd')}
               >
-                <View style={[styles.statusIconContainer, { backgroundColor: `${Theme.colors.status.info}15` }]}>
-                  <Ionicons name="time" size={20} color={Theme.colors.status.info} />
+                <View style={[styles.statusIconContainer, { backgroundColor: `${palette.statusInfo}15` }]}>
+                  <Ionicons name="time" size={20} color={palette.statusInfo} />
                 </View>
                 <View style={styles.statusTextContainer}>
                   <Text style={styles.statusOptionLabel}>Paid (Awaiting DD)</Text>
                   <Text style={styles.statusOptionDescription}>Payment made, DD setup pending</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Theme.colors.text.tertiary} />
+                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
               </Pressable>
 
               <Pressable
@@ -758,14 +789,14 @@ export default function TrialsScreen() {
                 ]}
                 onPress={() => handleStatusSelect('unpaid_dd')}
               >
-                <View style={[styles.statusIconContainer, { backgroundColor: `${Theme.colors.status.warning}15` }]}>
-                  <Ionicons name="card" size={20} color={Theme.colors.status.warning} />
+                <View style={[styles.statusIconContainer, { backgroundColor: `${palette.statusWarning}15` }]}>
+                  <Ionicons name="card" size={20} color={palette.statusWarning} />
                 </View>
                 <View style={styles.statusTextContainer}>
                   <Text style={styles.statusOptionLabel}>Unpaid (DD Scheduled)</Text>
                   <Text style={styles.statusOptionDescription}>Will be billed via Direct Debit</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Theme.colors.text.tertiary} />
+                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
               </Pressable>
 
               <Pressable
@@ -775,14 +806,14 @@ export default function TrialsScreen() {
                 ]}
                 onPress={() => handleStatusSelect('unpaid_coach_call')}
               >
-                <View style={[styles.statusIconContainer, { backgroundColor: `${Theme.colors.primary}15` }]}>
-                  <Ionicons name="call" size={20} color={Theme.colors.primary} />
+                <View style={[styles.statusIconContainer, { backgroundColor: `${palette.tint}15` }]}>
+                  <Ionicons name="call" size={20} color={palette.tint} />
                 </View>
                 <View style={styles.statusTextContainer}>
                   <Text style={styles.statusOptionLabel}>Unpaid (Follow Up)</Text>
                   <Text style={styles.statusOptionDescription}>Coach will contact for payment</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Theme.colors.text.tertiary} />
+                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
               </Pressable>
 
               <Pressable
@@ -792,14 +823,14 @@ export default function TrialsScreen() {
                 ]}
                 onPress={() => handleStatusSelect('not_joining')}
               >
-                <View style={[styles.statusIconContainer, { backgroundColor: `${Theme.colors.status.error}15` }]}>
-                  <Ionicons name="close-circle" size={20} color={Theme.colors.status.error} />
+                <View style={[styles.statusIconContainer, { backgroundColor: `${palette.statusError}15` }]}>
+                  <Ionicons name="close-circle" size={20} color={palette.statusError} />
                 </View>
                 <View style={styles.statusTextContainer}>
                   <Text style={styles.statusOptionLabel}>Not Joining</Text>
                   <Text style={styles.statusOptionDescription}>Decided not to continue</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={Theme.colors.text.tertiary} />
+                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
               </Pressable>
             </View>
           </Pressable>
@@ -826,12 +857,12 @@ export default function TrialsScreen() {
                 onPress={() => setShowKitModal(false)}
                 style={styles.modalCloseButton}
               >
-                <Ionicons name="close" size={24} color={Theme.colors.text.secondary} />
+                <Ionicons name="close" size={24} color={palette.textSecondary} />
               </Pressable>
             </View>
             <View style={styles.modalSubtitleContainer}>
-              <View style={[styles.modalAvatar, { backgroundColor: `${Theme.colors.status.info}15` }]}>
-                <Ionicons name="shirt" size={28} color={Theme.colors.status.info} />
+              <View style={[styles.modalAvatar, { backgroundColor: `${palette.statusInfo}15` }]}>
+                <Ionicons name="shirt" size={28} color={palette.statusInfo} />
               </View>
               <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
               <Text style={styles.modalDescription}>Select the kit items needed</Text>
@@ -849,7 +880,7 @@ export default function TrialsScreen() {
                         onPress={() => removeKitItem(index)}
                         style={styles.removeButton}
                       >
-                        <Ionicons name="trash-outline" size={18} color={Theme.colors.status.error} />
+                        <Ionicons name="trash-outline" size={18} color={palette.statusError} />
                       </TouchableOpacity>
                     </View>
 
@@ -893,7 +924,7 @@ export default function TrialsScreen() {
                 pressed && styles.addKitButtonPressed
               ]}
             >
-              <Ionicons name="add-circle" size={20} color={Theme.colors.primary} />
+              <Ionicons name="add-circle" size={20} color={palette.tint} />
               <Text style={styles.addKitButtonText}>Add Kit Item</Text>
             </Pressable>
 
@@ -916,7 +947,7 @@ export default function TrialsScreen() {
                 onPress={handleKitSubmit}
                 disabled={kitItems.length === 0}
               >
-                <Ionicons name="checkmark" size={18} color={Theme.colors.text.inverse} />
+                <Ionicons name="checkmark" size={18} color={palette.textInverse} />
                 <Text style={styles.modalPrimaryButtonText}>Confirm Kit</Text>
               </Pressable>
             </View>
@@ -944,12 +975,12 @@ export default function TrialsScreen() {
                 onPress={() => setShowReminderModal(false)}
                 style={styles.modalCloseButton}
               >
-                <Ionicons name="close" size={24} color={Theme.colors.text.secondary} />
+                <Ionicons name="close" size={24} color={palette.textSecondary} />
               </Pressable>
             </View>
             <View style={styles.modalSubtitleContainer}>
-              <View style={[styles.modalAvatar, { backgroundColor: `${Theme.colors.primary}15` }]}>
-                <Ionicons name="call" size={28} color={Theme.colors.primary} />
+              <View style={[styles.modalAvatar, { backgroundColor: `${palette.tint}15` }]}>
+                <Ionicons name="call" size={28} color={palette.tint} />
               </View>
               <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
               <Text style={styles.modalDescription}>Set a reminder to follow up</Text>
@@ -969,7 +1000,7 @@ export default function TrialsScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="calendar-outline" size={20} color={Theme.colors.text.secondary} />
+                  <Ionicons name="calendar-outline" size={20} color={palette.textSecondary} />
                   <Text style={styles.dateTimeButtonText}>
                     {reminderDate.toLocaleDateString('en-GB', {
                       weekday: 'short',
@@ -990,7 +1021,7 @@ export default function TrialsScreen() {
                     }
                   }}
                 >
-                  <Ionicons name="time-outline" size={20} color={Theme.colors.text.secondary} />
+                  <Ionicons name="time-outline" size={20} color={palette.textSecondary} />
                   <Text style={styles.dateTimeButtonText}>
                     {reminderDate.toLocaleTimeString('en-GB', {
                       hour: '2-digit',
@@ -1054,7 +1085,7 @@ export default function TrialsScreen() {
                 ]}
                 onPress={handleReminderSubmit}
               >
-                <Ionicons name="notifications" size={18} color={Theme.colors.text.inverse} />
+                <Ionicons name="notifications" size={18} color={palette.textInverse} />
                 <Text style={styles.modalPrimaryButtonText}>Set Reminder</Text>
               </Pressable>
             </View>
@@ -1065,10 +1096,10 @@ export default function TrialsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   scrollContent: {
     flexGrow: 1,
@@ -1081,53 +1112,53 @@ const styles = StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     fontFamily: Theme.typography.fonts.medium,
   },
   errorContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     ...Theme.shadows.md,
     maxWidth: 320,
   },
   errorIconContainer: {
     padding: Theme.spacing.lg,
-    backgroundColor: `${Theme.colors.status.error}15`,
+    backgroundColor: `${palette.statusError}15`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.lg,
   },
   errorTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   errorMessage: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     marginBottom: Theme.spacing.xl,
     lineHeight: 20,
   },
   retryButton: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
     ...Theme.shadows.sm,
   },
   retryButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
   },
@@ -1151,23 +1182,23 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   countBadge: {
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.xs,
     borderRadius: Theme.borderRadius.full,
   },
   countText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.bold,
   },
   offlineBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.status.warning,
+    backgroundColor: palette.statusWarning,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
@@ -1185,7 +1216,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.xs,
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
@@ -1195,20 +1226,20 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   addButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
   },
   syncText: {
     fontSize: Theme.typography.sizes.xs,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     fontFamily: Theme.typography.fonts.regular,
     marginBottom: Theme.spacing.lg,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.lg,
     paddingHorizontal: Theme.spacing.md,
     marginBottom: Theme.spacing.lg,
@@ -1222,7 +1253,7 @@ const styles = StyleSheet.create({
     height: 48,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   clearButton: {
     padding: Theme.spacing.xs,
@@ -1258,14 +1289,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: Theme.borderRadius.full,
-    backgroundColor: `${Theme.colors.primary}15`,
+    backgroundColor: `${palette.tint}15`,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   nameSection: {
     flex: 1,
@@ -1273,7 +1304,7 @@ const styles = StyleSheet.create({
   trialName: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   statusContainer: {
@@ -1293,6 +1324,11 @@ const styles = StyleSheet.create({
   classBadge: {
     alignSelf: 'flex-start',
   },
+  badgeContainer: {
+    flexDirection: 'column',
+    gap: Theme.spacing.xs,
+    alignItems: 'flex-end',
+  },
   trialDetails: {
     marginBottom: Theme.spacing.md,
   },
@@ -1308,14 +1344,14 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: Theme.borderRadius.md,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   detailText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     flex: 1,
   },
   actionButtons: {
@@ -1323,7 +1359,7 @@ const styles = StyleSheet.create({
     gap: Theme.spacing.md,
     paddingTop: Theme.spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: palette.borderLight,
   },
   actionButton: {
     flex: 1,
@@ -1336,12 +1372,12 @@ const styles = StyleSheet.create({
   },
   actionButtonOutline: {
     borderWidth: 1.5,
-    borderColor: Theme.colors.status.error,
+    borderColor: palette.statusError,
     backgroundColor: 'transparent',
   },
   actionButtonPrimary: {
     borderWidth: 1.5,
-    borderColor: Theme.colors.status.success,
+    borderColor: palette.statusSuccess,
     backgroundColor: 'transparent',
   },
   actionButtonPressed: {
@@ -1358,13 +1394,13 @@ const styles = StyleSheet.create({
     marginTop: Theme.spacing.xl,
     paddingTop: Theme.spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: palette.borderLight,
   },
   paginationButton: {
     width: 40,
     height: 40,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     justifyContent: 'center',
     alignItems: 'center',
     ...Theme.shadows.sm,
@@ -1382,12 +1418,12 @@ const styles = StyleSheet.create({
   paginationText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   paginationSubtext: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     marginTop: 2,
   },
   emptyState: {
@@ -1396,44 +1432,44 @@ const styles = StyleSheet.create({
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,
-    backgroundColor: `${Theme.colors.text.tertiary}10`,
+    backgroundColor: `${palette.textTertiary}10`,
     borderRadius: Theme.borderRadius.full,
     marginBottom: Theme.spacing.xl,
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyMessage: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,
   },
   clearSearchButton: {
     marginTop: Theme.spacing.lg,
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
   },
   clearSearchButtonText: {
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: palette.overlay,
     justifyContent: 'center',
     alignItems: 'center',
   },
   modalContent: {
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
     width: '90%',
     maxWidth: 400,
@@ -1448,12 +1484,12 @@ const styles = StyleSheet.create({
     paddingTop: Theme.spacing.xl,
     paddingBottom: Theme.spacing.md,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     flex: 1,
   },
   modalCloseButton: {
@@ -1469,7 +1505,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: Theme.borderRadius.full,
-    backgroundColor: `${Theme.colors.primary}15`,
+    backgroundColor: `${palette.tint}15`,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: Theme.spacing.md,
@@ -1477,18 +1513,18 @@ const styles = StyleSheet.create({
   modalAvatarText: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   modalSubtitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     textAlign: 'center',
   },
   modalDescription: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: Theme.spacing.xs,
     textAlign: 'center',
   },
@@ -1502,12 +1538,12 @@ const styles = StyleSheet.create({
     padding: Theme.spacing.md,
     marginBottom: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
   },
   statusOptionPressed: {
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     transform: [{ scale: 0.98 }],
   },
   statusIconContainer: {
@@ -1524,13 +1560,13 @@ const styles = StyleSheet.create({
   statusOptionLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: 2,
   },
   statusOptionDescription: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   modalFooter: {
     flexDirection: 'row',
@@ -1539,7 +1575,7 @@ const styles = StyleSheet.create({
     paddingBottom: Theme.spacing.xl,
     paddingTop: Theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: palette.borderLight,
   },
   modalCancelButton: {
     flex: 1,
@@ -1548,13 +1584,13 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
     borderWidth: 1,
-    borderColor: Theme.colors.border.default,
-    backgroundColor: Theme.colors.background.primary,
+    borderColor: palette.borderDefault,
+    backgroundColor: palette.background,
   },
   modalCancelButtonText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   modalPrimaryButton: {
     flex: 1,
@@ -1564,13 +1600,13 @@ const styles = StyleSheet.create({
     gap: Theme.spacing.xs,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: Theme.colors.primary,
+    backgroundColor: palette.tint,
     ...Theme.shadows.sm,
   },
   modalPrimaryButtonText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.inverse,
+    color: palette.textInverse,
   },
   modalButtonPressed: {
     opacity: 0.8,
@@ -1578,7 +1614,7 @@ const styles = StyleSheet.create({
   },
   modalButtonDisabled: {
     opacity: 0.5,
-    backgroundColor: Theme.colors.text.tertiary,
+    backgroundColor: palette.textTertiary,
   },
   kitList: {
     maxHeight: 300,
@@ -1586,12 +1622,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
   },
   kitItem: {
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.lg,
     padding: Theme.spacing.lg,
     marginBottom: Theme.spacing.md,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
     ...Theme.shadows.sm,
   },
   kitItemHeader: {
@@ -1603,11 +1639,11 @@ const styles = StyleSheet.create({
   kitItemNumber: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   removeButton: {
     padding: Theme.spacing.sm,
-    backgroundColor: `${Theme.colors.status.error}10`,
+    backgroundColor: `${palette.statusError}10`,
     borderRadius: Theme.borderRadius.sm,
   },
   pickerContainer: {
@@ -1616,13 +1652,13 @@ const styles = StyleSheet.create({
   pickerLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginBottom: Theme.spacing.xs,
   },
   noItemsText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
     textAlign: 'center',
     paddingVertical: Theme.spacing.xl,
   },
@@ -1635,18 +1671,18 @@ const styles = StyleSheet.create({
     marginHorizontal: Theme.spacing.xl,
     marginBottom: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: `${Theme.colors.primary}10`,
+    backgroundColor: `${palette.tint}10`,
     borderWidth: 1.5,
-    borderColor: Theme.colors.primary,
+    borderColor: palette.tint,
     borderStyle: 'dashed',
   },
   addKitButtonPressed: {
-    backgroundColor: `${Theme.colors.primary}20`,
+    backgroundColor: `${palette.tint}20`,
   },
   addKitButtonText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.primary,
+    color: palette.tint,
   },
   reminderContent: {
     paddingHorizontal: Theme.spacing.xl,
@@ -1655,7 +1691,7 @@ const styles = StyleSheet.create({
   reminderLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.md,
   },
   dateTimeContainer: {
@@ -1670,15 +1706,15 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.lg,
     paddingHorizontal: Theme.spacing.lg,
     borderRadius: Theme.borderRadius.lg,
-    backgroundColor: Theme.colors.background.primary,
+    backgroundColor: palette.background,
     borderWidth: 1.5,
-    borderColor: Theme.colors.border.default,
+    borderColor: palette.borderDefault,
     ...Theme.shadows.sm,
   },
   dateTimeButtonText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     flex: 1,
   },
 });

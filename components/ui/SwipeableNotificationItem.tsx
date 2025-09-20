@@ -5,10 +5,11 @@ import {
   StyleSheet,
   Animated,
   TouchableOpacity,
+  useColorScheme,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import { Colors } from '@/constants/Colors';
+import ColorPalette from '@/constants/Colors';
 import { NotificationItem } from './NotificationItem';
 import { Notification } from '@/types/notification';
 
@@ -28,6 +29,16 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
   onArchive,
 }) => {
   const swipeableRef = useRef<Swipeable>(null);
+  const colorScheme = useColorScheme();
+  const colors = ColorPalette[colorScheme ?? 'light'];
+  const actionVariantStyles = React.useMemo(
+    () => ({
+      read: { backgroundColor: colors.statusSuccess },
+      archive: { backgroundColor: colors.statusInfo },
+      delete: { backgroundColor: colors.statusError },
+    }),
+    [colors]
+  );
 
   const renderLeftActions = (
     progress: Animated.AnimatedInterpolation<number>,
@@ -44,7 +55,7 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
         <Animated.View
           style={[
             styles.actionButton,
-            styles.readButton,
+            actionVariantStyles.read,
             { transform: [{ scale }] },
           ]}
         >
@@ -58,9 +69,9 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
             <Ionicons
               name={notification.read ? 'mail-unread' : 'checkmark-done'}
               size={24}
-              color="white"
+              color={colors.textInverse}
             />
-            <Text style={styles.actionText}>
+            <Text style={[styles.actionText, { color: colors.textInverse }]}>
               {notification.read ? 'Unread' : 'Read'}
             </Text>
           </TouchableOpacity>
@@ -85,7 +96,7 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
           <Animated.View
             style={[
               styles.actionButton,
-              styles.archiveButton,
+              actionVariantStyles.archive,
               { transform: [{ scale }] },
             ]}
           >
@@ -96,8 +107,8 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
               }}
               style={styles.actionContent}
             >
-              <Ionicons name="archive" size={24} color="white" />
-              <Text style={styles.actionText}>Archive</Text>
+              <Ionicons name="archive" size={24} color={colors.textInverse} />
+              <Text style={[styles.actionText, { color: colors.textInverse }]}>Archive</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -105,7 +116,7 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
         <Animated.View
           style={[
             styles.actionButton,
-            styles.deleteButton,
+            actionVariantStyles.delete,
             { transform: [{ scale }] },
           ]}
         >
@@ -116,8 +127,8 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
             }}
             style={styles.actionContent}
           >
-            <Ionicons name="trash" size={24} color="white" />
-            <Text style={styles.actionText}>Delete</Text>
+            <Ionicons name="trash" size={24} color={colors.textInverse} />
+            <Text style={[styles.actionText, { color: colors.textInverse }]}>Delete</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>
@@ -170,17 +181,7 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  readButton: {
-    backgroundColor: Colors.status.success,
-  },
-  archiveButton: {
-    backgroundColor: Colors.status.info,
-  },
-  deleteButton: {
-    backgroundColor: Colors.status.error,
-  },
   actionText: {
-    color: 'white',
     fontSize: 12,
     fontFamily: 'Manrope_600SemiBold',
     marginTop: 4,

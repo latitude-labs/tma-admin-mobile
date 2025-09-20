@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -13,14 +13,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '../components/Logo';
 import { Button } from '../components/ui/Button';
 import { Input } from '../components/ui/Input';
-import Colors, { Colors as ColorsTheme } from '../constants/Colors';
 import { Theme } from '../constants/Theme';
 import { useAuthStore } from '../store/authStore';
 import { LoginRequest } from '../types/auth';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import { useColorScheme } from '@/components/useColorScheme';
 
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuthStore();
+  const colors = useThemeColors();
+  const colorScheme = useColorScheme();
+  const styles = useMemo(() => createStyles(colors), [colors]);
 
   const {
     control,
@@ -65,7 +69,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Logo width={192} variant="light" />
+            <Logo width={192} variant={colorScheme === 'dark' ? 'dark' : 'light'} />
           </View>
 
           <View style={styles.form}>
@@ -136,52 +140,53 @@ export default function LoginScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.light.background,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: Theme.spacing.lg,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: Theme.spacing.xl,
-    gap: Theme.spacing.md,
-  },
-  title: {
-    fontSize: Theme.typography.sizes.xxl,
-    fontWeight: '700',
-    color: Colors.light.text,
-    marginBottom: Theme.spacing.xs,
-  },
-  subtitle: {
-    fontSize: Theme.typography.sizes.md,
-    color: Colors.light.textSecondary,
-  },
-  form: {
-    gap: Theme.spacing.lg,
-  },
-  submitButton: {
-    marginTop: Theme.spacing.md,
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: Theme.spacing.xl,
-  },
-  footerText: {
-    fontSize: Theme.typography.sizes.sm,
-    color: Colors.light.textSecondary,
-  },
-  footerLink: {
-    fontSize: Theme.typography.sizes.sm,
-    color: ColorsTheme.primary,
-    marginTop: Theme.spacing.xs,
-    fontWeight: '600',
-  },
-});
+const createStyles = (palette: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: palette.background,
+    },
+    keyboardView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      justifyContent: 'center',
+      paddingHorizontal: Theme.spacing.lg,
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: Theme.spacing.xl,
+      gap: Theme.spacing.md,
+    },
+    title: {
+      fontSize: Theme.typography.sizes.xxl,
+      fontWeight: '700',
+      color: palette.textPrimary,
+      marginBottom: Theme.spacing.xs,
+    },
+    subtitle: {
+      fontSize: Theme.typography.sizes.md,
+      color: palette.textSecondary,
+    },
+    form: {
+      gap: Theme.spacing.lg,
+    },
+    submitButton: {
+      marginTop: Theme.spacing.md,
+    },
+    footer: {
+      alignItems: 'center',
+      marginTop: Theme.spacing.xl,
+    },
+    footerText: {
+      fontSize: Theme.typography.sizes.sm,
+      color: palette.textSecondary,
+    },
+    footerLink: {
+      fontSize: Theme.typography.sizes.sm,
+      color: palette.tint,
+      marginTop: Theme.spacing.xs,
+      fontWeight: '600',
+    },
+  });
