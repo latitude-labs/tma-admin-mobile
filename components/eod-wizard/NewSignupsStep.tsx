@@ -45,12 +45,12 @@ export const NewSignupsStep: React.FC = () => {
   ) => (
     <Card style={styles.signupCard}>
       <View style={styles.signupHeader}>
-        <Ionicons name={icon as any} size={24} color={Theme.colors.primary} />
+        <Ionicons name={icon as any} size={24} color={currentTheme.tint} />
         <View style={styles.signupText}>
           <Text style={[styles.signupLabel, { color: currentTheme.text }]}>
             {label}
           </Text>
-          <Text style={[styles.signupDescription, { color: Theme.colors.text.secondary }]}>
+          <Text style={[styles.signupDescription, { color: currentTheme.text }]}>
             {description}
           </Text>
         </View>
@@ -59,7 +59,7 @@ export const NewSignupsStep: React.FC = () => {
       <NumberInput
         value={value}
         onChange={handleCountChange(field)}
-        color={Theme.colors.primary}
+        color={currentTheme.tint}
       />
     </Card>
   );
@@ -76,7 +76,7 @@ export const NewSignupsStep: React.FC = () => {
       <Text style={[styles.title, { color: currentTheme.text }]}>
         New Sign-ups (Same Day)
       </Text>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         Students who signed up immediately after their trial session today
       </Text>
 
@@ -126,7 +126,7 @@ export const NewSignupsStep: React.FC = () => {
 
       {totalNewSignups > 0 && (
         <Card style={styles.summaryCard}>
-          <Text style={[styles.summaryValue, { color: Theme.colors.success }]}>
+          <Text style={[styles.summaryValue, { color: '#4CAF50' }]}>
             {totalNewSignups} new {totalNewSignups === 1 ? 'member' : 'members'} today!
           </Text>
         </Card>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   summaryCard: {
-    backgroundColor: Theme.colors.success + '10',
+    backgroundColor: '#4CAF50' + '10',
     alignItems: 'center',
     marginBottom: Theme.spacing.lg,
   },

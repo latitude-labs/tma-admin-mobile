@@ -2,17 +2,42 @@ import apiClient from './api/client';
 import { apiClient as api } from './api/client';
 import { ENDPOINTS } from '../config/api';
 import { LoginRequest, LoginResponse, User } from '../types/auth';
+import { secureStorage, STORAGE_KEYS } from '../utils/secureStorage';
+import { biometricService } from './biometric.service';
+import * as SecureStore from 'expo-secure-store';
 
 class AuthService {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     try {
+      // Get device ID and trust token if available
+      const deviceId = await biometricService.getDeviceId();
+      const trustToken = await SecureStore.getItemAsync('tma_trust_token');
+
+      const loginData: any = {
+        ...credentials,
+        device_id: deviceId || undefined,
+        trust_token: trustToken || undefined,
+      };
+
       const response = await apiClient.post<LoginResponse>(
         ENDPOINTS.auth.login,
-        credentials
+        loginData
       );
 
-      // Store the token for future requests
-      await api.setAuthToken(response.data.token);
+      // Check if 2FA is required
+      if (response.data.requires_2fa) {
+        // Don't store the token yet if 2FA is required
+        return response.data;
+      }
+
+      // Store the token for future requests (no 2FA required or trust token worked)
+      if (response.data.token) {
+        console.log('🔐 AUTH SERVICE: Setting token after login');
+        await api.setAuthToken(response.data.token);
+        // Also store in secure storage
+        await secureStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, response.data.token);
+        console.log('✅ AUTH SERVICE: Token stored successfully');
+      }
 
       return response.data;
     } catch (error: any) {
@@ -38,6 +63,10 @@ class AuthService {
       }
     } finally {
       await api.removeAuthToken();
+      // Clear secure storage tokens
+      await secureStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      await secureStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      await secureStorage.removeItem(STORAGE_KEYS.USER_DATA);
     }
   }
 
@@ -54,14 +83,24 @@ class AuthService {
   }
 
   async checkAuthStatus(): Promise<boolean> {
-    const token = await api.getAuthToken();
+    // First check secure storage
+    let token = await secureStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
+
+    // Fallback to AsyncStorage if not in secure storage
+    if (!token) {
+      token = await api.getAuthToken();
+    }
+
     if (!token) return false;
 
     try {
+      // Ensure token is set in API client
+      await api.setAuthToken(token);
       await this.getCurrentUser();
       return true;
     } catch (error) {
       await api.removeAuthToken();
+      await secureStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
       return false;
     }
   }

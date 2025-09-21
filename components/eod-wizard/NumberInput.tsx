@@ -109,15 +109,15 @@ export const NumberInput: React.FC<NumberInputProps> = ({
               styles.button,
               {
                 backgroundColor: value > min
-                  ? Theme.colors.secondary.light
-                  : Theme.colors.secondary.light + '40',
+                  ? currentTheme.card
+                  : currentTheme.card + '40',
               }
             ]}
           >
             <Ionicons
               name="remove"
               size={24}
-              color={value > min ? Theme.colors.text.primary : Theme.colors.text.tertiary}
+              color={value > min ? currentTheme.text : currentTheme.text + '60'}
             />
           </TouchableOpacity>
         )}
@@ -129,8 +129,8 @@ export const NumberInput: React.FC<NumberInputProps> = ({
               styles.input,
               {
                 color: currentTheme.text,
-                borderColor: isFocused ? color : Theme.colors.border.light,
-                backgroundColor: isFocused ? currentTheme.background : Theme.colors.background.secondary,
+                borderColor: isFocused ? color : currentTheme.border,
+                backgroundColor: isFocused ? currentTheme.background : currentTheme.card,
               }
             ]}
             value={inputValue}
@@ -144,7 +144,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
             textAlign="center"
           />
           {unit && !isFocused && (
-            <Text style={[styles.unit, { color: Theme.colors.text.secondary }]}>
+            <Text style={[styles.unit, { color: currentTheme.text }]}>
               {unit}
             </Text>
           )}
@@ -166,7 +166,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
             <Ionicons
               name="add"
               size={24}
-              color={value < max ? Theme.colors.text.inverse : Theme.colors.text.inverse + '60'}
+              color={'#FFFFFF'}
             />
           </TouchableOpacity>
         )}

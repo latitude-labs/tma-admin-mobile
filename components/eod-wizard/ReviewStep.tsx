@@ -10,7 +10,7 @@ import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { useClubStore } from '@/store/clubStore';
 import { Theme } from '@/constants/Theme';
 import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { Colors } from '@/constants/Colors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
@@ -60,7 +60,7 @@ export const ReviewStep: React.FC = () => {
   const renderSection = (title: string, icon: string, children: React.ReactNode) => (
     <Card style={styles.sectionCard}>
       <View style={styles.sectionHeader}>
-        <Ionicons name={icon as any} size={20} color={Theme.colors.primary} />
+        <Ionicons name={icon as any} size={20} color={currentTheme.tint} />
         <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
           {title}
         </Text>
@@ -74,12 +74,12 @@ export const ReviewStep: React.FC = () => {
 
     return (
       <View style={styles.row}>
-        <Text style={[styles.rowLabel, { color: Theme.colors.text.secondary }]}>
+        <Text style={[styles.rowLabel, { color: currentTheme.text }]}>
           {label}
         </Text>
         <Text style={[
           styles.rowValue,
-          { color: highlight ? Theme.colors.primary : currentTheme.text }
+          { color: highlight ? currentTheme.tint : currentTheme.text }
         ]}>
           {typeof value === 'number' ? value : value}
         </Text>
@@ -100,7 +100,7 @@ export const ReviewStep: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         Please review your report before submitting
       </Text>
 
@@ -108,7 +108,7 @@ export const ReviewStep: React.FC = () => {
         <Text style={[styles.clubName, { color: currentTheme.text }]}>
           {selectedClub?.name}
         </Text>
-        <Text style={[styles.date, { color: Theme.colors.text.secondary }]}>
+        <Text style={[styles.date, { color: currentTheme.text }]}>
           {format(new Date(data.report_date || new Date()), 'EEEE, MMMM d, yyyy')}
         </Text>
       </Card>
@@ -156,17 +156,62 @@ export const ReviewStep: React.FC = () => {
       ))}
 
       {renderSection('Financial', 'cash', (
-        <Text style={[styles.cashAmount, { color: Theme.colors.success }]}>
+        <Text style={[styles.cashAmount, { color: '#4CAF50' }]}>
           £{(data.total_cash_taken || 0).toFixed(2)}
         </Text>
       ))}
+
+      {data.helper_attendance && data.helper_attendance.length > 0 &&
+        renderSection('Helper Attendance', 'people', (
+          <>
+            {data.helper_attendance.map((helper, index) => (
+              <View key={index} style={styles.helperRow}>
+                <Text style={[styles.helperName, { color: currentTheme.text }]}>
+                  {helper.name}
+                </Text>
+                <View style={styles.helperStatus}>
+                  <Ionicons
+                    name={
+                      helper.status === 'on_time' ? 'checkmark-circle' :
+                      helper.status === 'late' ? 'time' :
+                      'close-circle'
+                    }
+                    size={16}
+                    color={
+                      helper.status === 'on_time' ? '#4CAF50' :
+                      helper.status === 'late' ? '#FFC107' :
+                      '#F44336'
+                    }
+                  />
+                  <Text style={[
+                    styles.helperStatusText,
+                    {
+                      color: helper.status === 'on_time' ? '#4CAF50' :
+                             helper.status === 'late' ? '#FFC107' :
+                             '#F44336'
+                    }
+                  ]}>
+                    {helper.status === 'on_time' ? 'On Time' :
+                     helper.status === 'late' ? 'Late' :
+                     'No Show'}
+                  </Text>
+                </View>
+                {helper.message && (
+                  <Text style={[styles.helperMessage, { color: currentTheme.text }]}>
+                    {helper.message}
+                  </Text>
+                )}
+              </View>
+            ))}
+          </>
+        ))}
 
       {(data.signup_names || data.helper_names || data.incidents || data.general_notes) &&
         renderSection('Additional Information', 'document-text', (
           <>
             {data.signup_names && (
               <View style={styles.noteSection}>
-                <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Sign-ups:
                 </Text>
                 <Text style={[styles.noteText, { color: currentTheme.text }]}>
@@ -174,9 +219,9 @@ export const ReviewStep: React.FC = () => {
                 </Text>
               </View>
             )}
-            {data.helper_names && (
+            {data.helper_names && !data.helper_attendance && (
               <View style={styles.noteSection}>
-                <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Helpers:
                 </Text>
                 <Text style={[styles.noteText, { color: currentTheme.text }]}>
@@ -186,7 +231,7 @@ export const ReviewStep: React.FC = () => {
             )}
             {data.incidents && (
               <View style={styles.noteSection}>
-                <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Incidents:
                 </Text>
                 <Text style={[styles.noteText, { color: currentTheme.text }]}>
@@ -196,7 +241,7 @@ export const ReviewStep: React.FC = () => {
             )}
             {data.general_notes && (
               <View style={styles.noteSection}>
-                <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Notes:
                 </Text>
                 <Text style={[styles.noteText, { color: currentTheme.text }]}>
@@ -284,7 +329,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: Theme.colors.border.light,
+    backgroundColor: Colors.border.light,
     marginVertical: Theme.spacing.sm,
   },
   cashAmount: {
@@ -304,6 +349,31 @@ const styles = StyleSheet.create({
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
     lineHeight: Theme.typography.sizes.sm * 1.5,
+  },
+  helperRow: {
+    paddingVertical: Theme.spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+  },
+  helperName: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.semibold,
+    marginBottom: Theme.spacing.xs,
+  },
+  helperStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  helperStatusText: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    marginLeft: Theme.spacing.xs,
+  },
+  helperMessage: {
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: Theme.typography.fonts.regular,
+    marginTop: Theme.spacing.xs,
+    fontStyle: 'italic',
   },
   footer: {
     flexDirection: 'row',

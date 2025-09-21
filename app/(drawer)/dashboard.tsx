@@ -83,14 +83,22 @@ export default function DashboardScreen() {
   };
 
   useEffect(() => {
-    fetchClubs();
-    fetchBookings();
-    fetchStats();
+    // Small delay to ensure auth is fully ready
+    const loadData = async () => {
+      // Wait a bit to ensure token is available
+      await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Fetch Facebook pages if user is admin
-    if (user?.is_admin) {
-      fetchFacebookPages();
-    }
+      fetchClubs();
+      fetchBookings();
+      fetchStats();
+
+      // Fetch Facebook pages if user is admin
+      if (user?.is_admin) {
+        fetchFacebookPages();
+      }
+    };
+
+    loadData();
   }, [user]);
 
   // Debug logging for stats

@@ -166,15 +166,20 @@ class NotificationService {
    * Start polling for new notifications
    */
   startPolling(onUpdate?: (unreadCount: number) => void, intervalMs: number = 30000) {
+    // Clear any existing polling
     if (this.pollingInterval) {
-      this.stopPolling();
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
     }
+
+    console.log('NotificationService: Starting polling with interval:', intervalMs);
 
     // Poll immediately on start
     this.pollUnreadCount(onUpdate);
 
     // Then poll at intervals
     this.pollingInterval = setInterval(() => {
+      console.log('NotificationService: Polling for unread count...');
       this.pollUnreadCount(onUpdate);
     }, intervalMs);
   }
@@ -185,11 +190,13 @@ class NotificationService {
   private async pollUnreadCount(onUpdate?: (unreadCount: number) => void) {
     try {
       const count = await this.getUnreadCount();
+      console.log('NotificationService: Received unread count:', count);
       if (onUpdate) {
         onUpdate(count);
       }
     } catch (error) {
-      console.error('Polling error:', error);
+      console.error('NotificationService: Polling error:', error);
+      // Don't stop polling on error, just log it
     }
   }
 
@@ -197,6 +204,7 @@ class NotificationService {
    * Stop polling for notifications
    */
   stopPolling() {
+    console.log('NotificationService: Stopping polling');
     if (this.pollingInterval) {
       clearInterval(this.pollingInterval);
       this.pollingInterval = null;

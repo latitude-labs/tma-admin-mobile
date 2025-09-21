@@ -60,7 +60,7 @@ export const AttendanceStep: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         How many students attended each class today?
       </Text>
 
@@ -70,7 +70,7 @@ export const AttendanceStep: React.FC = () => {
           'kids_1_count',
           kids_1_count,
           'people',
-          Theme.colors.info
+          '#2196F3'
         )}
 
         {hasKids2Class && renderCounter(
@@ -78,7 +78,7 @@ export const AttendanceStep: React.FC = () => {
           'kids_2_count',
           kids_2_count,
           'people',
-          Theme.colors.warning
+          '#FFC107'
         )}
 
         {hasAdultsClass && renderCounter(
@@ -86,13 +86,16 @@ export const AttendanceStep: React.FC = () => {
           'adults_count',
           adults_count,
           'person',
-          Theme.colors.success
+          '#4CAF50'
         )}
       </View>
 
-      <Card style={styles.totalCard}>
+      <Card style={[styles.totalCard, {
+        backgroundColor: currentTheme.tint + '10',
+        borderColor: currentTheme.tint,
+      }]}>
         <View style={styles.totalContent}>
-          <Text style={[styles.totalLabel, { color: Theme.colors.text.secondary }]}>
+          <Text style={[styles.totalLabel, { color: currentTheme.text }]}>
             Total Attendance
           </Text>
           <Text style={[styles.totalValue, { color: currentTheme.text }]}>
@@ -155,8 +158,6 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.fonts.semibold,
   },
   totalCard: {
-    backgroundColor: Theme.colors.primary + '10',
-    borderColor: Theme.colors.primary,
     borderWidth: 1,
   },
   totalContent: {

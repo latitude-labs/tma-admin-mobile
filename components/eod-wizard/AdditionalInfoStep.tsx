@@ -1,22 +1,22 @@
-import React, { useState, useRef } from 'react';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { useColorScheme } from '@/components/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { Theme } from '@/constants/Theme';
+import { useEndOfDayStore } from '@/store/endOfDayStore';
+import { Ionicons } from '@expo/vector-icons';
+import React, { useRef, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TextInput,
+  Keyboard,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
   TouchableOpacity,
-  Keyboard,
+  View,
 } from 'react-native';
-import { useEndOfDayStore } from '@/store/endOfDayStore';
-import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Ionicons } from '@expo/vector-icons';
 
 export const AdditionalInfoStep: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -79,7 +79,7 @@ export const AdditionalInfoStep: React.FC = () => {
             <Text style={[styles.inputLabel, { color: currentTheme.text }]}>
               {label}
             </Text>
-            <Text style={[styles.charCount, { color: Theme.colors.text.tertiary }]}>
+            <Text style={[styles.charCount, { color: currentTheme.text }]}>
               {value.length}/{maxLength}
             </Text>
           </View>
@@ -89,7 +89,7 @@ export const AdditionalInfoStep: React.FC = () => {
             value={value}
             onChangeText={onChange}
             placeholder={placeholder}
-            placeholderTextColor={Theme.colors.text.secondary}
+            placeholderTextColor={currentTheme.text + '80'}
             multiline
             numberOfLines={3}
             maxLength={maxLength}
@@ -113,20 +113,20 @@ export const AdditionalInfoStep: React.FC = () => {
                   onPress={() => nextInputRef.current?.focus()}
                   style={styles.toolbarButton}
                 >
-                  <Text style={[styles.toolbarButtonText, { color: Theme.colors.primary }]}>
+                  <Text style={[styles.toolbarButtonText, { color: currentTheme.tint }]}>
                     Next Field
                   </Text>
-                  <Ionicons name="arrow-down" size={16} color={Theme.colors.primary} />
+                  <Ionicons name="arrow-down" size={16} color={currentTheme.tint} />
                 </TouchableOpacity>
               )}
               <TouchableOpacity
                 onPress={() => Keyboard.dismiss()}
                 style={styles.toolbarButton}
               >
-                <Text style={[styles.toolbarButtonText, { color: Theme.colors.primary }]}>
+                <Text style={[styles.toolbarButtonText, { color: currentTheme.tint }]}>
                   Done
                 </Text>
-                <Ionicons name="checkmark" size={16} color={Theme.colors.primary} />
+                <Ionicons name="checkmark" size={16} color={currentTheme.tint} />
               </TouchableOpacity>
             </View>
           )}
@@ -151,7 +151,7 @@ export const AdditionalInfoStep: React.FC = () => {
         onPress={() => Keyboard.dismiss()}
         style={styles.dismissArea}
       >
-        <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+        <Text style={[styles.description, { color: currentTheme.text }]}>
           Add any additional information about today's sessions (optional)
         </Text>
       </TouchableOpacity>
@@ -162,7 +162,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setSignupNames,
         'Names of people who signed up today...',
         'person-add',
-        Theme.colors.success,
+        '#4CAF50',
         500,
         signupNamesRef,
         helperNamesRef,
@@ -175,7 +175,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setHelperNames,
         'Names of people who helped with the class...',
         'people',
-        Theme.colors.info,
+        '#2196F3',
         500,
         helperNamesRef,
         incidentsRef,
@@ -188,7 +188,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setIncidents,
         'Any injuries, issues, or incidents to report...',
         'warning',
-        Theme.colors.error,
+        '#F44336',
         1000,
         incidentsRef,
         generalNotesRef,
@@ -201,7 +201,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setGeneralNotes,
         'Any other notes about today\'s sessions...',
         'document-text',
-        Theme.colors.primary,
+        currentTheme.tint,
         1000,
         generalNotesRef,
         undefined,
@@ -209,8 +209,8 @@ export const AdditionalInfoStep: React.FC = () => {
       )}
 
       <View style={styles.info}>
-        <Ionicons name="information-circle" size={20} color={Theme.colors.info} />
-        <Text style={[styles.infoText, { color: Theme.colors.info }]}>
+        <Ionicons name="information-circle" size={20} color={'#2196F3'} />
+        <Text style={[styles.infoText, { color: '#2196F3' }]}>
           All fields are optional. Skip this step if you have nothing to add.
         </Text>
       </View>
@@ -293,7 +293,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingTop: Theme.spacing.sm,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: Colors.border.light,
     marginTop: Theme.spacing.sm,
   },
   toolbarButton: {
@@ -311,7 +311,7 @@ const styles = StyleSheet.create({
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.info + '10',
+    backgroundColor: '#2196F3' + '10',
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.md,
     marginBottom: Theme.spacing.lg,

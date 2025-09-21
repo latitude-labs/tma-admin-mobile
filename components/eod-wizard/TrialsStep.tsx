@@ -63,13 +63,13 @@ export const TrialsStep: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         How many students tried a class for the first time today?
       </Text>
 
       <View style={styles.info}>
-        <Ionicons name="information-circle" size={20} color={Theme.colors.info} />
-        <Text style={[styles.infoText, { color: Theme.colors.info }]}>
+        <Ionicons name="information-circle" size={20} color={'#2196F3'} />
+        <Text style={[styles.infoText, { color: '#2196F3' }]}>
           Only count people who haven't trained before
         </Text>
       </View>
@@ -79,30 +79,30 @@ export const TrialsStep: React.FC = () => {
           'Kids Class 1 Trials',
           'kids_1_trials',
           kids_1_trials,
-          Theme.colors.info
+          '#2196F3'
         )}
 
         {hasKids2Class && renderTrialCounter(
           'Kids Class 2 Trials',
           'kids_2_trials',
           kids_2_trials,
-          Theme.colors.warning
+          '#FFC107'
         )}
 
         {hasAdultsClass && renderTrialCounter(
           'Adults Class Trials',
           'adults_trials',
           adults_trials,
-          Theme.colors.success
+          '#4CAF50'
         )}
       </View>
 
       {totalTrials > 0 && (
         <Card style={styles.summaryCard}>
-          <Text style={[styles.summaryLabel, { color: Theme.colors.text.secondary }]}>
+          <Text style={[styles.summaryLabel, { color: currentTheme.text }]}>
             Total Trials Today
           </Text>
-          <Text style={[styles.summaryValue, { color: Theme.colors.primary }]}>
+          <Text style={[styles.summaryValue, { color: currentTheme.tint }]}>
             {totalTrials} new {totalTrials === 1 ? 'student' : 'students'}
           </Text>
         </Card>
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.info + '10',
+    backgroundColor: '#2196F3' + '10',
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.md,
     marginBottom: Theme.spacing.lg,

@@ -23,6 +23,7 @@ import { TrialsStep } from '@/components/eod-wizard/TrialsStep';
 import { NewSignupsStep } from '@/components/eod-wizard/NewSignupsStep';
 import { ReturningSignupsStep } from '@/components/eod-wizard/ReturningSignupsStep';
 import { FinancialStep } from '@/components/eod-wizard/FinancialStep';
+import { HelperCheckupsStep } from '@/components/eod-wizard/HelperCheckupsStep';
 import { AdditionalInfoStep } from '@/components/eod-wizard/AdditionalInfoStep';
 import { ReviewStep } from '@/components/eod-wizard/ReviewStep';
 import { WizardProgress } from '@/components/eod-wizard/WizardProgress';
@@ -64,6 +65,8 @@ export default function EoDWizardScreen() {
         return <ReturningSignupsStep />;
       case EoDWizardStep.Financial:
         return <FinancialStep />;
+      case EoDWizardStep.HelperCheckups:
+        return <HelperCheckupsStep />;
       case EoDWizardStep.AdditionalInfo:
         return <AdditionalInfoStep />;
       case EoDWizardStep.Review:
@@ -87,6 +90,8 @@ export default function EoDWizardScreen() {
         return 'Returning Sign-ups';
       case EoDWizardStep.Financial:
         return 'Financial Summary';
+      case EoDWizardStep.HelperCheckups:
+        return 'Helper Checkups';
       case EoDWizardStep.AdditionalInfo:
         return 'Additional Information';
       case EoDWizardStep.Review:

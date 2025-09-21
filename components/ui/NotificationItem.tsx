@@ -2,6 +2,7 @@ import ColorPalette from '@/constants/Colors';
 import { Notification, NotificationType } from '@/types/notification';
 import { Ionicons } from '@expo/vector-icons';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
+import { useRouter } from 'expo-router';
 import React from 'react';
 import {
   Image,
@@ -37,6 +38,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   const colorScheme = useColorScheme();
   const colors = ColorPalette[colorScheme ?? 'light'];
   const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const router = useRouter();
 
   const getNotificationIcon = (type: NotificationType) => {
     const iconMap = {
@@ -142,7 +144,27 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             </Text>
 
             {notification.actionLabel && (
-              <TouchableOpacity style={styles.actionButton}>
+              <TouchableOpacity
+                style={styles.actionButton}
+                onPress={() => {
+                  // Handle action based on actionUrl
+                  if (notification.actionUrl) {
+                    // Check if it's an event detail URL
+                    const eventMatch = notification.actionUrl.match(/\/event\/(\d+)/);
+                    if (eventMatch) {
+                      // Navigate to event detail with proper Expo Router format
+                      router.push({
+                        pathname: '/event-detail',
+                        params: { id: eventMatch[1] }
+                      });
+                    } else if (notification.actionUrl.startsWith('/')) {
+                      // Internal navigation
+                      router.push(notification.actionUrl as any);
+                    }
+                    // You could handle external URLs here if needed
+                  }
+                }}
+              >
                 <Text style={styles.actionText}>{notification.actionLabel}</Text>
               </TouchableOpacity>
             )}

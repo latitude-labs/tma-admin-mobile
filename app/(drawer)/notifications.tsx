@@ -42,12 +42,9 @@ export default function NotificationsScreen() {
   const styles = useMemo(() => createStyles(colors), [colors]);
 
   useEffect(() => {
+    // Just fetch notifications when screen is opened
+    // Polling is handled at app level in _layout.tsx
     fetchNotifications();
-    startPolling();
-
-    return () => {
-      stopPolling();
-    };
   }, []);
 
   const groupedNotifications = useMemo(() => {

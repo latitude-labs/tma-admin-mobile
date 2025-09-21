@@ -175,10 +175,17 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
-          name="classes"
+          name="calendar"
           options={{
-            title: 'Classes',
-            drawerLabel: 'Classes',
+            title: 'Calendar',
+            drawerLabel: 'Calendar',
+          }}
+        />
+        <Drawer.Screen
+          name="holiday-requests"
+          options={{
+            title: 'Holiday Requests',
+            drawerLabel: 'Holiday Requests',
           }}
         />
         <Drawer.Screen
@@ -189,11 +196,25 @@ export default function DrawerLayout() {
           }}
         />
         <Drawer.Screen
+          name="reminders"
+          options={{
+            title: 'Reminders',
+            drawerLabel: 'Reminders',
+          }}
+        />
+        <Drawer.Screen
           name="notifications"
           options={{
             title: 'Notifications',
             drawerLabel: 'Notifications',
             headerLeft: NotificationBackButton,
+          }}
+        />
+        <Drawer.Screen
+          name="notification-settings"
+          options={{
+            title: 'Notification Settings',
+            drawerLabel: 'Notification Settings',
           }}
         />
         <Drawer.Screen

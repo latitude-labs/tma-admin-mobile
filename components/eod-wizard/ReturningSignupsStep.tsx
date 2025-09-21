@@ -45,12 +45,12 @@ export const ReturningSignupsStep: React.FC = () => {
   ) => (
     <Card style={styles.signupCard}>
       <View style={styles.signupHeader}>
-        <Ionicons name={icon as any} size={24} color={Theme.colors.warning} />
+        <Ionicons name={icon as any} size={24} color={'#FFC107'} />
         <View style={styles.signupText}>
           <Text style={[styles.signupLabel, { color: currentTheme.text }]}>
             {label}
           </Text>
-          <Text style={[styles.signupDescription, { color: Theme.colors.text.secondary }]}>
+          <Text style={[styles.signupDescription, { color: currentTheme.text }]}>
             {description}
           </Text>
         </View>
@@ -59,7 +59,7 @@ export const ReturningSignupsStep: React.FC = () => {
       <NumberInput
         value={value}
         onChange={handleCountChange(field)}
-        color={Theme.colors.warning}
+        color={'#FFC107'}
       />
     </Card>
   );
@@ -76,7 +76,7 @@ export const ReturningSignupsStep: React.FC = () => {
       <Text style={[styles.title, { color: currentTheme.text }]}>
         Returning Sign-ups
       </Text>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         Students who trialed before and came back today to sign up
       </Text>
 
@@ -126,7 +126,7 @@ export const ReturningSignupsStep: React.FC = () => {
 
       {totalReturningSignups > 0 && (
         <Card style={styles.summaryCard}>
-          <Text style={[styles.summaryValue, { color: Theme.colors.warning }]}>
+          <Text style={[styles.summaryValue, { color: '#FFC107' }]}>
             {totalReturningSignups} returning {totalReturningSignups === 1 ? 'member' : 'members'} today!
           </Text>
         </Card>
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   summaryCard: {
-    backgroundColor: Theme.colors.warning + '10',
+    backgroundColor: '#FFC107' + '10',
     alignItems: 'center',
     marginBottom: Theme.spacing.lg,
   },

@@ -51,6 +51,7 @@ const WIZARD_STEPS_ORDER: EoDWizardStep[] = [
   EoDWizardStep.NewSignups,
   EoDWizardStep.ReturningSignups,
   EoDWizardStep.Financial,
+  EoDWizardStep.HelperCheckups,
   EoDWizardStep.AdditionalInfo,
   EoDWizardStep.Review,
 ];

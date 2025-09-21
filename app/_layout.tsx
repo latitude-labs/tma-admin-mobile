@@ -15,6 +15,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import { AppState, AppStateStatus } from 'react-native';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { useColorScheme } from '@/components/useColorScheme';
 import { ApiHealthProvider } from '../components/ApiHealthProvider';
@@ -25,6 +26,9 @@ import { syncManager } from '../services/offline/syncManager';
 import { useAuthStore } from '../store/authStore';
 import { useClubStore } from '../store/clubStore';
 import { useFacebookStore } from '../store/facebookStore';
+import { useNotificationStore } from '../store/notificationStore';
+import { useOffline } from '../hooks/useOffline';
+import NetInfo from '@react-native-community/netinfo';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -71,9 +75,11 @@ export default function RootLayout() {
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
-  const { isAuthenticated, isInitialized, checkAuth, user, forceLogout } = useAuthStore();
+  const { isAuthenticated, isInitialized, checkAuth, user, forceLogout, twoFactorPending } = useAuthStore();
   const { fetchClubs } = useClubStore();
   const { fetchFacebookPages } = useFacebookStore();
+  const { initialize: initializeNotifications } = useNotificationStore();
+  const { isConnected } = useOffline();
 
   useEffect(() => {
     // Register logout callback with API client
@@ -84,7 +90,18 @@ function RootLayoutNav() {
 
     // Check authentication status on app start
     checkAuth();
+
+    // Initialize push notifications
+    initializeNotifications();
   }, []);
+
+  // Re-initialize notifications when user authenticates
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      // Re-initialize notifications when authenticated
+      initializeNotifications();
+    }
+  }, [isAuthenticated, user]);
 
   // Sync data when app comes to foreground
   useEffect(() => {
@@ -98,16 +115,25 @@ function RootLayoutNav() {
         if (user?.is_admin) {
           fetchFacebookPages();
         }
+
+        // Re-initialize notifications when app becomes active
+        initializeNotifications();
       }
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
     return () => subscription.remove();
-  }, [isAuthenticated, user]);
+  }, [isAuthenticated, user, isConnected]);
 
   useEffect(() => {
     // Only redirect after initialization is complete
     if (isInitialized) {
+      // Don't redirect if 2FA is pending
+      if (twoFactorPending) {
+        // User is in the middle of 2FA verification, don't redirect
+        return;
+      }
+
       if (isAuthenticated && user) {
         // Navigate based on user role
         if (user.is_admin) {
@@ -119,7 +145,7 @@ function RootLayoutNav() {
         router.replace('/login');
       }
     }
-  }, [isAuthenticated, isInitialized, user]);
+  }, [isAuthenticated, isInitialized, user, twoFactorPending]);
 
   // Show loading screen while checking auth status
   if (!isInitialized) {
@@ -127,17 +153,20 @@ function RootLayoutNav() {
   }
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <ApiHealthProvider>
-        <AuthStatusProvider>
-          <Stack>
-            <Stack.Screen name="login" options={{ headerShown: false }} />
-            <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-            <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-            <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
-          </Stack>
-        </AuthStatusProvider>
-      </ApiHealthProvider>
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <ApiHealthProvider>
+          <AuthStatusProvider>
+            <Stack>
+              <Stack.Screen name="login" options={{ headerShown: false }} />
+              <Stack.Screen name="two-factor-verify" options={{ headerShown: false }} />
+              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+              <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
+            </Stack>
+          </AuthStatusProvider>
+        </ApiHealthProvider>
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }

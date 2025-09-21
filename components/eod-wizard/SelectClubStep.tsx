@@ -1,23 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { Dropdown, DropdownOption } from '@/components/ui';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { useColorScheme } from '@/components/useColorScheme';
+import { Colors } from '@/constants/Colors';
+import { Theme } from '@/constants/Theme';
+import { classTimesService } from '@/services/api/classTimes.service';
 import { useClubStore } from '@/store/clubStore';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
-import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
-import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
-import { Dropdown, DropdownOption } from '@/components/ui';
-import { Ionicons } from '@expo/vector-icons';
-import { classTimesService } from '@/services/api/classTimes.service';
 import { ClassTime, Club } from '@/types/api';
+import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
+import React, { useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 
 export const SelectClubStep: React.FC = () => {
   const colorScheme = useColorScheme();
@@ -173,13 +173,13 @@ export const SelectClubStep: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         Choose the club for today's end of day report
       </Text>
 
       <Card style={styles.dateCard}>
         <View style={styles.dateHeader}>
-          <Ionicons name="calendar" size={24} color={Theme.colors.primary} />
+          <Ionicons name="calendar" size={24} color={currentTheme.tint} />
           <Text style={[styles.dateText, { color: currentTheme.text }]}>
             {format(new Date(), 'EEEE, MMMM d, yyyy')}
           </Text>
@@ -189,8 +189,8 @@ export const SelectClubStep: React.FC = () => {
       {isLoading && (
         <Card style={styles.selectionCard}>
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="small" color={Theme.colors.primary} />
-            <Text style={[styles.loadingText, { color: Theme.colors.text.secondary }]}>
+            <ActivityIndicator size="small" color={currentTheme.tint} />
+            <Text style={[styles.loadingText, { color: currentTheme.text }]}>
               Loading clubs with classes today...
             </Text>
           </View>
@@ -200,11 +200,11 @@ export const SelectClubStep: React.FC = () => {
       {!isLoading && clubsWithClassesToday.length === 0 && (
         <Card style={styles.selectionCard}>
           <View style={styles.emptyContainer}>
-            <Ionicons name="calendar-outline" size={48} color={Theme.colors.text.tertiary} />
-            <Text style={[styles.emptyText, { color: Theme.colors.text.secondary }]}>
+            <Ionicons name="calendar-outline" size={48} color={currentTheme.text + '60'} />
+            <Text style={[styles.emptyText, { color: currentTheme.text }]}>
               No clubs have classes scheduled for today
             </Text>
-            <Text style={[styles.emptySubtext, { color: Theme.colors.text.tertiary }]}>
+            <Text style={[styles.emptySubtext, { color: currentTheme.text }]}>
               There are no classes to report on today
             </Text>
           </View>
@@ -215,7 +215,7 @@ export const SelectClubStep: React.FC = () => {
         <>
           <Card style={styles.selectionCard}>
             <View style={styles.cardHeader}>
-              <Ionicons name="business" size={24} color={Theme.colors.primary} />
+              <Ionicons name="business" size={24} color={currentTheme.tint} />
               <Text style={[styles.cardTitle, { color: currentTheme.text }]}>
                 Select Club
               </Text>
@@ -232,15 +232,15 @@ export const SelectClubStep: React.FC = () => {
             {selectedClub && (
               <View style={styles.selectedInfo}>
                 <View style={styles.infoRow}>
-                  <Ionicons name="location-outline" size={16} color={Theme.colors.text.secondary} />
-                  <Text style={[styles.infoText, { color: Theme.colors.text.secondary }]}>
+                  <Ionicons name="location-outline" size={16} color={currentTheme.text} />
+                  <Text style={[styles.infoText, { color: currentTheme.text }]}>
                     {selectedClub.address || 'No address available'}
                   </Text>
                 </View>
                 {selectedClub.postcode && (
                   <View style={styles.infoRow}>
-                    <Ionicons name="map-outline" size={16} color={Theme.colors.text.secondary} />
-                    <Text style={[styles.infoText, { color: Theme.colors.text.secondary }]}>
+                    <Ionicons name="map-outline" size={16} color={currentTheme.text} />
+                    <Text style={[styles.infoText, { color: currentTheme.text }]}>
                       {selectedClub.postcode}
                     </Text>
                   </View>
@@ -252,7 +252,7 @@ export const SelectClubStep: React.FC = () => {
           {selectedClub && selectedClubClasses.length > 0 && (
             <Card style={styles.classesCard}>
               <View style={styles.cardHeader}>
-                <Ionicons name="time" size={24} color={Theme.colors.info} />
+                <Ionicons name="time" size={24} color={'#2196F3'} />
                 <Text style={[styles.cardTitle, { color: currentTheme.text }]}>
                   Today's Classes at {selectedClub.name}
                 </Text>
@@ -266,7 +266,7 @@ export const SelectClubStep: React.FC = () => {
                   })
                   .map(classTime => (
                     <View key={classTime.id} style={styles.classItem}>
-                      <Ionicons name="checkmark-circle" size={20} color={Theme.colors.success} />
+                      <Ionicons name="checkmark-circle" size={20} color={'#4CAF50'} />
                       <Text style={[styles.classText, { color: currentTheme.text }]}>
                         {formatTime(classTime.start_time)} - {classTime.name || 'Class'}
                       </Text>
@@ -274,8 +274,8 @@ export const SelectClubStep: React.FC = () => {
                   ))}
               </View>
               <View style={styles.classNote}>
-                <Ionicons name="information-circle-outline" size={16} color={Theme.colors.text.secondary} />
-                <Text style={[styles.classNoteText, { color: Theme.colors.text.secondary }]}>
+                <Ionicons name="information-circle-outline" size={16} color={currentTheme.text} />
+                <Text style={[styles.classNoteText, { color: currentTheme.text }]}>
                   The report will include data for all classes at this club today
                 </Text>
               </View>
@@ -342,7 +342,7 @@ const styles = StyleSheet.create({
     marginTop: Theme.spacing.md,
     paddingTop: Theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: Colors.border.light,
   },
   infoRow: {
     flexDirection: 'row',
@@ -377,7 +377,7 @@ const styles = StyleSheet.create({
     marginTop: Theme.spacing.md,
     paddingTop: Theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: Colors.border.light,
   },
   classNoteText: {
     fontSize: Theme.typography.sizes.sm,

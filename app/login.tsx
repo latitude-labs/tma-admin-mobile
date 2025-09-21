@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -26,26 +26,49 @@ export default function LoginScreen() {
   const colorScheme = useColorScheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
+  // Auto-fill development credentials if available
+  const isDevelopment = __DEV__;
+  const devEmail = process.env.EXPO_PUBLIC_DEV_EMAIL || '';
+  const devPassword = process.env.EXPO_PUBLIC_DEV_PASSWORD || '';
+
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginRequest>({
     defaultValues: {
-      email: '',
-      password: '',
+      email: isDevelopment ? devEmail : '',
+      password: isDevelopment ? devPassword : '',
     },
   });
+
+  // Auto-login in development if credentials are set
+  useEffect(() => {
+    if (isDevelopment && devEmail && devPassword) {
+      // Delay to ensure API client is ready and form is visible
+      setTimeout(() => {
+        handleSubmit(onSubmit)();
+      }, 1000);
+    }
+  }, []);
 
   const onSubmit = async (data: LoginRequest) => {
     setIsLoading(true);
     try {
-      const user = await login(data);
-      // Navigate based on user role
-      if (user.is_admin) {
-        router.replace('/(drawer)/dashboard');
-      } else {
-        router.replace('/(drawer)/coach-dashboard');
+      await login(data);
+      // Navigation is now handled inside the login function
+      // If 2FA is required, it will navigate to the 2FA verification screen
+      // If not, it will complete login and we navigate based on user role
+      const state = useAuthStore.getState();
+      if (state.isAuthenticated && state.user) {
+        // Ensure token is fully propagated before navigation
+        await new Promise(resolve => setTimeout(resolve, 500));
+
+        if (state.user.is_admin) {
+          router.replace('/(drawer)/dashboard');
+        } else {
+          router.replace('/(drawer)/coach-dashboard');
+        }
       }
     } catch (error: any) {
       Alert.alert(

@@ -1,0 +1,379 @@
+import React, { useState } from 'react';
+import {
+  ScrollView,
+  View,
+  Text,
+  StyleSheet,
+  Switch,
+  Alert,
+  Platform,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Linking } from 'react-native';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
+import { Colors } from '@/constants/Colors';
+import { useNotificationStore } from '@/store/notificationStore';
+import { Ionicons } from '@expo/vector-icons';
+
+export default function NotificationSettingsScreen() {
+  const {
+    hasPermission,
+    pushToken,
+    notifications,
+    unreadCount,
+    refreshPermissions,
+    testLocalNotification,
+    testBackendNotification,
+    clearNotifications,
+    markAllAsRead,
+  } = useNotificationStore();
+
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    newSignups: true,
+    endOfDay: true,
+    reminders: true,
+    systemAlerts: true,
+  });
+
+  const handlePermissionRequest = async () => {
+    await refreshPermissions();
+    if (!hasPermission) {
+      Alert.alert(
+        'Permission Required',
+        'Please enable notifications in your device settings to receive push notifications.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Open Settings',
+            onPress: () => {
+              if (Platform.OS === 'ios') {
+                Linking.openURL('app-settings:');
+              } else {
+                Linking.openSettings();
+              }
+            },
+          },
+        ]
+      );
+    }
+  };
+
+  const handleTestLocalNotification = () => {
+    testLocalNotification();
+    Alert.alert('Test Sent', 'A local test notification will appear in 2 seconds.');
+  };
+
+  const handleTestBackendNotification = async () => {
+    try {
+      await testBackendNotification();
+      Alert.alert('Test Sent', 'A push notification has been sent from the server.');
+    } catch (error: any) {
+      Alert.alert('Test Failed', error.message || 'Failed to send test notification');
+    }
+  };
+
+  const handleClearAll = () => {
+    Alert.alert(
+      'Clear All Notifications',
+      'Are you sure you want to clear all notifications?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Clear All',
+          style: 'destructive',
+          onPress: clearNotifications,
+        },
+      ]
+    );
+  };
+
+  const togglePreference = (key: keyof typeof notificationPreferences) => {
+    setNotificationPreferences(prev => ({
+      ...prev,
+      [key]: !prev[key],
+    }));
+    // TODO: Save preference to backend
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent}>
+        {/* Permission Status Card */}
+        <Card variant="elevated" style={styles.card}>
+          <View style={styles.statusContainer}>
+            <Ionicons
+              name={hasPermission ? 'checkmark-circle' : 'close-circle'}
+              size={32}
+              color={hasPermission ? Colors.status.success : Colors.status.error}
+            />
+            <View style={styles.statusText}>
+              <Text style={styles.statusTitle}>
+                Notifications {hasPermission ? 'Enabled' : 'Disabled'}
+              </Text>
+              <Text style={styles.statusDescription}>
+                {hasPermission
+                  ? 'You will receive push notifications'
+                  : 'Enable notifications to stay updated'}
+              </Text>
+            </View>
+          </View>
+
+          {!hasPermission && (
+            <Button
+              onPress={handlePermissionRequest}
+              style={styles.enableButton}
+            >
+              Enable Notifications
+            </Button>
+          )}
+        </Card>
+
+        {/* Notification Statistics */}
+        <Card variant="filled" style={styles.card}>
+          <Text style={styles.sectionTitle}>Statistics</Text>
+          <View style={styles.statsRow}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{notifications.length}</Text>
+              <Text style={styles.statLabel}>Total</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: Colors.primary }]}>
+                {unreadCount}
+              </Text>
+              <Text style={styles.statLabel}>Unread</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>
+                {notifications.length - unreadCount}
+              </Text>
+              <Text style={styles.statLabel}>Read</Text>
+            </View>
+          </View>
+
+          <View style={styles.actionButtons}>
+            <Button
+              variant="outline"
+              onPress={markAllAsRead}
+              disabled={unreadCount === 0}
+            >
+              Mark All Read
+            </Button>
+            <Button
+              variant="text"
+              onPress={handleClearAll}
+              disabled={notifications.length === 0}
+            >
+              Clear All
+            </Button>
+          </View>
+        </Card>
+
+        {/* Notification Preferences */}
+        <Card variant="outlined" style={styles.card}>
+          <Text style={styles.sectionTitle}>Notification Types</Text>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>New Signups</Text>
+              <Text style={styles.preferenceDescription}>
+                Get notified when new members sign up
+              </Text>
+            </View>
+            <Switch
+              value={notificationPreferences.newSignups}
+              onValueChange={() => togglePreference('newSignups')}
+              trackColor={{ false: Colors.border.default, true: Colors.primary }}
+              thumbColor={Colors.background.primary}
+            />
+          </View>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>End of Day Reminders</Text>
+              <Text style={styles.preferenceDescription}>
+                Daily reminder to complete EOD reports
+              </Text>
+            </View>
+            <Switch
+              value={notificationPreferences.endOfDay}
+              onValueChange={() => togglePreference('endOfDay')}
+              trackColor={{ false: Colors.border.default, true: Colors.primary }}
+              thumbColor={Colors.background.primary}
+            />
+          </View>
+
+          <View style={styles.preferenceItem}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>General Reminders</Text>
+              <Text style={styles.preferenceDescription}>
+                Important tasks and deadlines
+              </Text>
+            </View>
+            <Switch
+              value={notificationPreferences.reminders}
+              onValueChange={() => togglePreference('reminders')}
+              trackColor={{ false: Colors.border.default, true: Colors.primary }}
+              thumbColor={Colors.background.primary}
+            />
+          </View>
+
+          <View style={[styles.preferenceItem, { borderBottomWidth: 0 }]}>
+            <View style={styles.preferenceInfo}>
+              <Text style={styles.preferenceTitle}>System Alerts</Text>
+              <Text style={styles.preferenceDescription}>
+                Important system updates and maintenance
+              </Text>
+            </View>
+            <Switch
+              value={notificationPreferences.systemAlerts}
+              onValueChange={() => togglePreference('systemAlerts')}
+              trackColor={{ false: Colors.border.default, true: Colors.primary }}
+              thumbColor={Colors.background.primary}
+            />
+          </View>
+        </Card>
+
+        {/* Debug Information */}
+        {__DEV__ && (
+          <Card variant="filled" style={[styles.card, styles.debugCard]}>
+            <Text style={styles.sectionTitle}>Debug Info</Text>
+            <Text style={styles.debugText}>
+              Push Token: {pushToken ? `${pushToken.substring(0, 20)}...` : 'Not registered'}
+            </Text>
+            <Text style={styles.debugText}>
+              Platform: {Platform.OS}
+            </Text>
+
+            <View style={styles.testButtons}>
+              <Button
+                onPress={handleTestLocalNotification}
+                variant="secondary"
+                style={styles.testButton}
+              >
+                Local Test
+              </Button>
+              <Button
+                onPress={handleTestBackendNotification}
+                variant="primary"
+                style={styles.testButton}
+              >
+                Server Test
+              </Button>
+            </View>
+          </Card>
+        )}
+      </ScrollView>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background.secondary,
+  },
+  scrollContent: {
+    padding: 16,
+    paddingBottom: 32,
+  },
+  card: {
+    marginBottom: 16,
+  },
+  statusContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  statusText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  statusTitle: {
+    fontSize: 18,
+    fontFamily: 'Manrope_600SemiBold',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  statusDescription: {
+    fontSize: 14,
+    fontFamily: 'Manrope_400Regular',
+    color: Colors.text.secondary,
+  },
+  enableButton: {
+    marginTop: 8,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Manrope_600SemiBold',
+    color: Colors.text.primary,
+    marginBottom: 16,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 20,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontSize: 24,
+    fontFamily: 'Manrope_700Bold',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 12,
+    fontFamily: 'Manrope_400Regular',
+    color: Colors.text.secondary,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.border.light,
+  },
+  preferenceItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border.light,
+  },
+  preferenceInfo: {
+    flex: 1,
+    marginRight: 12,
+  },
+  preferenceTitle: {
+    fontSize: 14,
+    fontFamily: 'Manrope_500Medium',
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  preferenceDescription: {
+    fontSize: 12,
+    fontFamily: 'Manrope_400Regular',
+    color: Colors.text.secondary,
+  },
+  debugCard: {
+    backgroundColor: Colors.background.tertiary,
+  },
+  debugText: {
+    fontSize: 12,
+    fontFamily: 'Manrope_400Regular',
+    color: Colors.text.secondary,
+    marginBottom: 8,
+  },
+  testButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+    gap: 12,
+  },
+  testButton: {
+    flex: 1,
+  },
+});

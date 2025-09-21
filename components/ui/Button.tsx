@@ -90,6 +90,49 @@ export const Button: React.FC<ButtonProps> = ({
     return colors.tint;
   };
 
+  const renderContent = () => {
+    const childArray = React.Children.toArray(children);
+
+    const rendered = childArray
+      .map((child, index) => {
+        if (typeof child === 'string') {
+          const trimmed = child.trim();
+          if (!trimmed) {
+            return null;
+          }
+
+          return (
+            <Text key={index} style={textStyles}>
+              {trimmed}
+            </Text>
+          );
+        }
+
+        if (typeof child === 'number') {
+          return (
+            <Text key={index} style={textStyles}>
+              {child}
+            </Text>
+          );
+        }
+
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, {
+            key: child.key ?? index,
+          });
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    if (rendered.length === 0) {
+      return null;
+    }
+
+    return rendered.length === 1 ? rendered[0] : rendered;
+  };
+
   return (
     <TouchableOpacity
       style={buttonStyles}
@@ -103,7 +146,7 @@ export const Button: React.FC<ButtonProps> = ({
           size={size === 'sm' ? 'small' : 'small'}
         />
       ) : (
-        <Text style={textStyles}>{children}</Text>
+        renderContent()
       )}
     </TouchableOpacity>
   );

@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -6,21 +7,19 @@ import {
   Alert,
   Animated,
   Dimensions,
-  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View,
+  View
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 
 import { RemindersSection } from '@/components/dashboard/RemindersSection';
 import { SkeletonLoader } from '@/components/SkeletonLoader';
-import { Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { useOffline } from '@/hooks/useOffline';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { bookingsService } from '@/services/api/bookings.service';
 import { classTimesService } from '@/services/api/classTimes.service';
 import { remindersService } from '@/services/api/reminders.service';
@@ -130,15 +129,22 @@ export default function CoachDashboardScreen() {
 
   useEffect(() => {
     if (user) {
-      initializeDaysData();
-      loadReminders();
+      // Small delay to ensure auth is fully ready
+      const loadData = async () => {
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Fade in animation
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 500,
-        useNativeDriver: true,
-      }).start();
+        initializeDaysData();
+        loadReminders();
+
+        // Fade in animation
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }).start();
+      };
+
+      loadData();
     }
 
     return () => {
@@ -437,6 +443,9 @@ export default function CoachDashboardScreen() {
   };
 
   const handleRefresh = async () => {
+    // Add haptic feedback when sync button is tapped
+    await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
     if (isSyncing || isRefreshing) {
       return;
     }
@@ -611,77 +620,6 @@ export default function CoachDashboardScreen() {
           onViewAll={handleViewAllReminders}
         />
 
-        {/* Today's Overview with Circular Progress - Moved after Classes */}
-        <View style={styles.overviewContainer}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Today's Metrics</Text>
-            {stats.percentage === 100 && <Text style={styles.celebrateEmoji}>🎉</Text>}
-          </View>
-          <Card variant="elevated" style={styles.overviewCard}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <CircularProgress
-                  percentage={stats.classes > 0 ? Math.min(100, stats.classes * 20) : 0}
-                  size={70}
-                  strokeWidth={7}
-                  color={colors.tint}
-                  bgColor={`${colors.tint}15`}
-                >
-                  <View style={styles.statContent}>
-                    <Text style={styles.statNumber}>{stats.classes}</Text>
-                  </View>
-                </CircularProgress>
-                <Text style={styles.statLabel}>Classes</Text>
-              </View>
-
-              <View style={styles.statItem}>
-                <CircularProgress
-                  percentage={stats.bookings > 0 ? Math.min(100, (stats.bookings / 30) * 100) : 0}
-                  size={70}
-                  strokeWidth={7}
-                  color={colors.statusInfo}
-                  bgColor={`${colors.statusInfo}15`}
-                >
-                  <View style={styles.statContent}>
-                    <Text style={styles.statNumber}>{stats.bookings}</Text>
-                  </View>
-                </CircularProgress>
-                <Text style={styles.statLabel}>Trials</Text>
-              </View>
-
-              <View style={styles.statItem}>
-                <CircularProgress
-                  percentage={stats.percentage}
-                  size={70}
-                  strokeWidth={7}
-                  color={
-                    stats.percentage === 100 ? colors.statusSuccess :
-                    stats.percentage >= 75 ? colors.statusWarning :
-                    colors.statusInfo
-                  }
-                  bgColor={
-                    stats.percentage === 100 ? `${colors.statusSuccess}15` :
-                    stats.percentage >= 75 ? `${colors.statusWarning}15` :
-                    `${colors.statusInfo}15`
-                  }
-                >
-                  <View style={styles.statContent}>
-                    <Text style={styles.statNumber}>{stats.percentage}%</Text>
-                  </View>
-                </CircularProgress>
-                <Text style={styles.statLabel}>Complete</Text>
-              </View>
-            </View>
-
-            {stats.percentage === 100 && (
-              <View style={styles.completionBadge}>
-                <Text style={styles.completionText}>🏆 All classes processed!</Text>
-              </View>
-            )}
-          </Card>
-        </View>
-
-        {/* Classes Section - Moved before stats */}
         <View style={styles.classesSection}>
           <View style={styles.sectionHeaderWithAction}>
             <Text style={styles.sectionTitle}>Your Classes</Text>

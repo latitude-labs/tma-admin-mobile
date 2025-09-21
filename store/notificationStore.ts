@@ -1,138 +1,158 @@
 import { create } from 'zustand';
+import * as Notifications from 'expo-notifications';
+import { notificationService } from '@/services/notification.service';
+import { notificationApiService } from '@/services/api/notification.service';
 import { Notification } from '@/types/notification';
-import { notificationService } from '@/services/notificationService';
+
+export interface NotificationItem {
+  id: string;
+  title: string;
+  body: string;
+  data?: any;
+  timestamp: Date;
+  read: boolean;
+}
 
 interface NotificationState {
+  // Push token
+  pushToken: string | null;
+
+  // Notifications (from API)
   notifications: Notification[];
+  // Local push notifications
+  localNotifications: NotificationItem[];
   unreadCount: number;
-  lastFetch: Date | null;
-  isLoading: boolean;
-  error: string | null;
+
+  // Filtering
   filter: 'all' | 'unread' | 'read';
 
-  // Actions
-  setNotifications: (notifications: Notification[]) => void;
-  setUnreadCount: (count: number) => void;
-  setFilter: (filter: 'all' | 'unread' | 'read') => void;
-  addNotification: (notification: Notification) => void;
-  markAsRead: (notificationId: string) => void;
-  markAllAsRead: () => void;
-  deleteNotification: (notificationId: string) => void;
+  // Permissions
+  hasPermission: boolean;
+
+  // Loading states
+  isInitializing: boolean;
+  isSendingToken: boolean;
+  isLoading: boolean;
+  error: string | null;
+
+  // Polling
+  pollingInterval: NodeJS.Timeout | null;
+
+  // Actions - Push notifications
+  initialize: () => Promise<void>;
+  cleanup: () => Promise<void>;
+  addNotification: (notification: Notifications.Notification) => void;
+  setPushToken: (token: string | null) => void;
+  setHasPermission: (hasPermission: boolean) => void;
+  refreshPermissions: () => Promise<void>;
+  testLocalNotification: () => Promise<void>;
+  testBackendNotification: () => Promise<void>;
+
+  // Actions - API notifications
   fetchNotifications: () => Promise<void>;
-  fetchUnreadCount: () => Promise<void>;
+  markAsRead: (notificationId: string) => Promise<void>;
+  markAllAsRead: () => Promise<void>;
+  deleteNotification: (notificationId: string) => Promise<void>;
+  setFilter: (filter: 'all' | 'unread' | 'read') => void;
+  clearNotifications: () => void;
   startPolling: () => void;
   stopPolling: () => void;
 }
 
 export const useNotificationStore = create<NotificationState>((set, get) => ({
+  // Initial state
+  pushToken: null,
   notifications: [],
+  localNotifications: [],
   unreadCount: 0,
-  lastFetch: null,
+  filter: 'all',
+  hasPermission: false,
+  isInitializing: false,
+  isSendingToken: false,
   isLoading: false,
   error: null,
-  filter: 'all',
+  pollingInterval: null,
 
-  setNotifications: (notifications) =>
-    set({
-      notifications,
-      unreadCount: notifications.filter((n) => !n.read).length,
-    }),
+  // Initialize notifications
+  initialize: async () => {
+    set({ isInitializing: true });
 
-  setUnreadCount: (count) => set({ unreadCount: count }),
+    try {
+      // Check if notifications are enabled
+      const hasPermission = await notificationService.areNotificationsEnabled();
+      set({ hasPermission });
 
-  setFilter: (filter) => {
-    set({ filter });
+      if (hasPermission) {
+        // Register for push notifications
+        const token = await notificationService.registerForPushNotifications();
+
+        if (token) {
+          set({ pushToken: token, isSendingToken: true });
+
+          // Send token to backend
+          await notificationService.sendTokenToBackend(token);
+          set({ isSendingToken: false });
+        }
+      }
+
+      // Initialize listeners
+      notificationService.initializeListeners(
+        // On notification received
+        (notification) => {
+          get().addNotification(notification);
+        },
+        // On notification interaction
+        (response) => {
+          const notificationId = response.notification.request.identifier;
+          get().markAsRead(notificationId);
+
+          // Handle navigation based on notification data
+          const data = response.notification.request.content.data;
+          if (data?.screen) {
+            // Navigation will be handled by the app layout
+            console.log('Navigate to:', data.screen);
+          }
+        }
+      );
+
+      // Clear badge on app open
+      await notificationService.clearBadge();
+    } catch (error) {
+      console.error('Error initializing notifications:', error);
+    } finally {
+      set({ isInitializing: false });
+    }
+  },
+
+  // Add a new local push notification
+  addNotification: (notification) => {
+    const newNotification: NotificationItem = {
+      id: notification.request.identifier,
+      title: notification.request.content.title || 'Notification',
+      body: notification.request.content.body || '',
+      data: notification.request.content.data,
+      timestamp: new Date(notification.date),
+      read: false,
+    };
+
+    set((state) => ({
+      localNotifications: [newNotification, ...state.localNotifications],
+    }));
+
+    // Also fetch latest notifications from API to sync
     get().fetchNotifications();
   },
 
-  addNotification: (notification) =>
-    set((state) => ({
-      notifications: [notification, ...state.notifications],
-      unreadCount: state.unreadCount + (notification.read ? 0 : 1),
-    })),
-
-  markAsRead: async (notificationId) => {
-    try {
-      // Optimistically update UI
-      const now = new Date();
-      set((state) => {
-        const updatedNotifications = state.notifications.map((n) =>
-          n.id === notificationId ? { ...n, read: true, readAt: now } : n
-        );
-        return {
-          notifications: updatedNotifications,
-          unreadCount: updatedNotifications.filter((n) => !n.read).length,
-        };
-      });
-
-      // Call API
-      await notificationService.markAsRead(notificationId);
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
-      // Revert on error
-      get().fetchNotifications();
-    }
-  },
-
-  markAllAsRead: async () => {
-    try {
-      // Optimistically update UI
-      const now = new Date();
-      set((state) => {
-        const updatedNotifications = state.notifications.map((n) => ({
-          ...n,
-          read: true,
-          readAt: n.read ? n.readAt : now,
-        }));
-
-        return {
-          notifications: updatedNotifications,
-          unreadCount: 0,
-        };
-      });
-
-      // Call API
-      await notificationService.markAllAsRead();
-    } catch (error) {
-      console.error('Failed to mark all notifications as read:', error);
-      // Revert on error
-      get().fetchNotifications();
-    }
-  },
-
-  deleteNotification: async (notificationId) => {
-    try {
-      // Optimistically update UI
-      set((state) => {
-        const filteredNotifications = state.notifications.filter(
-          (n) => n.id !== notificationId
-        );
-        return {
-          notifications: filteredNotifications,
-          unreadCount: filteredNotifications.filter((n) => !n.read).length,
-        };
-      });
-
-      // Call API
-      await notificationService.deleteNotification(notificationId);
-    } catch (error) {
-      console.error('Failed to delete notification:', error);
-      // Revert on error
-      get().fetchNotifications();
-    }
-  },
-
+  // Fetch notifications from API
   fetchNotifications: async () => {
     set({ isLoading: true, error: null });
-
     try {
       const { filter } = get();
-      const result = await notificationService.fetchNotifications(filter);
+      const result = await notificationApiService.fetchNotifications(filter);
 
       set({
         notifications: result.notifications,
         unreadCount: result.unreadCount,
-        lastFetch: new Date(),
         isLoading: false,
       });
     } catch (error: any) {
@@ -144,28 +164,183 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     }
   },
 
-  fetchUnreadCount: async () => {
+  // Mark notification as read
+  markAsRead: async (notificationId) => {
     try {
-      const count = await notificationService.getUnreadCount();
-      set({ unreadCount: count });
+      // Optimistically update UI
+      set((state) => {
+        const notifications = state.notifications.map((notif) =>
+          notif.id === notificationId ? { ...notif, read: true, readAt: new Date() } : notif
+        );
+        const unreadCount = notifications.filter((n) => !n.read).length;
+        return { notifications, unreadCount };
+      });
+
+      // Call API
+      await notificationApiService.markAsRead(notificationId);
+
+      // Clear badge if no more unread
+      const { unreadCount } = get();
+      if (unreadCount === 0) {
+        notificationService.clearBadge();
+      }
     } catch (error) {
-      console.error('Failed to fetch unread count:', error);
+      console.error('Failed to mark notification as read:', error);
+      // Revert on error
+      get().fetchNotifications();
     }
   },
 
-  startPolling: () => {
-    // Poll unread count every 30 seconds
-    notificationService.startPolling((count) => {
-      set({ unreadCount: count });
-    });
+  // Mark all notifications as read
+  markAllAsRead: async () => {
+    try {
+      // Optimistically update UI
+      set((state) => ({
+        notifications: state.notifications.map((notif) => ({
+          ...notif,
+          read: true,
+          readAt: notif.read ? notif.readAt : new Date(),
+        })),
+        unreadCount: 0,
+      }));
 
-    // Fetch full notifications list every 60 seconds
-    setInterval(() => {
+      // Call API
+      await notificationApiService.markAllAsRead();
+
+      // Clear badge
+      notificationService.clearBadge();
+    } catch (error) {
+      console.error('Failed to mark all notifications as read:', error);
+      // Revert on error
       get().fetchNotifications();
-    }, 60000);
+    }
   },
 
+  // Delete a specific notification
+  deleteNotification: async (notificationId) => {
+    try {
+      // Optimistically update UI
+      set((state) => {
+        const notifications = state.notifications.filter((n) => n.id !== notificationId);
+        const unreadCount = notifications.filter((n) => !n.read).length;
+        return { notifications, unreadCount };
+      });
+
+      // Call API
+      await notificationApiService.deleteNotification(notificationId);
+    } catch (error) {
+      console.error('Failed to delete notification:', error);
+      // Revert on error
+      get().fetchNotifications();
+    }
+  },
+
+  // Set filter
+  setFilter: (filter) => {
+    set({ filter });
+    get().fetchNotifications();
+  },
+
+  // Clear all notifications
+  clearNotifications: () => {
+    set({ notifications: [], localNotifications: [], unreadCount: 0 });
+    notificationService.dismissAllNotifications();
+  },
+
+  // Start polling for notifications
+  startPolling: () => {
+    const { pollingInterval } = get();
+    if (pollingInterval) return; // Already polling
+
+    // Fetch immediately
+    get().fetchNotifications();
+
+    // Poll every 30 seconds
+    const interval = setInterval(() => {
+      get().fetchNotifications();
+    }, 30000);
+
+    set({ pollingInterval: interval });
+  },
+
+  // Stop polling
   stopPolling: () => {
-    notificationService.stopPolling();
+    const { pollingInterval } = get();
+    if (pollingInterval) {
+      clearInterval(pollingInterval);
+      set({ pollingInterval: null });
+    }
+  },
+
+  // Set push token
+  setPushToken: (token) => {
+    set({ pushToken: token });
+  },
+
+  // Set permission status
+  setHasPermission: (hasPermission) => {
+    set({ hasPermission });
+  },
+
+  // Refresh permission status
+  refreshPermissions: async () => {
+    const hasPermission = await notificationService.areNotificationsEnabled();
+    set({ hasPermission });
+
+    if (!hasPermission) {
+      // Request permissions
+      const granted = await notificationService.requestPermissions();
+      if (granted) {
+        set({ hasPermission: true });
+        // Re-initialize if permissions were granted
+        get().initialize();
+      }
+    }
+  },
+
+  // Test local notification
+  testLocalNotification: async () => {
+    await notificationService.scheduleLocalNotification(
+      'Test Notification',
+      'This is a test notification from TMA Admin',
+      { test: true, timestamp: Date.now() },
+      2
+    );
+  },
+
+  // Test backend notification
+  testBackendNotification: async () => {
+    await notificationService.sendTestNotification();
+  },
+
+  // Cleanup on logout
+  cleanup: async () => {
+    const { pushToken } = get();
+
+    // Stop polling
+    get().stopPolling();
+
+    // Remove push token from backend if it exists
+    if (pushToken) {
+      await notificationService.removePushToken(pushToken);
+    }
+
+    // Remove listeners
+    notificationService.removeListeners();
+
+    // Reset state
+    set({
+      pushToken: null,
+      notifications: [],
+      localNotifications: [],
+      unreadCount: 0,
+      filter: 'all',
+      hasPermission: false,
+      isInitializing: false,
+      isSendingToken: false,
+      isLoading: false,
+      error: null,
+      pollingInterval: null,
+    });
   },
 }));

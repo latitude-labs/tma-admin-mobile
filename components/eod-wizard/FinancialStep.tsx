@@ -67,13 +67,13 @@ export const FinancialStep: React.FC = () => {
       <Text style={[styles.title, { color: currentTheme.text }]}>
         Cash Collection
       </Text>
-      <Text style={[styles.description, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.description, { color: currentTheme.text }]}>
         How much cash was collected today?
       </Text>
 
       <Card style={styles.inputCard}>
         <View style={styles.currencyInputContainer}>
-          <Text style={[styles.currencySymbol, { color: Theme.colors.primary }]}>
+          <Text style={[styles.currencySymbol, { color: currentTheme.tint }]}>
             £
           </Text>
           <TextInput
@@ -81,7 +81,7 @@ export const FinancialStep: React.FC = () => {
             value={cashAmount}
             onChangeText={handleCashChange}
             placeholder="0.00"
-            placeholderTextColor={Theme.colors.text.secondary}
+            placeholderTextColor={currentTheme.text + '80'}
             keyboardType="decimal-pad"
             maxLength={10}
             returnKeyType="done"
@@ -91,7 +91,7 @@ export const FinancialStep: React.FC = () => {
       </Card>
 
       <View style={styles.quickAmounts}>
-        <Text style={[styles.quickAmountsLabel, { color: Theme.colors.text.secondary }]}>
+        <Text style={[styles.quickAmountsLabel, { color: currentTheme.text }]}>
           Quick add:
         </Text>
         <View style={styles.quickAmountsGrid}>
@@ -99,21 +99,21 @@ export const FinancialStep: React.FC = () => {
             <TouchableOpacity
               key={amount}
               onPress={() => handleQuickAmount(amount)}
-              style={styles.quickAmountButton}
+              style={[styles.quickAmountButton, { backgroundColor: currentTheme.card }]}
             >
-              <Text style={styles.quickAmountText}>+£{amount}</Text>
+              <Text style={[styles.quickAmountText, { color: currentTheme.text }]}>+£{amount}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <Card style={styles.summaryCard}>
+      <Card style={[styles.summaryCard, { backgroundColor: currentTheme.card }]}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryLabel, { color: Theme.colors.text.secondary }]}>
+            <Text style={[styles.summaryLabel, { color: currentTheme.text }]}>
               Kit Sales Expected
             </Text>
-            <Text style={[styles.summaryHint, { color: Theme.colors.text.tertiary }]}>
+            <Text style={[styles.summaryHint, { color: currentTheme.text }]}>
               (Approx. £40 per kit)
             </Text>
           </View>
@@ -125,21 +125,21 @@ export const FinancialStep: React.FC = () => {
           </Text>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: Theme.colors.border.light }]} />
+        <View style={[styles.divider, { backgroundColor: currentTheme.border }]} />
 
         <View style={styles.summaryRow}>
           <Text style={[styles.totalLabel, { color: currentTheme.text }]}>
             Total Cash Collected
           </Text>
-          <Text style={[styles.totalValue, { color: Theme.colors.success }]}>
+          <Text style={[styles.totalValue, { color: '#4CAF50' }]}>
             £{formatCurrency(cashAmount)}
           </Text>
         </View>
       </Card>
 
       <View style={styles.info}>
-        <Ionicons name="information-circle" size={20} color={Theme.colors.info} />
-        <Text style={[styles.infoText, { color: Theme.colors.info }]}>
+        <Ionicons name="information-circle" size={20} color={'#2196F3'} />
+        <Text style={[styles.infoText, { color: '#2196F3' }]}>
           Include all cash collected: kit sales, trial fees, and any other payments
         </Text>
       </View>
@@ -214,19 +214,16 @@ const styles = StyleSheet.create({
     marginHorizontal: -Theme.spacing.xs,
   },
   quickAmountButton: {
-    backgroundColor: Theme.colors.secondary.light,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.md,
     margin: Theme.spacing.xs,
   },
   quickAmountText: {
-    color: Theme.colors.text.primary,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
   },
   summaryCard: {
-    backgroundColor: Theme.colors.background.secondary,
     marginBottom: Theme.spacing.lg,
   },
   summaryRow: {
@@ -266,7 +263,7 @@ const styles = StyleSheet.create({
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.info + '10',
+    backgroundColor: '#2196F3' + '10',
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.md,
     marginBottom: Theme.spacing.lg,
