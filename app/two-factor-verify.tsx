@@ -109,9 +109,9 @@ export default function TwoFactorVerifyScreen() {
 
         // Navigate based on user role
         if (response.user.is_admin) {
-          router.replace('/(drawer)/dashboard');
+          router.replace('/(tabs)/dashboard');
         } else {
-          router.replace('/(drawer)/coach-dashboard');
+          router.replace('/(tabs)/dashboard');
         }
       }
     } catch (error: any) {
@@ -137,9 +137,9 @@ export default function TwoFactorVerifyScreen() {
 
         // Navigate based on user role
         if (response.user.is_admin) {
-          router.replace('/(drawer)/dashboard');
+          router.replace('/(tabs)/dashboard');
         } else {
-          router.replace('/(drawer)/coach-dashboard');
+          router.replace('/(tabs)/dashboard');
         }
       }
     } catch (error: any) {

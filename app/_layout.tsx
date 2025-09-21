@@ -135,12 +135,8 @@ function RootLayoutNav() {
       }
 
       if (isAuthenticated && user) {
-        // Navigate based on user role
-        if (user.is_admin) {
-          router.replace('/(drawer)/dashboard');
-        } else {
-          router.replace('/(drawer)/coach-dashboard');
-        }
+        // Navigate to tabs dashboard (handles both admin and coach)
+        router.replace('/(tabs)/dashboard');
       } else if (!isAuthenticated) {
         router.replace('/login');
       }
@@ -160,6 +156,7 @@ function RootLayoutNav() {
             <Stack>
               <Stack.Screen name="login" options={{ headerShown: false }} />
               <Stack.Screen name="two-factor-verify" options={{ headerShown: false }} />
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
               <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
               <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
               <Stack.Screen name="design-system" options={{ title: 'Design System' }} />

@@ -95,7 +95,6 @@ export default function CalendarScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Calendar</Text>
         <View style={styles.headerActions}>
@@ -112,9 +111,7 @@ export default function CalendarScreen() {
         </View>
       </View>
 
-      {/* Main Content - Calendar scrollable behind fixed buttons */}
       <View style={styles.contentWrapper}>
-        {/* Calendar View */}
         <CalendarView
           onDateSelect={handleDateSelect}
           onEventSelect={handleEventSelect}
@@ -130,7 +127,6 @@ export default function CalendarScreen() {
           }
         />
 
-        {/* Fixed Bottom Action Buttons */}
         <View style={styles.bottomActions}>
           <View style={styles.bottomButtonsContainer}>
             <TouchableOpacity
@@ -151,7 +147,6 @@ export default function CalendarScreen() {
         </View>
       </View>
 
-      {/* Floating Action Button for Admin */}
       {isAdmin && (
         <TouchableOpacity
           style={styles.fab}
@@ -161,7 +156,6 @@ export default function CalendarScreen() {
         </TouchableOpacity>
       )}
 
-      {/* Holiday Request Modal */}
       <HolidayRequestModal
         visible={showHolidayModal}
         onClose={() => setShowHolidayModal(false)}

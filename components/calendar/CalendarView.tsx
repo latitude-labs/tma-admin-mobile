@@ -447,7 +447,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     return (
       <>
-        {/* Render holiday overlay if present */}
         {holidayEvents.length > 0 && (
           <View style={styles.holidayOverlay} pointerEvents="none">
             <View style={styles.holidayBanner}>
@@ -459,7 +458,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                 }
               </Text>
             </View>
-            {/* Add horizontal stripes pattern */}
             <View style={styles.holidayStripesContainer}>
               {Array.from({ length: stripeCount }).map((_, i) => (
                 <View
@@ -477,7 +475,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           </View>
         )}
 
-        {/* Render timeline events */}
         {eventPositions.map(({ event, top, height, left, width }) => (
           <TouchableOpacity
             key={event.id}
@@ -532,13 +529,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
           <View style={styles.timelineContainer}>
             {renderTimeAxis()}
             <View style={styles.eventsContainer}>
-              {/* Hour grid lines - adjusted for 8 AM start */}
               {Array.from({ length: 16 }, (_, i) => (
                 <View key={i} style={[styles.hourLine, { top: i * HOUR_HEIGHT }]} />
               ))}
-              {/* Events */}
               {renderEventsOnTimeline()}
-              {/* Current time indicator */}
               {renderCurrentTimeLine()}
             </View>
           </View>
@@ -549,7 +543,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Sticky Header */}
       <View style={styles.stickyHeader}>
         <TouchableOpacity onPress={handlePreviousDay} style={styles.navButton}>
           <Ionicons name="chevron-back" size={24} color={palette.textPrimary} />
@@ -568,7 +561,6 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </TouchableOpacity>
       </View>
 
-      {/* Calendar Content */}
       {renderDayView()}
     </View>
   );

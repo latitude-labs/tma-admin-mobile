@@ -571,7 +571,6 @@ export default function CoachDashboardScreen() {
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
       >
-        {/* Friendly Header */}
         <View style={styles.header}>
           <View style={styles.headerTop}>
             <View style={styles.greetingContainer}>
@@ -610,7 +609,6 @@ export default function CoachDashboardScreen() {
           </View>
         </View>
 
-        {/* Reminders Section */}
         <RemindersSection
           reminders={reminders}
           loading={remindersLoading}
@@ -773,7 +771,6 @@ export default function CoachDashboardScreen() {
         <View style={{ height: 150 }} />
       </ScrollView>
 
-      {/* Floating Action Buttons */}
       <View style={styles.floatingActions}>
         <TouchableOpacity
           style={[styles.fab, styles.fabSecondary]}

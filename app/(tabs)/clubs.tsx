@@ -71,7 +71,6 @@ const ClubItem = React.memo(({
         entering={FadeInDown.delay(index * 100).duration(400).springify()}
         layout={Layout.springify()}
       >
-        {/* Club Header */}
         <View style={styles.clubHeader}>
           <View style={styles.clubIconContainer}>
             <Ionicons name="business" size={28} color={palette.tint} />
@@ -101,7 +100,6 @@ const ClubItem = React.memo(({
           </Animated.View>
         </View>
 
-        {/* Location Info */}
         {(club.address || club.postcode) && (
           <View style={styles.locationContainer}>
             <Ionicons name="location" size={16} color={palette.textTertiary} />
@@ -111,7 +109,6 @@ const ClubItem = React.memo(({
           </View>
         )}
 
-        {/* Expanded Content */}
         {isExpanded && club.class_times && club.class_times.length > 0 && (
           <Animated.View
             entering={FadeIn.duration(300)}
@@ -269,7 +266,6 @@ export default function ClubsScreen() {
         />
       }>
       <View style={styles.content}>
-        {/* Header Section */}
         <Animated.View
           entering={FadeInDown.duration(400).springify()}
           style={styles.headerSection}
@@ -309,7 +305,6 @@ export default function ClubsScreen() {
           )}
         </Animated.View>
 
-        {/* Clubs Grid */}
         <View style={styles.clubsGrid}>
           {clubs.map((club, index) => (
             <ClubItem
@@ -324,7 +319,6 @@ export default function ClubsScreen() {
           ))}
         </View>
 
-        {/* Empty State */}
         {clubs.length === 0 && !isLoading && (
           <Animated.View
             entering={FadeIn.duration(400)}

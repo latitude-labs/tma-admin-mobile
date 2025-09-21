@@ -351,7 +351,6 @@ export default function TrialsScreen() {
         />
       }>
       <View style={styles.content}>
-        {/* Header Section */}
         <Animated.View
           entering={FadeInDown.duration(400).springify()}
           style={styles.header}
@@ -403,7 +402,6 @@ export default function TrialsScreen() {
           </Animated.Text>
         )}
 
-        {/* Search Bar */}
         <Animated.View
           entering={FadeInDown.delay(100).duration(400).springify()}
           style={[styles.searchContainer, searchAnimatedStyle]}
@@ -444,7 +442,6 @@ export default function TrialsScreen() {
           )}
         </Animated.View>
 
-        {/* Filter Chips */}
         <Animated.View
           entering={FadeInDown.delay(200).duration(400).springify()}
         >
@@ -475,7 +472,6 @@ export default function TrialsScreen() {
           </ScrollView>
         </Animated.View>
 
-        {/* Bookings List */}
         {sortedBookings.length > 0 ? (
           <>
             <View style={styles.bookingsList}>
@@ -498,7 +494,6 @@ export default function TrialsScreen() {
                       entering={FadeInDown.delay(index * 80).duration(400).springify()}
                       layout={Layout.springify()}
                     >
-                      {/* Card Header */}
                       <View style={styles.trialHeader}>
                         <View style={styles.trialHeaderLeft}>
                           <View style={styles.avatarContainer}>
@@ -542,7 +537,6 @@ export default function TrialsScreen() {
                         </View>
                       </View>
 
-                      {/* Card Details */}
                       <View style={styles.trialDetails}>
                         <View style={styles.detailGrid}>
                           <View style={styles.detailItem}>
@@ -581,7 +575,6 @@ export default function TrialsScreen() {
                         </View>
                       </View>
 
-                      {/* Action Buttons */}
                       {status === 'scheduled' && (
                         <Animated.View
                           entering={FadeIn.delay(200).duration(300)}
@@ -621,7 +614,6 @@ export default function TrialsScreen() {
               })}
             </View>
 
-            {/* Pagination */}
             {!isOffline && pagination.totalPages > 1 && (
               <Animated.View
                 entering={FadeInUp.delay(300).duration(400).springify()}
@@ -715,7 +707,6 @@ export default function TrialsScreen() {
       </View>
     </ScrollView>
 
-      {/* Status Selection Modal */}
       <Modal
         visible={showStatusModal}
         animationType="fade"
@@ -837,7 +828,6 @@ export default function TrialsScreen() {
         </Pressable>
       </Modal>
 
-      {/* Kit Selection Modal */}
       <Modal
         visible={showKitModal}
         animationType="fade"
@@ -955,7 +945,6 @@ export default function TrialsScreen() {
         </Pressable>
       </Modal>
 
-      {/* Reminder Modal */}
       <Modal
         visible={showReminderModal}
         animationType="fade"

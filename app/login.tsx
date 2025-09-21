@@ -64,11 +64,8 @@ export default function LoginScreen() {
         // Ensure token is fully propagated before navigation
         await new Promise(resolve => setTimeout(resolve, 500));
 
-        if (state.user.is_admin) {
-          router.replace('/(drawer)/dashboard');
-        } else {
-          router.replace('/(drawer)/coach-dashboard');
-        }
+        // Navigate to tabs dashboard (handles both admin and coach)
+        router.replace('/(tabs)/dashboard');
       }
     } catch (error: any) {
       Alert.alert(
