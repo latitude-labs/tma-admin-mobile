@@ -21,6 +21,7 @@ import { useColorScheme } from '@/components/useColorScheme';
 import { ApiHealthProvider } from '../components/ApiHealthProvider';
 import { AuthStatusProvider } from '../components/AuthStatusProvider';
 import { LoadingScreen } from '../components/LoadingScreen';
+import { ToastProvider } from '@/components/ui/Toast';
 import { apiClient } from '../services/api/client';
 import { syncManager } from '../services/offline/syncManager';
 import { useAuthStore } from '../store/authStore';
@@ -151,18 +152,21 @@ function RootLayoutNav() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <ApiHealthProvider>
-          <AuthStatusProvider>
-            <Stack>
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-              <Stack.Screen name="two-factor-verify" options={{ headerShown: false }} />
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-              <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
-            </Stack>
-          </AuthStatusProvider>
-        </ApiHealthProvider>
+        <ToastProvider>
+          <ApiHealthProvider>
+            <AuthStatusProvider>
+              <Stack>
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+                <Stack.Screen name="two-factor-verify" options={{ headerShown: false }} />
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
+                <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
+                <Stack.Screen name="club-health" options={{ headerShown: false }} />
+              </Stack>
+            </AuthStatusProvider>
+          </ApiHealthProvider>
+        </ToastProvider>
       </ThemeProvider>
     </GestureHandlerRootView>
   );

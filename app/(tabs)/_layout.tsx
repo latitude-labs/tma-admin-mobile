@@ -6,8 +6,6 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  withTiming,
-  interpolate,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -19,28 +17,22 @@ import { NotificationBadge } from '@/components/ui/NotificationBadge';
 import { useNotificationStore } from '@/store/notificationStore';
 import { BlurView } from 'expo-blur';
 
-// Custom Tab Bar Component with center highlight
-function CustomTabBar({ state, descriptors, navigation }: any) {
+// Tab Icon Component - separated to avoid hooks in render
+function TabIcon({ route, isFocused, index, descriptors, navigation, animatedStyle, tabAnimation, unreadCount }: any) {
   const colorScheme = useColorScheme();
   const currentTheme = Colors[colorScheme ?? 'light'];
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
 
-  const tabAnimations = state.routes.map(() => ({
-    scale: useSharedValue(1),
-    rotation: useSharedValue(0),
-  }));
-
-  const handleTabPress = (route: any, isFocused: boolean, index: number) => {
+  const handleTabPress = () => {
     if (!isFocused) {
       // Haptic feedback
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
       // Animate the tab
-      tabAnimations[index].scale.value = withSpring(0.9, {
+      tabAnimation.scale.value = withSpring(0.9, {
         damping: 15,
         stiffness: 200,
       }, () => {
-        tabAnimations[index].scale.value = withSpring(1, {
+        tabAnimation.scale.value = withSpring(1, {
           damping: 10,
           stiffness: 150,
         });
@@ -58,102 +50,186 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     }
   };
 
-  const renderTabIcon = (route: any, isFocused: boolean, index: number) => {
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [
-        { scale: tabAnimations[index].scale.value },
-        { rotate: `${tabAnimations[index].rotation.value}deg` },
-      ],
-    }));
+  let iconName: keyof typeof Ionicons.glyphMap;
+  let showBadge = false;
 
-    let iconName: keyof typeof Ionicons.glyphMap;
-    let showBadge = false;
+  switch (route.name) {
+    case 'clubs':
+      iconName = isFocused ? 'business' : 'business-outline';
+      break;
+    case 'trials':
+      iconName = isFocused ? 'person-add' : 'person-add-outline';
+      break;
+    case 'dashboard':
+      iconName = isFocused ? 'home' : 'home-outline';
+      break;
+    case 'calendar':
+      iconName = isFocused ? 'calendar' : 'calendar-outline';
+      break;
+    case 'more':
+      iconName = isFocused ? 'grid' : 'grid-outline';
+      showBadge = unreadCount > 0;
+      break;
+    default:
+      iconName = 'help-outline';
+  }
 
-    switch (route.name) {
-      case 'clubs':
-        iconName = isFocused ? 'business' : 'business-outline';
-        break;
-      case 'trials':
-        iconName = isFocused ? 'person-add' : 'person-add-outline';
-        break;
-      case 'dashboard':
-        iconName = isFocused ? 'home' : 'home-outline';
-        break;
-      case 'calendar':
-        iconName = isFocused ? 'calendar' : 'calendar-outline';
-        break;
-      case 'more':
-        iconName = isFocused ? 'grid' : 'grid-outline';
-        showBadge = unreadCount > 0;
-        break;
-      default:
-        iconName = 'help-outline';
-    }
+  const isCenter = route.name === 'dashboard';
 
-    const isCenter = route.name === 'dashboard';
+  return (
+    <TouchableOpacity
+      accessibilityRole="button"
+      accessibilityState={isFocused ? { selected: true } : {}}
+      accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
+      testID={descriptors[route.key].options.tabBarTestID}
+      onPress={handleTabPress}
+      style={[
+        styles.tabButton,
+        isCenter && styles.centerTabButton,
+        isCenter && {
+          backgroundColor: isFocused ? Theme.colors.primary : currentTheme.card,
+          shadowColor: Theme.colors.primary,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: isFocused ? 0.2 : 0.1,
+          shadowRadius: 8,
+          elevation: isFocused ? 8 : 4,
+        },
+      ]}
+    >
+      <View style={styles.iconWrapper}>
+        <Animated.View style={animatedStyle}>
+          <View style={styles.iconContainer}>
+            <Ionicons
+              name={iconName}
+              size={isCenter ? 28 : 24}
+              color={
+                isCenter && isFocused
+                  ? '#FFFFFF'
+                  : isFocused
+                  ? Theme.colors.primary
+                  : currentTheme.tabIconDefault
+              }
+            />
+            {showBadge && (
+              <View style={styles.badgeContainer}>
+                <NotificationBadge count={unreadCount} size="small" />
+              </View>
+            )}
+          </View>
+        </Animated.View>
+      </View>
+    </TouchableOpacity>
+  );
+}
 
-    return (
-      <TouchableOpacity
-        accessibilityRole="button"
-        accessibilityState={isFocused ? { selected: true } : {}}
-        accessibilityLabel={descriptors[route.key].options.tabBarAccessibilityLabel}
-        testID={descriptors[route.key].options.tabBarTestID}
-        onPress={() => handleTabPress(route, isFocused, index)}
-        style={[
-          styles.tabButton,
-          isCenter && styles.centerTabButton,
-          isCenter && {
-            backgroundColor: isFocused ? Theme.colors.primary : currentTheme.card,
-            shadowColor: Theme.colors.primary,
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: isFocused ? 0.2 : 0.1,
-            shadowRadius: 8,
-            elevation: isFocused ? 8 : 4,
-          },
-        ]}
-      >
-        <View style={styles.iconWrapper}>
-          <Animated.View style={animatedStyle}>
-            <View style={styles.iconContainer}>
-              <Ionicons
-                name={iconName}
-                size={isCenter ? 28 : 24}
-                color={
-                  isCenter && isFocused
-                    ? '#FFFFFF'
-                    : isFocused
-                    ? Theme.colors.primary
-                    : currentTheme.tabIconDefault
-                }
-              />
-              {showBadge && (
-                <View style={styles.badgeContainer}>
-                  <NotificationBadge count={unreadCount} size="small" />
-                </View>
-              )}
-            </View>
-          </Animated.View>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+// Custom Tab Bar Component with center highlight
+function CustomTabBar({ state, descriptors, navigation }: any) {
+  const colorScheme = useColorScheme();
+  const currentTheme = Colors[colorScheme ?? 'light'];
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+
+  // Create fixed number of animation values (max 5 tabs)
+  const scale1 = useSharedValue(1);
+  const scale2 = useSharedValue(1);
+  const scale3 = useSharedValue(1);
+  const scale4 = useSharedValue(1);
+  const scale5 = useSharedValue(1);
+
+  const rotation1 = useSharedValue(0);
+  const rotation2 = useSharedValue(0);
+  const rotation3 = useSharedValue(0);
+  const rotation4 = useSharedValue(0);
+  const rotation5 = useSharedValue(0);
+
+  const tabAnimations = [
+    { scale: scale1, rotation: rotation1 },
+    { scale: scale2, rotation: rotation2 },
+    { scale: scale3, rotation: rotation3 },
+    { scale: scale4, rotation: rotation4 },
+    { scale: scale5, rotation: rotation5 },
+  ];
+
+  // Create animated styles for all tabs upfront
+  const animatedStyle1 = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale1.value },
+      { rotate: `${rotation1.value}deg` },
+    ],
+  }));
+
+  const animatedStyle2 = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale2.value },
+      { rotate: `${rotation2.value}deg` },
+    ],
+  }));
+
+  const animatedStyle3 = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale3.value },
+      { rotate: `${rotation3.value}deg` },
+    ],
+  }));
+
+  const animatedStyle4 = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale4.value },
+      { rotate: `${rotation4.value}deg` },
+    ],
+  }));
+
+  const animatedStyle5 = useAnimatedStyle(() => ({
+    transform: [
+      { scale: scale5.value },
+      { rotate: `${rotation5.value}deg` },
+    ],
+  }));
+
+  const animatedStyles = [
+    animatedStyle1,
+    animatedStyle2,
+    animatedStyle3,
+    animatedStyle4,
+    animatedStyle5,
+  ];
+
 
   return (
     <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
       {Platform.OS === 'ios' ? (
         <BlurView intensity={95} tint={colorScheme ?? 'light'} style={styles.blurContainer}>
           <View style={styles.tabBar}>
-            {state.routes.map((route: any, index: number) =>
-              renderTabIcon(route, state.index === index, index)
-            )}
+            {state.routes.map((route: any, index: number) => (
+              <TabIcon
+                key={route.key}
+                route={route}
+                isFocused={state.index === index}
+                index={index}
+                descriptors={descriptors}
+                navigation={navigation}
+                animatedStyle={animatedStyles[index]}
+                tabAnimation={tabAnimations[index]}
+                unreadCount={unreadCount}
+              />
+            ))}
           </View>
         </BlurView>
       ) : (
         <View style={[styles.androidContainer, { backgroundColor: currentTheme.card }]}>
           <View style={styles.tabBar}>
-            {state.routes.map((route: any, index: number) =>
-              renderTabIcon(route, state.index === index, index)
-            )}
+            {state.routes.map((route: any, index: number) => (
+              <TabIcon
+                key={route.key}
+                route={route}
+                isFocused={state.index === index}
+                index={index}
+                descriptors={descriptors}
+                navigation={navigation}
+                animatedStyle={animatedStyles[index]}
+                tabAnimation={tabAnimations[index]}
+                unreadCount={unreadCount}
+              />
+            ))}
           </View>
         </View>
       )}
@@ -184,7 +260,7 @@ function NotificationButton() {
 }
 
 export default function TabsLayout() {
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const colorScheme = useColorScheme();
   const currentTheme = Colors[colorScheme ?? 'light'];
@@ -193,7 +269,11 @@ export default function TabsLayout() {
     if (!isAuthenticated) {
       router.replace('/login');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <Tabs

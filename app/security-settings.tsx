@@ -8,13 +8,14 @@ import {
   Switch,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, { FadeIn } from 'react-native-reanimated';
+import { Stack } from 'expo-router';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useAuthStore } from '@/store/authStore';
 import { twoFactorService, TwoFactorStatus } from '@/services/twoFactor.service';
 import { biometricService } from '@/services/biometric.service';
@@ -163,20 +164,23 @@ export default function SecuritySettingsScreen() {
 
   if (isLoading) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
             Loading security settings...
           </Text>
         </View>
-      </SafeAreaView>
+      </View>
     );
   }
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ScreenHeader title="Security Settings" />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <Animated.View entering={FadeIn.duration(300)}>
           {/* 2FA Status Card */}
           <Card variant="filled" style={styles.card}>
@@ -319,7 +323,8 @@ export default function SecuritySettingsScreen() {
           </Card>
         </Animated.View>
       </ScrollView>
-    </SafeAreaView>
+      </View>
+    </>
   );
 }
 

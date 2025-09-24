@@ -1,5 +1,6 @@
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { HolidayRequestModal } from '@/components/calendar/HolidayRequestModal';
+import { OvertimeRequestModal } from '@/components/calendar/OvertimeRequestModal';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { calendarSyncService } from '@/services/calendarSync.service';
@@ -13,6 +14,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
+  Platform,
   RefreshControl,
   StyleSheet,
   Text,
@@ -133,28 +135,26 @@ export default function CalendarScreen() {
               style={[styles.actionButton, styles.primaryButton]}
               onPress={() => setShowHolidayModal(true)}
             >
-              <Ionicons name="airplane" size={20} color={palette.textInverse} />
               <Text style={styles.primaryButtonText}>Request Holiday</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.outlineButton]}
               onPress={() => setShowOvertimeModal(true)}
             >
-              <Ionicons name="time" size={20} color={palette.tint} />
               <Text style={styles.outlineButtonText}>Request Overtime</Text>
             </TouchableOpacity>
           </View>
         </View>
       </View>
 
-      {isAdmin && (
+      {isAdmin ? (
         <TouchableOpacity
           style={styles.fab}
           onPress={() => console.log('Create new event')}
         >
           <Ionicons name="add" size={24} color={palette.textInverse} />
         </TouchableOpacity>
-      )}
+      ) : null}
 
       <HolidayRequestModal
         visible={showHolidayModal}
@@ -162,6 +162,15 @@ export default function CalendarScreen() {
         onSubmit={() => {
           handleRefresh();
           setShowHolidayModal(false);
+        }}
+      />
+
+      <OvertimeRequestModal
+        visible={showOvertimeModal}
+        onClose={() => setShowOvertimeModal(false)}
+        onSubmit={() => {
+          handleRefresh();
+          setShowOvertimeModal(false);
         }}
       />
     </View>
@@ -201,7 +210,7 @@ const createStyles = (palette: any, insets: any) =>
     },
     bottomActions: {
       position: 'absolute',
-      bottom: 0,
+      bottom: 56 + (Platform.OS === 'ios' ? 20 : 0), // Account for tab bar height
       left: 0,
       right: 0,
       backgroundColor: palette.background,
@@ -209,7 +218,7 @@ const createStyles = (palette: any, insets: any) =>
       borderTopColor: palette.borderLight,
       paddingHorizontal: Theme.spacing.lg,
       paddingVertical: Theme.spacing.md,
-      paddingBottom: Math.max(insets.bottom, Theme.spacing.md),
+      paddingBottom: Theme.spacing.md,
       shadowColor: '#000',
       shadowOffset: {
         width: 0,
@@ -252,7 +261,7 @@ const createStyles = (palette: any, insets: any) =>
     },
     fab: {
       position: 'absolute',
-      bottom: 120 + Math.max(insets.bottom, Theme.spacing.md),
+      bottom: 56 + (Platform.OS === 'ios' ? 20 : 0) + 80 + Theme.spacing.md, // Tab bar + buttons + spacing
       right: Theme.spacing.lg,
       width: 56,
       height: 56,

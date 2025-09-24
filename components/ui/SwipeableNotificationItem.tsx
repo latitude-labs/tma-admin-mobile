@@ -1,15 +1,14 @@
-import React, { useRef } from 'react';
+import React, { useRef, useMemo } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   Animated,
   TouchableOpacity,
-  useColorScheme,
 } from 'react-native';
 import { Swipeable } from 'react-native-gesture-handler';
 import { Ionicons } from '@expo/vector-icons';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { NotificationItem } from './NotificationItem';
 import { Notification } from '@/types/notification';
 
@@ -29,15 +28,14 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
   onArchive,
 }) => {
   const swipeableRef = useRef<Swipeable>(null);
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
-  const actionVariantStyles = React.useMemo(
+  const palette = useThemeColors();
+  const actionVariantStyles = useMemo(
     () => ({
-      read: { backgroundColor: colors.statusSuccess },
-      archive: { backgroundColor: colors.statusInfo },
-      delete: { backgroundColor: colors.statusError },
+      read: { backgroundColor: palette.statusSuccess },
+      archive: { backgroundColor: palette.statusInfo },
+      delete: { backgroundColor: palette.statusError },
     }),
-    [colors]
+    [palette]
   );
 
   const renderLeftActions = (
@@ -69,9 +67,9 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
             <Ionicons
               name={notification.read ? 'mail-unread' : 'checkmark-done'}
               size={24}
-              color={colors.textInverse}
+              color={palette.textInverse}
             />
-            <Text style={[styles.actionText, { color: colors.textInverse }]}>
+            <Text style={[styles.actionText, { color: palette.textInverse }]}>
               {notification.read ? 'Unread' : 'Read'}
             </Text>
           </TouchableOpacity>
@@ -107,8 +105,8 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
               }}
               style={styles.actionContent}
             >
-              <Ionicons name="archive" size={24} color={colors.textInverse} />
-              <Text style={[styles.actionText, { color: colors.textInverse }]}>Archive</Text>
+              <Ionicons name="archive" size={24} color={palette.textInverse} />
+              <Text style={[styles.actionText, { color: palette.textInverse }]}>Archive</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
@@ -127,8 +125,8 @@ export const SwipeableNotificationItem: React.FC<SwipeableNotificationItemProps>
             }}
             style={styles.actionContent}
           >
-            <Ionicons name="trash" size={24} color={colors.textInverse} />
-            <Text style={[styles.actionText, { color: colors.textInverse }]}>Delete</Text>
+            <Ionicons name="trash" size={24} color={palette.textInverse} />
+            <Text style={[styles.actionText, { color: palette.textInverse }]}>Delete</Text>
           </TouchableOpacity>
         </Animated.View>
       </View>

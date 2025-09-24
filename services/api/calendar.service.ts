@@ -4,11 +4,14 @@ import { useAuthStore } from '@/store/authStore';
 import {
   CalendarEvent,
   HolidayRequest,
+  OvertimeRequest,
   CoverageAssignment,
   AvailableCoach,
   CreateEventRequest,
   UpdateEventRequest,
   CreateHolidayRequest,
+  CreateOvertimeRequest,
+  UpdateOvertimeRequest,
   AssignCoverageRequest,
   CalendarSyncOperation,
   CalendarSyncResponse,
@@ -16,6 +19,8 @@ import {
   AffectedClass,
   EventsResponse,
   HolidayRequestsResponse,
+  OvertimeRequestsResponse,
+  OvertimeRequestSummary,
   TeamCalendarResponse,
   PopulateScheduleResponse,
   ConflictsCheckResponse,
@@ -41,9 +46,14 @@ class CalendarService {
 
   private handleError(error: unknown): never {
     if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const message = axiosError.response?.data?.message || 'An error occurred';
-      throw new Error(message);
+      const axiosError = error as AxiosError<{ message?: string; error?: string }>;
+      // Check for 'error' field first (used by backend), then 'message'
+      const errorMessage =
+        axiosError.response?.data?.error ||
+        axiosError.response?.data?.message ||
+        axiosError.message ||
+        'An error occurred';
+      throw new Error(errorMessage);
     }
     throw error;
   }
@@ -300,6 +310,139 @@ class CalendarService {
       const response = await axios.post(
         `${getApiUrl()}/holiday-requests/${holidayRequestId}/assign-coverage`,
         data,
+        { headers: this.getHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  // ===== Overtime Request Methods =====
+
+  async getOvertimeRequests(params?: {
+    start_date?: string;
+    end_date?: string;
+    status?: string;
+    user_id?: number;
+    page?: number;
+    per_page?: number;
+  }): Promise<OvertimeRequestsResponse> {
+    try {
+      const response = await axios.get(`${getApiUrl()}/overtime-requests`, {
+        params,
+        headers: this.getHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getOvertimeRequestSummary(): Promise<{ data: OvertimeRequestSummary }> {
+    try {
+      const response = await axios.get(`${getApiUrl()}/overtime-requests/summary`, {
+        headers: this.getHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async getOvertimeRequest(id: number): Promise<{ data: OvertimeRequest }> {
+    try {
+      const response = await axios.get(`${getApiUrl()}/overtime-requests/${id}`, {
+        headers: this.getHeaders(),
+      });
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async createOvertimeRequest(
+    data: CreateOvertimeRequest
+  ): Promise<{ message: string; data: OvertimeRequest }> {
+    try {
+      const response = await axios.post(
+        `${getApiUrl()}/overtime-requests`,
+        data,
+        { headers: this.getHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async updateOvertimeRequest(
+    id: number,
+    data: UpdateOvertimeRequest
+  ): Promise<{ message: string; data: OvertimeRequest }> {
+    try {
+      const response = await axios.put(
+        `${getApiUrl()}/overtime-requests/${id}`,
+        data,
+        { headers: this.getHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async deleteOvertimeRequest(id: number): Promise<{ message: string }> {
+    try {
+      const response = await axios.delete(
+        `${getApiUrl()}/overtime-requests/${id}`,
+        { headers: this.getHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async cancelOvertimeRequest(
+    id: number
+  ): Promise<{ message: string; data: OvertimeRequest }> {
+    try {
+      const response = await axios.post(
+        `${getApiUrl()}/overtime-requests/${id}/cancel`,
+        {},
+        { headers: this.getHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async approveOvertimeRequest(
+    id: number,
+    data?: { notes?: string }
+  ): Promise<{ message: string; data: OvertimeRequest }> {
+    try {
+      const response = await axios.post(
+        `${getApiUrl()}/overtime-requests/${id}/approve`,
+        data || {},
+        { headers: this.getHeaders() }
+      );
+      return response.data;
+    } catch (error) {
+      this.handleError(error);
+    }
+  }
+
+  async rejectOvertimeRequest(
+    id: number,
+    data?: { reason?: string }
+  ): Promise<{ message: string; data: OvertimeRequest }> {
+    try {
+      const response = await axios.post(
+        `${getApiUrl()}/overtime-requests/${id}/reject`,
+        data || {},
         { headers: this.getHeaders() }
       );
       return response.data;

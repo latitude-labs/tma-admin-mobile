@@ -522,6 +522,76 @@ class CalendarSyncService {
   }
 
   /**
+   * Submit an overtime request
+   */
+  async submitOvertimeRequest(requestData: any): Promise<void> {
+    const store = useCalendarStore.getState();
+
+    try {
+      store.setOvertimeRequestsLoading(true);
+
+      // Submit to backend
+      const response = await calendarService.createOvertimeRequest(requestData);
+
+      // Add to local store
+      store.addOvertimeRequest(response.data);
+
+      // Clear draft
+      store.setOvertimeRequestDraft(null);
+
+    } catch (error) {
+      console.error('Failed to submit overtime request:', error);
+      throw error;
+    } finally {
+      store.setOvertimeRequestsLoading(false);
+    }
+  }
+
+  /**
+   * Fetch overtime requests
+   */
+  async fetchOvertimeRequests(params?: {
+    start_date?: string;
+    end_date?: string;
+    status?: string;
+  }): Promise<void> {
+    const store = useCalendarStore.getState();
+
+    try {
+      store.setOvertimeRequestsLoading(true);
+
+      const response = await calendarService.getOvertimeRequests(params);
+      store.setOvertimeRequests(response.data);
+
+    } catch (error) {
+      console.error('Failed to fetch overtime requests:', error);
+      throw error;
+    } finally {
+      store.setOvertimeRequestsLoading(false);
+    }
+  }
+
+  /**
+   * Cancel an overtime request
+   */
+  async cancelOvertimeRequest(id: number): Promise<void> {
+    const store = useCalendarStore.getState();
+
+    try {
+      store.setOvertimeRequestsLoading(true);
+
+      const response = await calendarService.cancelOvertimeRequest(id);
+      store.updateOvertimeRequest(id, response.data);
+
+    } catch (error) {
+      console.error('Failed to cancel overtime request:', error);
+      throw error;
+    } finally {
+      store.setOvertimeRequestsLoading(false);
+    }
+  }
+
+  /**
    * Load user's assigned class times
    */
   async loadUserClassTimes(): Promise<void> {

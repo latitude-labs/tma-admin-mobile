@@ -1,4 +1,4 @@
-import { Badge, Button, Card, Chip } from '@/components/ui';
+import { Badge, Button, Card, Chip, ScreenHeader } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { calendarService } from '@/services/api/calendar.service';
@@ -8,6 +8,7 @@ import { HolidayRequest, HolidayStatus } from '@/types/calendar';
 import { Ionicons } from '@expo/vector-icons';
 import { differenceInDays, format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
+import { Stack } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -294,21 +295,24 @@ export default function HolidayRequestsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.title}>Holiday Requests</Text>
-        <TouchableOpacity
-          style={styles.headerButton}
-          onPress={handleRefresh}
-        >
-          <Ionicons
-            name="refresh"
-            size={24}
-            color={palette.textPrimary}
-          />
-        </TouchableOpacity>
-      </View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
+        <ScreenHeader
+          title="Holiday Requests"
+          rightAction={
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleRefresh}
+            >
+              <Ionicons
+                name="refresh"
+                size={24}
+                color={palette.textPrimary}
+              />
+            </TouchableOpacity>
+          }
+        />
 
       {/* Status Filter */}
       <ScrollView
@@ -369,7 +373,8 @@ export default function HolidayRequestsScreen() {
           </View>
         }
       />
-    </View>
+      </View>
+    </>
   );
 }
 
@@ -384,7 +389,8 @@ const createStyles = (palette: any) =>
       alignItems: 'center',
       justifyContent: 'space-between',
       paddingHorizontal: Theme.spacing.lg,
-      paddingVertical: Theme.spacing.md,
+      paddingTop: 60,
+      paddingBottom: Theme.spacing.md,
       backgroundColor: palette.background,
       borderBottomWidth: 1,
       borderBottomColor: palette.borderLight,

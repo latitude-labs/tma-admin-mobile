@@ -1,22 +1,25 @@
-import React, { useState } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  Switch,
-  Alert,
-  Platform,
-} from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Linking } from 'react-native';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Colors } from '@/constants/Colors';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
+import { Theme } from '@/constants/Theme';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
+import { Stack } from 'expo-router';
+import React, { useMemo, useState } from 'react';
+import {
+  Alert,
+  Linking,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View
+} from 'react-native';
 
 export default function NotificationSettingsScreen() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const {
     hasPermission,
     pushToken,
@@ -97,15 +100,18 @@ export default function NotificationSettingsScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
+        <ScreenHeader title="Notification Settings" />
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Permission Status Card */}
         <Card variant="elevated" style={styles.card}>
           <View style={styles.statusContainer}>
             <Ionicons
               name={hasPermission ? 'checkmark-circle' : 'close-circle'}
               size={32}
-              color={hasPermission ? Colors.status.success : Colors.status.error}
+              color={hasPermission ? Theme.colors.status.success : Theme.colors.status.error}
             />
             <View style={styles.statusText}>
               <Text style={styles.statusTitle}>
@@ -138,7 +144,7 @@ export default function NotificationSettingsScreen() {
               <Text style={styles.statLabel}>Total</Text>
             </View>
             <View style={styles.statItem}>
-              <Text style={[styles.statValue, { color: Colors.primary }]}>
+              <Text style={[styles.statValue, { color: Theme.colors.primary }]}>
                 {unreadCount}
               </Text>
               <Text style={styles.statLabel}>Unread</Text>
@@ -166,71 +172,6 @@ export default function NotificationSettingsScreen() {
             >
               Clear All
             </Button>
-          </View>
-        </Card>
-
-        {/* Notification Preferences */}
-        <Card variant="outlined" style={styles.card}>
-          <Text style={styles.sectionTitle}>Notification Types</Text>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>New Signups</Text>
-              <Text style={styles.preferenceDescription}>
-                Get notified when new members sign up
-              </Text>
-            </View>
-            <Switch
-              value={notificationPreferences.newSignups}
-              onValueChange={() => togglePreference('newSignups')}
-              trackColor={{ false: Colors.border.default, true: Colors.primary }}
-              thumbColor={Colors.background.primary}
-            />
-          </View>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>End of Day Reminders</Text>
-              <Text style={styles.preferenceDescription}>
-                Daily reminder to complete EOD reports
-              </Text>
-            </View>
-            <Switch
-              value={notificationPreferences.endOfDay}
-              onValueChange={() => togglePreference('endOfDay')}
-              trackColor={{ false: Colors.border.default, true: Colors.primary }}
-              thumbColor={Colors.background.primary}
-            />
-          </View>
-
-          <View style={styles.preferenceItem}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>General Reminders</Text>
-              <Text style={styles.preferenceDescription}>
-                Important tasks and deadlines
-              </Text>
-            </View>
-            <Switch
-              value={notificationPreferences.reminders}
-              onValueChange={() => togglePreference('reminders')}
-              trackColor={{ false: Colors.border.default, true: Colors.primary }}
-              thumbColor={Colors.background.primary}
-            />
-          </View>
-
-          <View style={[styles.preferenceItem, { borderBottomWidth: 0 }]}>
-            <View style={styles.preferenceInfo}>
-              <Text style={styles.preferenceTitle}>System Alerts</Text>
-              <Text style={styles.preferenceDescription}>
-                Important system updates and maintenance
-              </Text>
-            </View>
-            <Switch
-              value={notificationPreferences.systemAlerts}
-              onValueChange={() => togglePreference('systemAlerts')}
-              trackColor={{ false: Colors.border.default, true: Colors.primary }}
-              thumbColor={Colors.background.primary}
-            />
           </View>
         </Card>
 
@@ -264,14 +205,15 @@ export default function NotificationSettingsScreen() {
           </Card>
         )}
       </ScrollView>
-    </SafeAreaView>
+      </View>
+    </>
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   scrollContent: {
     padding: 16,
@@ -292,13 +234,13 @@ const styles = StyleSheet.create({
   statusTitle: {
     fontSize: 18,
     fontFamily: 'Manrope_600SemiBold',
-    color: Colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: 4,
   },
   statusDescription: {
     fontSize: 14,
     fontFamily: 'Manrope_400Regular',
-    color: Colors.text.secondary,
+    color: palette.textSecondary,
   },
   enableButton: {
     marginTop: 8,
@@ -306,7 +248,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontFamily: 'Manrope_600SemiBold',
-    color: Colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: 16,
   },
   statsRow: {
@@ -320,20 +262,20 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontFamily: 'Manrope_700Bold',
-    color: Colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
     fontFamily: 'Manrope_400Regular',
-    color: Colors.text.secondary,
+    color: palette.textSecondary,
   },
   actionButtons: {
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    borderTopColor: palette.borderLight,
   },
   preferenceItem: {
     flexDirection: 'row',
@@ -341,7 +283,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   preferenceInfo: {
     flex: 1,
@@ -350,21 +292,21 @@ const styles = StyleSheet.create({
   preferenceTitle: {
     fontSize: 14,
     fontFamily: 'Manrope_500Medium',
-    color: Colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: 4,
   },
   preferenceDescription: {
     fontSize: 12,
     fontFamily: 'Manrope_400Regular',
-    color: Colors.text.secondary,
+    color: palette.textSecondary,
   },
   debugCard: {
-    backgroundColor: Colors.background.tertiary,
+    backgroundColor: palette.backgroundTertiary,
   },
   debugText: {
     fontSize: 12,
     fontFamily: 'Manrope_400Regular',
-    color: Colors.text.secondary,
+    color: palette.textSecondary,
     marginBottom: 8,
   },
   testButtons: {

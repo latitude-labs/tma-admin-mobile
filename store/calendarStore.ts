@@ -4,6 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   CalendarEvent,
   HolidayRequest,
+  OvertimeRequest,
   CoverageAssignment,
   AvailableCoach,
   CalendarFilters,
@@ -30,6 +31,20 @@ interface CalendarStore {
   holidayRequestsLoading: boolean;
   pendingHolidayRequests: HolidayRequest[];
 
+  // Overtime Requests
+  overtimeRequests: OvertimeRequest[];
+  overtimeRequestsLoading: boolean;
+  overtimeRequestDraft: {
+    type?: 'one_time' | 'recurring';
+    startDate?: Date | null;
+    endDate?: Date | null;
+    dayOfWeek?: string | null;
+    durationWeeks?: number | null;
+    preferredClubId?: number | null;
+    timePreference?: string | null;
+    notes?: string;
+  } | null;
+
   // Coverage
   coverageAssignments: CoverageAssignment[];
   availableCoaches: AvailableCoach[];
@@ -44,6 +59,7 @@ interface CalendarStore {
     end: Date | null;
     reason?: string;
     notes?: string;
+    hasCoverArranged?: boolean;
   } | null;
 
   // Sync State
@@ -73,6 +89,14 @@ interface CalendarStore {
   updateHolidayRequest: (id: number, updates: Partial<HolidayRequest>) => void;
   deleteHolidayRequest: (id: number) => void;
   setHolidayRequestsLoading: (loading: boolean) => void;
+
+  // Actions - Overtime Requests
+  setOvertimeRequests: (requests: OvertimeRequest[]) => void;
+  addOvertimeRequest: (request: OvertimeRequest) => void;
+  updateOvertimeRequest: (id: number, updates: Partial<OvertimeRequest>) => void;
+  deleteOvertimeRequest: (id: number) => void;
+  setOvertimeRequestsLoading: (loading: boolean) => void;
+  setOvertimeRequestDraft: (draft: typeof overtimeRequestDraft | null) => void;
 
   // Actions - Coverage
   setCoverageAssignments: (assignments: CoverageAssignment[]) => void;
@@ -172,6 +196,9 @@ export const useCalendarStore = create<CalendarStore>()(
       holidayRequests: [],
       holidayRequestsLoading: false,
       pendingHolidayRequests: [],
+      overtimeRequests: [],
+      overtimeRequestsLoading: false,
+      overtimeRequestDraft: null,
       coverageAssignments: [],
       availableCoaches: [],
       coverageLoading: false,
@@ -288,6 +315,49 @@ export const useCalendarStore = create<CalendarStore>()(
       })),
 
       setHolidayRequestsLoading: (loading) => set({ holidayRequestsLoading: loading }),
+
+      // Overtime Request Actions
+      setOvertimeRequests: (requests) => set({
+        overtimeRequests: requests
+      }),
+
+      addOvertimeRequest: (request) => set((state) => ({
+        overtimeRequests: [...state.overtimeRequests, request],
+        syncQueue: [
+          ...state.syncQueue,
+          {
+            client_id: `overtime-${Date.now()}`,
+            operation: 'create',
+            entity: 'overtime_request',
+            data: request,
+            timestamp: Date.now(),
+          },
+        ],
+      })),
+
+      updateOvertimeRequest: (id, updates) => set((state) => ({
+        overtimeRequests: state.overtimeRequests.map((r) =>
+          r.id === id ? { ...r, ...updates } : r
+        ),
+        syncQueue: [
+          ...state.syncQueue,
+          {
+            id,
+            operation: 'update',
+            entity: 'overtime_request',
+            data: updates,
+            timestamp: Date.now(),
+          },
+        ],
+      })),
+
+      deleteOvertimeRequest: (id) => set((state) => ({
+        overtimeRequests: state.overtimeRequests.filter((r) => r.id !== id),
+      })),
+
+      setOvertimeRequestsLoading: (loading) => set({ overtimeRequestsLoading: loading }),
+
+      setOvertimeRequestDraft: (draft) => set({ overtimeRequestDraft: draft }),
 
       // Coverage Actions
       setCoverageAssignments: (assignments) => set({ coverageAssignments: assignments }),

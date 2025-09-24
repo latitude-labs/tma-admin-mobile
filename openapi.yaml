@@ -585,17 +585,127 @@ paths:
                     type: string
                   errors:
                     type: object
+  /cadence/bookings/by-club:
+    get:
+      summary: Get bookings aggregated by club
+      description: |
+        Returns booking statistics aggregated by club with optional filtering by date range and channel types.
+        Includes total bookings, active bookings, cancelled bookings, no-show bookings, and calculated rates.
+      operationId: getCadenceBookingsByClub
+      tags:
+        - Cadence
+      parameters:
+        - name: from_date
+          in: query
+          description: Filter bookings from this date (start of day)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: '2025-01-01'
+        - name: to_date
+          in: query
+          description: Filter bookings until this date (end of day)
+          required: false
+          schema:
+            type: string
+            format: date
+          example: '2025-01-31'
+        - name: channel_types
+          in: query
+          description: Filter bookings by specific channel types
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+          style: form
+          explode: true
+          example:
+            - whatsapp
+            - email
+            - phone
+      responses:
+        '200':
+          description: Bookings aggregated by club successfully retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        club_id:
+                          type: integer
+                          description: The ID of the club
+                        club_name:
+                          type: string
+                          description: The name of the club
+                        total_bookings:
+                          type: integer
+                          description: Total number of bookings for the club
+                        active_bookings:
+                          type: integer
+                          description: Number of active bookings (not cancelled and not no-show)
+                        cancelled_bookings:
+                          type: integer
+                          description: Number of cancelled bookings
+                        no_show_bookings:
+                          type: integer
+                          description: Number of no-show bookings
+                        attendance_rate:
+                          type: number
+                          format: float
+                          description: Percentage of active bookings that attended (active - no_shows) / active * 100
+                        cancellation_rate:
+                          type: number
+                          format: float
+                          description: Percentage of bookings that were cancelled (cancelled / total * 100)
+              example:
+                data:
+                  - club_id: 1
+                    club_name: Temple Manchester - City Center
+                    total_bookings: 150
+                    active_bookings: 120
+                    cancelled_bookings: 25
+                    no_show_bookings: 5
+                    attendance_rate: 95.8
+                    cancellation_rate: 16.7
+                  - club_id: 2
+                    club_name: Temple Manchester - South
+                    total_bookings: 200
+                    active_bookings: 160
+                    cancelled_bookings: 30
+                    no_show_bookings: 10
+                    attendance_rate: 93.8
+                    cancellation_rate: 15
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /clubs:
     get:
       summary: Get clubs assigned to user
       description: |
         Returns a list of clubs assigned to the authenticated user through their classTimes relation.
         Admin users (is_admin=true) will receive all clubs in the system.
+
+        When include_all=true is set, returns all clubs in the system regardless of user access,
+        using the ClubLiteResource format (limited information without class times).
       operationId: getMobileClubs
       tags:
         - Mobile App
       security:
         - BearerAuth: []
+      parameters:
+        - name: include_all
+          in: query
+          description: When true, returns all clubs regardless of user access using ClubLiteResource format
+          required: false
+          schema:
+            type: boolean
+            default: false
       responses:
         '200':
           description: List of clubs successfully retrieved
@@ -607,7 +717,10 @@ paths:
                   data:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Club'
+                      oneOf:
+                        - $ref: '#/components/schemas/Club'
+                        - $ref: '#/components/schemas/ClubLite'
+                    description: Returns Club schema normally, or ClubLite when include_all=true
               example:
                 data:
                   - id: 1
@@ -1103,6 +1216,16 @@ paths:
               - unpaid_dd
               - unpaid_coach_call
               - not_joining
+        - name: view_mode
+          in: query
+          required: false
+          description: Controls which bookings are visible - 'mine' for bookings the authenticated user has access to (default), 'all' for all bookings across all clubs/locations
+          schema:
+            type: string
+            enum:
+              - mine
+              - all
+            default: mine
       responses:
         '200':
           description: Bookings retrieved successfully
@@ -1155,12 +1278,24 @@ paths:
       description: |
         Retrieve aggregated booking counts.
         - Admins can see totals for all bookings
-        - Non-admin users only see totals for bookings in their assigned class times
+        - Non-admin users only see totals for bookings in their assigned class times by default
+        - Non-admin users can set view_mode=all to see totals for all bookings across all clubs
       operationId: getBookingsTotals
       tags:
         - Mobile App
       security:
         - BearerAuth: []
+      parameters:
+        - name: view_mode
+          in: query
+          required: false
+          description: Controls which bookings are included in totals - 'mine' for bookings the authenticated user has access to (default), 'all' for all bookings across all clubs/locations
+          schema:
+            type: string
+            enum:
+              - mine
+              - all
+            default: mine
       responses:
         '200':
           description: Booking totals
@@ -1511,6 +1646,92 @@ paths:
           description: Validation error
         '500':
           description: Failed to update booking status
+  /kit-catalog:
+    get:
+      summary: Get kit catalog
+      description: Returns available kit items for ordering
+      operationId: getKitCatalog
+      tags:
+        - Kit
+      security:
+        - bearer_auth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Kit'
+              example:
+                items:
+                  - id: 1
+                    type: tshirt
+                    name: T-Shirt
+                    sizes:
+                      - Small Youth
+                      - Medium Youth
+                      - Large Youth
+                      - XL Youth
+                      - Small
+                      - Medium
+                      - Large
+                      - XL
+                      - 2XL
+                      - 3XL
+                    price: 25
+                    description: Temple Manchester training t-shirt
+                    image_url: https://s3.amazonaws.com/your-bucket/kit-images/tshirt.jpg
+                  - id: 2
+                    type: trousers
+                    name: Trousers
+                    sizes:
+                      - Small Youth
+                      - Medium Youth
+                      - Large Youth
+                      - XL Youth
+                      - Small
+                      - Medium
+                      - Large
+                      - XL
+                      - 2XL
+                      - 3XL
+                    price: 30
+                    description: Temple Manchester training trousers
+                  - id: 3
+                    type: gloves
+                    name: Gloves
+                    sizes:
+                      - 8oz
+                      - 10oz
+                      - 12oz
+                      - 14oz
+                      - 16oz
+                    price: 35
+                    description: Boxing gloves for training and sparring
+                  - id: 4
+                    type: shinpads
+                    name: Shin Pads
+                    sizes:
+                      - Small
+                      - Medium
+                      - Large
+                      - XL
+                    price: 15
+                    description: Protective shin pads for sparring
+                  - id: 5
+                    type: kitbag
+                    name: Kit Bag
+                    sizes:
+                      - One Size
+                    price: 40
+                    description: Temple Manchester sports bag for all your training gear
+        '401':
+          $ref: '#/components/responses/Unauthorized'
   /kit-orders:
     get:
       summary: List kit orders
@@ -2486,6 +2707,418 @@ paths:
                     type: string
                   errors:
                     type: object
+  /overtime-requests:
+    get:
+      summary: List overtime requests
+      description: Get a list of overtime requests. Non-admin users can only see their own requests.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum:
+              - pending
+              - approved
+              - rejected
+              - cancelled
+        - name: type
+          in: query
+          description: Filter by request type
+          schema:
+            type: string
+            enum:
+              - one_time
+              - recurring
+        - name: page
+          in: query
+          description: Page number for pagination
+          schema:
+            type: integer
+            default: 1
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/OvertimeRequest'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      summary: Create overtime request
+      description: Create a new overtime request
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - type
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - one_time
+                    - recurring
+                  description: Type of overtime request
+                start_date:
+                  type: string
+                  format: date
+                  description: Start date (required for one-time requests)
+                end_date:
+                  type: string
+                  format: date
+                  description: End date (required for one-time requests)
+                day_of_week:
+                  type: string
+                  enum:
+                    - monday
+                    - tuesday
+                    - wednesday
+                    - thursday
+                    - friday
+                    - saturday
+                    - sunday
+                  description: Day of week (required for recurring requests)
+                duration_weeks:
+                  type: integer
+                  minimum: 1
+                  maximum: 52
+                  description: Duration in weeks (required for recurring requests)
+                preferred_club_id:
+                  type: integer
+                  description: ID of preferred club (optional)
+                time_preference:
+                  type: string
+                  enum:
+                    - morning
+                    - afternoon
+                    - evening
+                  description: Preferred time of day (optional)
+                notes:
+                  type: string
+                  maxLength: 1000
+                  description: Additional notes (optional)
+      responses:
+        '201':
+          description: Overtime request created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OvertimeRequest'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+  /overtime-requests/summary:
+    get:
+      summary: Get overtime requests summary
+      description: Get a summary of overtime requests statistics. Non-admin users see only their own statistics.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    description: Total number of overtime requests
+                  pending:
+                    type: integer
+                    description: Number of pending requests
+                  approved:
+                    type: integer
+                    description: Number of approved requests
+                  rejected:
+                    type: integer
+                    description: Number of rejected requests
+                  cancelled:
+                    type: integer
+                    description: Number of cancelled requests
+                  one_time:
+                    type: integer
+                    description: Number of one-time requests
+                  recurring:
+                    type: integer
+                    description: Number of recurring requests
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /overtime-requests/{id}:
+    get:
+      summary: Get overtime request details
+      description: Get details of a specific overtime request. Non-admin users can only view their own requests.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Overtime request ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OvertimeRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      summary: Update overtime request
+      description: Update a pending overtime request. Non-admin users can only update their own requests.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Overtime request ID
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                type:
+                  type: string
+                  enum:
+                    - one_time
+                    - recurring
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                day_of_week:
+                  type: string
+                  enum:
+                    - monday
+                    - tuesday
+                    - wednesday
+                    - thursday
+                    - friday
+                    - saturday
+                    - sunday
+                duration_weeks:
+                  type: integer
+                  minimum: 1
+                  maximum: 52
+                preferred_club_id:
+                  type: integer
+                time_preference:
+                  type: string
+                  enum:
+                    - morning
+                    - afternoon
+                    - evening
+                notes:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Overtime request updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OvertimeRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+    delete:
+      summary: Delete overtime request
+      description: Delete a pending overtime request. Non-admin users can only delete their own requests.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Overtime request ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Overtime request deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Overtime request deleted successfully
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /overtime-requests/{id}/cancel:
+    post:
+      summary: Cancel overtime request
+      description: Cancel a pending overtime request. Non-admin users can only cancel their own requests.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Overtime request ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Overtime request cancelled successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OvertimeRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /overtime-requests/{id}/approve:
+    post:
+      summary: Approve overtime request
+      description: Approve a pending overtime request. Admin only.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Overtime request ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Overtime request approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OvertimeRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+  /overtime-requests/{id}/reject:
+    post:
+      summary: Reject overtime request
+      description: Reject a pending overtime request. Admin only.
+      tags:
+        - Overtime Requests
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Overtime request ID
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                  maxLength: 500
+                  description: Reason for rejection (optional)
+      responses:
+        '200':
+          description: Overtime request rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/OvertimeRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
   /users:
     get:
       summary: List users
@@ -2541,6 +3174,402 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '404':
           description: User not found
+  /api/clubs/summary:
+    get:
+      summary: Get clubs summary
+      description: Returns a summary of all clubs with key health indicators
+      operationId: getClubsSummary
+      tags:
+        - Club Metrics
+      security:
+        - coachBearerAuth: []
+      parameters:
+        - in: query
+          name: date_range
+          required: false
+          schema:
+            type: string
+            enum:
+              - today
+              - yesterday
+              - last_7_days
+              - last_30_days
+              - last_3_months
+            default: last_30_days
+          description: Date range for metrics calculation
+      responses:
+        '200':
+          description: Successfully retrieved clubs summary
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    club_id:
+                      type: integer
+                      description: The club's ID
+                    club_name:
+                      type: string
+                      description: The club's name
+                    health_score:
+                      type: integer
+                      minimum: 0
+                      maximum: 100
+                      description: Calculated health score representing overall club performance
+                    key_metric:
+                      type: object
+                      properties:
+                        label:
+                          type: string
+                          description: Metric name (e.g., "Enrollment", "No-Shows", "Bookings")
+                        value:
+                          type: string
+                          description: Formatted value (e.g., "68.5%", "+12%")
+                        trend:
+                          type: string
+                          enum:
+                            - up
+                            - down
+                            - stable
+                          description: Trend direction
+        '403':
+          description: Unauthorized - Admin access required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch club metrics
+                  error:
+                    type: string
+  /api/clubs/{id}/metrics:
+    get:
+      summary: Get club performance metrics
+      description: Returns performance metrics for a specific club
+      operationId: getClubMetrics
+      tags:
+        - Club Metrics
+      security:
+        - coachBearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Club ID
+        - in: query
+          name: date_range
+          required: true
+          schema:
+            type: string
+            enum:
+              - today
+              - yesterday
+              - last_7_days
+              - last_30_days
+              - last_3_months
+          description: Date range for metrics calculation
+      responses:
+        '200':
+          description: Successfully retrieved club metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  club_id:
+                    type: integer
+                    description: The club's ID
+                  club_name:
+                    type: string
+                    description: The club's name
+                  date_range:
+                    type: string
+                    description: The requested date range
+                  period_start:
+                    type: string
+                    format: date-time
+                    description: ISO timestamp of period start
+                  period_end:
+                    type: string
+                    format: date-time
+                    description: ISO timestamp of period end
+                  bookings_count:
+                    type: integer
+                    description: Total number of trial bookings in the period
+                  enrollment_rate:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 100
+                    description: Percentage of bookings that converted to enrollments
+                  no_show_rate:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 100
+                    description: Percentage of bookings that were no-shows
+                  attendance_rate:
+                    type: number
+                    format: float
+                    minimum: 0
+                    maximum: 100
+                    description: Percentage of bookings that attended
+                  new_students:
+                    type: integer
+                    description: Count of first-time trial students
+                  returning_students:
+                    type: integer
+                    description: Count of returning trial students
+                  total_revenue:
+                    type: number
+                    format: float
+                    description: Total revenue in GBP
+                  average_class_size:
+                    type: number
+                    format: float
+                    description: Average number of students per class
+                  bookings_change:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Percentage change from previous period
+                  enrollment_change:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Percentage change from previous period
+                  no_show_change:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Percentage change from previous period
+                  attendance_change:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Percentage change from previous period
+        '403':
+          description: Unauthorized - Admin access required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '404':
+          description: Club not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Club not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The given data was invalid.
+                  errors:
+                    type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch club metrics
+                  error:
+                    type: string
+  /api/clubs/{id}/facebook-ads:
+    get:
+      summary: Get Facebook advertising metrics
+      description: Returns Facebook advertising performance for a specific club
+      operationId: getFacebookAdsMetrics
+      tags:
+        - Club Metrics
+      security:
+        - coachBearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: Club ID
+        - in: query
+          name: date_range
+          required: true
+          schema:
+            type: string
+            enum:
+              - today
+              - yesterday
+              - last_7_days
+              - last_30_days
+              - last_3_months
+          description: Date range for metrics calculation
+      responses:
+        '200':
+          description: Successfully retrieved Facebook ads metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  club_id:
+                    type: integer
+                    description: The club's ID
+                  date_range:
+                    type: string
+                    description: The requested date range
+                  period_start:
+                    type: string
+                    format: date-time
+                    description: ISO timestamp of period start
+                  period_end:
+                    type: string
+                    format: date-time
+                    description: ISO timestamp of period end
+                  total_spend:
+                    type: number
+                    format: float
+                    description: Total advertising spend in GBP
+                  impressions:
+                    type: integer
+                    description: Total number of ad impressions (currently returns 0)
+                  clicks:
+                    type: integer
+                    description: Total number of clicks (currently returns 0)
+                  ctr:
+                    type: number
+                    format: float
+                    description: Click-through rate as percentage (currently returns 0)
+                  cost_per_click:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Cost per click in GBP (currently returns null)
+                  bookings_from_ads:
+                    type: integer
+                    description: Number of bookings attributed to Facebook ads
+                  cost_per_booking:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Cost per booking in GBP
+                  conversion_rate:
+                    type: number
+                    format: float
+                    description: Percentage of clicks that became bookings (currently returns 0)
+                  roas:
+                    type: number
+                    format: float
+                    nullable: true
+                    description: Return on ad spend ratio
+                  campaigns:
+                    type: array
+                    description: Array of campaign objects (currently returns empty array)
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          description: Campaign identifier
+                        name:
+                          type: string
+                          description: Campaign name
+                        status:
+                          type: string
+                          enum:
+                            - active
+                            - paused
+                            - completed
+                          description: Campaign status
+                        spend:
+                          type: number
+                          format: float
+                          description: Campaign spend in GBP
+                        impressions:
+                          type: integer
+                          description: Campaign impressions
+                        clicks:
+                          type: integer
+                          description: Campaign clicks
+                        conversions:
+                          type: integer
+                          description: Number of bookings from this campaign
+        '403':
+          description: Unauthorized - Admin access required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '404':
+          description: Club not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Club not found
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: The given data was invalid.
+                  errors:
+                    type: object
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch Facebook ads metrics
+                  error:
+                    type: string
   /v1/notifications:
     get:
       summary: Get list of notifications
@@ -3028,6 +4057,11 @@ components:
         is_admin:
           type: boolean
           default: false
+        class_time_ids:
+          type: array
+          items:
+            type: integer
+          description: Array of class_time IDs the coach is assigned to
         email_verified_at:
           type: string
           format: date-time
@@ -3620,6 +4654,43 @@ components:
               type: integer
               description: Total number of notifications (capped at 100)
               example: 45
+    ClubLite:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: The unique identifier for the club
+          example: 1
+        name:
+          type: string
+          description: The name of the club
+          example: Temple Manchester - City Center
+        slug:
+          type: string
+          description: The URL-friendly slug for the club
+          example: city-center
+        address:
+          type: string
+          description: The street address of the club
+          example: 123 Main St
+        postcode:
+          type: string
+          description: The postal code of the club
+          example: M1 1AA
+        latitude:
+          type: number
+          format: double
+          description: The latitude coordinate of the club location
+          example: 53.4808
+        longitude:
+          type: number
+          format: double
+          description: The longitude coordinate of the club location
+          example: -2.2426
+      required:
+        - id
+        - name
+        - slug
     ValidationError:
       description: Validation Error - Invalid input data
       content:
@@ -3644,6 +4715,197 @@ components:
                 - The email field is required.
               password:
                 - The password field must be at least 8 characters.
+    Kit:
+      type: object
+      required:
+        - id
+        - type
+        - name
+        - price
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the kit item
+          example: 1
+        type:
+          type: string
+          description: Type of kit item
+          enum:
+            - tshirt
+            - trousers
+            - gloves
+            - shinpads
+            - kitbag
+          example: tshirt
+        name:
+          type: string
+          description: Display name of the kit item
+          example: T-Shirt
+        sizes:
+          type: array
+          items:
+            type: string
+          description: Available sizes for this kit item
+          example:
+            - Small Youth
+            - Medium Youth
+            - Large Youth
+            - Small
+            - Medium
+            - Large
+            - XL
+            - 2XL
+        price:
+          type: number
+          format: float
+          description: Price of the kit item in GBP
+          example: 25
+        description:
+          type: string
+          description: Detailed description of the kit item
+          example: Temple Manchester training t-shirt
+        image_url:
+          type: string
+          nullable: true
+          description: URL of the kit item image
+          example: https://s3.amazonaws.com/your-bucket/kit-images/tshirt.jpg
+    OvertimeRequest:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Overtime request ID
+        user:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            email:
+              type: string
+              format: email
+        type:
+          type: string
+          enum:
+            - one_time
+            - recurring
+          description: Type of overtime request
+        start_date:
+          type: string
+          format: date
+          nullable: true
+          description: Start date for one-time requests
+        end_date:
+          type: string
+          format: date
+          nullable: true
+          description: End date for one-time requests
+        day_of_week:
+          type: string
+          enum:
+            - monday
+            - tuesday
+            - wednesday
+            - thursday
+            - friday
+            - saturday
+            - sunday
+          nullable: true
+          description: Day of week for recurring requests
+        duration_weeks:
+          type: integer
+          nullable: true
+          description: Duration in weeks for recurring requests
+        preferred_club:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        time_preference:
+          type: string
+          enum:
+            - morning
+            - afternoon
+            - evening
+          nullable: true
+          description: Preferred time of day
+        notes:
+          type: string
+          nullable: true
+          description: Additional notes
+        status:
+          type: string
+          enum:
+            - pending
+            - approved
+            - rejected
+            - cancelled
+          description: Request status
+        approved_by:
+          type: object
+          nullable: true
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        rejection_reason:
+          type: string
+          nullable: true
+          description: Reason for rejection
+        can_be_edited:
+          type: boolean
+          description: Whether the request can be edited
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+    PaginationMeta:
+      type: object
+      properties:
+        current_page:
+          type: integer
+          example: 1
+        from:
+          type: integer
+          example: 1
+        last_page:
+          type: integer
+          example: 5
+        per_page:
+          type: integer
+          example: 20
+        to:
+          type: integer
+          example: 20
+        total:
+          type: integer
+          example: 100
+        path:
+          type: string
+          example: /api/overtime-requests
+        links:
+          type: array
+          items:
+            type: object
+            properties:
+              url:
+                type: string
+                nullable: true
+              label:
+                type: string
+              active:
+                type: boolean
   responses:
     LoginSuccessResponse:
       description: A successful login response
@@ -3672,6 +4934,10 @@ components:
               name: John Doe
               email: john@example.com
               is_admin: false
+              class_time_ids:
+                - 1
+                - 2
+                - 3
             expires_at: '2025-09-06T12:33:38+00:00'
     UnauthorizedError:
       description: Unauthorized - Invalid or missing authentication token
@@ -3714,6 +4980,70 @@ components:
                 - The email field is required.
               password:
                 - The password field must be at least 8 characters.
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Unauthenticated.
+            required:
+              - message
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Bad request
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: This action is unauthorized.
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: Resource not found
+    UnprocessableEntity:
+      description: Unprocessable Entity
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              message:
+                type: string
+                example: The given data was invalid.
+              errors:
+                type: object
+                additionalProperties:
+                  type: array
+                  items:
+                    type: string
   securitySchemes:
     BearerAuth:
       type: http

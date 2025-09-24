@@ -11,6 +11,7 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
+import { Stack } from 'expo-router';
 import { Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
@@ -231,7 +232,9 @@ export default function FacebookScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         refreshControl={
@@ -497,7 +500,8 @@ export default function FacebookScreen() {
           )}
         </View>
       </ScrollView>
-    </View>
+      </View>
+    </>
   );
 }
 
@@ -505,6 +509,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: palette.backgroundSecondary,
+    paddingTop: 60,
   },
   centerContent: {
     flex: 1,

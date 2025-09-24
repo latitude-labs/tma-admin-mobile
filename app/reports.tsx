@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { Stack } from 'expo-router';
 import { Theme } from '@/constants/Theme';
 import { Card } from '@/components/ui';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
@@ -9,14 +10,17 @@ export default function ReportsScreen() {
   const styles = useMemo(() => createStyles(palette), [palette]);
 
   return (
-    <ScrollView style={styles.container}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <ScrollView style={styles.container}>
       <View style={styles.content}>
         <Card variant="elevated" style={styles.card}>
           <Text style={styles.title}>Reports</Text>
           <Text style={styles.subtitle}>Generate and view detailed reports</Text>
         </Card>
       </View>
-    </ScrollView>
+      </ScrollView>
+    </>
   );
 }
 
@@ -24,6 +28,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: palette.backgroundSecondary,
+    paddingTop: 60,
   },
   content: {
     padding: Theme.spacing.lg,

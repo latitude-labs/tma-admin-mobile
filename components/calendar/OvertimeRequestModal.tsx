@@ -1,17 +1,17 @@
 import { Button } from '@/components/ui';
 import { toast } from '@/components/ui/Toast';
+import { Dropdown, DropdownOption } from '@/components/ui/Dropdown';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { calendarSyncService } from '@/services/calendarSync.service';
 import { useCalendarStore } from '@/store/calendarStore';
-import { HolidayReason } from '@/types/calendar';
+import { DayOfWeek, TimePreference, OvertimeType } from '@/types/calendar';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { differenceInDays, format, addDays, startOfWeek, isWeekend } from 'date-fns';
+import { format, addDays } from 'date-fns';
 import * as Haptics from 'expo-haptics';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  Alert,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -31,39 +31,69 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { clubsService } from '@/services/api/clubs.service';
+import { Club } from '@/types/api';
 
-interface HolidayRequestModalProps {
+interface OvertimeRequestModalProps {
   visible: boolean;
   onClose: () => void;
-  startDate?: Date;
-  endDate?: Date;
   onSubmit?: () => void;
 }
 
-const HOLIDAY_REASONS: { value: HolidayReason; label: string; icon: string }[] = [
-  { value: 'holiday', label: 'Holiday', icon: 'airplane' },
-  { value: 'sick', label: 'Sick Leave', icon: 'medical' },
-  { value: 'personal', label: 'Personal', icon: 'person' },
-  { value: 'other', label: 'Other', icon: 'ellipsis-horizontal' },
+const DAYS_OF_WEEK: { value: DayOfWeek; label: string; short: string }[] = [
+  { value: 'monday', label: 'Monday', short: 'Mon' },
+  { value: 'tuesday', label: 'Tuesday', short: 'Tue' },
+  { value: 'wednesday', label: 'Wednesday', short: 'Wed' },
+  { value: 'thursday', label: 'Thursday', short: 'Thu' },
+  { value: 'friday', label: 'Friday', short: 'Fri' },
+  { value: 'saturday', label: 'Saturday', short: 'Sat' },
+  { value: 'sunday', label: 'Sunday', short: 'Sun' },
 ];
 
-export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
+const TIME_PREFERENCES: { value: TimePreference; label: string; icon: string }[] = [
+  { value: 'morning', label: 'Morning', icon: 'sunny' },
+  { value: 'afternoon', label: 'Afternoon', icon: 'partly-sunny' },
+  { value: 'evening', label: 'Evening', icon: 'moon' },
+];
+
+export const OvertimeRequestModal: React.FC<OvertimeRequestModalProps> = ({
   visible,
   onClose,
-  startDate: propStartDate,
-  endDate: propEndDate,
   onSubmit,
 }) => {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
 
-  const { holidayRequestDraft, setHolidayRequestDraft } = useCalendarStore();
+  const { overtimeRequestDraft, setOvertimeRequestDraft } = useCalendarStore();
 
-  const [startDate, setStartDate] = useState<Date | null>(propStartDate || holidayRequestDraft?.start || null);
-  const [endDate, setEndDate] = useState<Date | null>(propEndDate || holidayRequestDraft?.end || null);
-  const [reason, setReason] = useState<HolidayReason>(holidayRequestDraft?.reason as HolidayReason || 'holiday');
-  const [notes, setNotes] = useState(holidayRequestDraft?.notes || '');
-  const [hasCoverArranged, setHasCoverArranged] = useState(holidayRequestDraft?.hasCoverArranged || false);
+  // Request type
+  const [requestType, setRequestType] = useState<OvertimeType>('one_time');
+
+  // One-time fields
+  const [startDate, setStartDate] = useState<Date | null>(
+    overtimeRequestDraft?.startDate || null
+  );
+  const [endDate, setEndDate] = useState<Date | null>(
+    overtimeRequestDraft?.endDate || null
+  );
+
+  // Recurring fields
+  const [dayOfWeek, setDayOfWeek] = useState<DayOfWeek | null>(
+    (overtimeRequestDraft?.dayOfWeek as DayOfWeek) || null
+  );
+  const [durationWeeks, setDurationWeeks] = useState<string>(
+    overtimeRequestDraft?.durationWeeks?.toString() || '4'
+  );
+
+  // Common fields
+  const [selectedClub, setSelectedClub] = useState<Club | null>(null);
+  const [timePreference, setTimePreference] = useState<TimePreference | null>(
+    (overtimeRequestDraft?.timePreference as TimePreference) || null
+  );
+  const [notes, setNotes] = useState(overtimeRequestDraft?.notes || '');
+
+  // UI state
+  const [clubs, setClubs] = useState<Club[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showStartPicker, setShowStartPicker] = useState(false);
   const [showEndPicker, setShowEndPicker] = useState(false);
@@ -74,41 +104,97 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
     transform: [{ scale: scale.value }],
   }));
 
-  const handleReasonSelect = useCallback((selectedReason: HolidayReason) => {
+  // Load clubs on mount
+  useEffect(() => {
+    if (visible) {
+      loadClubs();
+    }
+  }, [visible]);
+
+  const loadClubs = async () => {
+    try {
+      // Fetch all clubs regardless of user's assigned clubs
+      const clubsList = await clubsService.getClubs(true);
+      setClubs(clubsList);
+      // Set initial club if there's a draft
+      if (overtimeRequestDraft?.preferredClubId) {
+        const club = clubsList.find(c => c.id === overtimeRequestDraft.preferredClubId);
+        if (club) setSelectedClub(club);
+      }
+    } catch (error) {
+      console.error('Failed to load clubs:', error);
+    }
+  };
+
+  const handleRequestTypeChange = useCallback((type: OvertimeType) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setReason(selectedReason);
+    setRequestType(type);
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    if (!startDate || !endDate) {
-      toast.error('Please select both start and end dates');
-      return;
-    }
+  const handleDaySelect = useCallback((day: DayOfWeek) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setDayOfWeek(day);
+  }, []);
 
-    if (startDate > endDate) {
-      toast.error('End date must be after start date');
-      return;
+  const handleTimePreferenceSelect = useCallback((pref: TimePreference) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setTimePreference(pref);
+  }, []);
+
+  const handleClubSelect = useCallback((clubId: string) => {
+    const club = clubs.find(c => c.id === parseInt(clubId));
+    if (club) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      setSelectedClub(club);
+    }
+  }, [clubs]);
+
+  const handleSubmit = useCallback(async () => {
+    // Validation
+    if (requestType === 'one_time') {
+      if (!startDate || !endDate) {
+        toast.error('Please select both start and end dates');
+        return;
+      }
+      if (startDate > endDate) {
+        toast.error('End date must be after start date');
+        return;
+      }
+    } else {
+      if (!dayOfWeek) {
+        toast.error('Please select a day of the week');
+        return;
+      }
+      const weeks = parseInt(durationWeeks);
+      if (!weeks || weeks < 1 || weeks > 52) {
+        toast.error('Duration must be between 1 and 52 weeks');
+        return;
+      }
     }
 
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setIsSubmitting(true);
 
     try {
-      // If cover is arranged, prepend helper information to notes
-      const finalNotes = hasCoverArranged && notes.trim()
-        ? `Cover arranged: ${notes.trim()}`
-        : notes.trim() || undefined;
+      const requestData: any = {
+        type: requestType,
+        notes: notes.trim() || undefined,
+        preferred_club_id: selectedClub?.id || undefined,
+        time_preference: timePreference || undefined,
+      };
 
-      await calendarSyncService.submitHolidayRequest({
-        start_date: format(startDate, 'yyyy-MM-dd'),
-        end_date: format(endDate, 'yyyy-MM-dd'),
-        reason,
-        notes: finalNotes,
-        has_cover_arranged: hasCoverArranged,
-      });
+      if (requestType === 'one_time') {
+        requestData.start_date = startDate ? format(startDate, 'yyyy-MM-dd') : undefined;
+        requestData.end_date = endDate ? format(endDate, 'yyyy-MM-dd') : undefined;
+      } else {
+        requestData.day_of_week = dayOfWeek;
+        requestData.duration_weeks = parseInt(durationWeeks);
+      }
+
+      await calendarSyncService.submitOvertimeRequest(requestData);
 
       // Clear draft
-      setHolidayRequestDraft(null);
+      setOvertimeRequestDraft(null);
 
       // Success feedback
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -118,11 +204,11 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
 
       // Show success toast after modal closes
       setTimeout(() => {
-        toast.success('Holiday request submitted successfully!');
+        toast.success('Overtime request submitted successfully!');
         onSubmit?.();
       }, 300);
     } catch (error) {
-      let errorMessage = 'Failed to submit holiday request';
+      let errorMessage = 'Failed to submit overtime request';
       if (error instanceof Error) {
         errorMessage = error.message;
       }
@@ -130,26 +216,43 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
     } finally {
       setIsSubmitting(false);
     }
-  }, [startDate, endDate, reason, notes, onSubmit, onClose]);
+  }, [
+    requestType,
+    startDate,
+    endDate,
+    dayOfWeek,
+    durationWeeks,
+    selectedClub,
+    timePreference,
+    notes,
+    onSubmit,
+    onClose,
+  ]);
 
   const handleClose = useCallback(() => {
     // Save draft
-    if (startDate || endDate) {
-      setHolidayRequestDraft({
-        start: startDate,
-        end: endDate,
-        reason,
-        notes,
-        hasCoverArranged,
-      });
-    }
+    setOvertimeRequestDraft({
+      type: requestType,
+      startDate,
+      endDate,
+      dayOfWeek,
+      durationWeeks: durationWeeks ? parseInt(durationWeeks) : undefined,
+      preferredClubId: selectedClub?.id,
+      timePreference,
+      notes,
+    });
     onClose();
-  }, [startDate, endDate, reason, notes, hasCoverArranged, onClose]);
-
-  const dayCount = useMemo(() => {
-    if (!startDate || !endDate) return 0;
-    return differenceInDays(endDate, startDate) + 1;
-  }, [startDate, endDate]);
+  }, [
+    requestType,
+    startDate,
+    endDate,
+    dayOfWeek,
+    durationWeeks,
+    selectedClub,
+    timePreference,
+    notes,
+    onClose,
+  ]);
 
   return (
     <Modal
@@ -174,7 +277,7 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
           >
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.title}>Request Holiday</Text>
+              <Text style={styles.title}>Request Overtime</Text>
               <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
                 <Ionicons name="close" size={24} color={palette.textPrimary} />
               </TouchableOpacity>
@@ -186,106 +289,164 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
             >
-              {/* Date Selection */}
+              {/* Request Type Selection */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Dates</Text>
-                <View style={styles.dateRow}>
-                  <View style={styles.dateContainer}>
-                    <Text style={styles.dateLabel}>From</Text>
-                    <TouchableOpacity
-                      style={styles.dateDisplay}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setShowEndPicker(false); // Close end picker if open
-                        setShowStartPicker(true);
-                      }}
-                    >
-                      <Ionicons
-                        name="calendar-outline"
-                        size={16}
-                        color={palette.tint}
-                      />
-                      <Text style={styles.dateText}>
-                        {startDate ? format(startDate, 'MMM dd, yyyy') : 'Select date'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  <View style={styles.dateSeparator}>
+                <Text style={styles.sectionTitle}>Request Type</Text>
+                <View style={styles.typeRow}>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeCard,
+                      requestType === 'one_time' && styles.typeCardActive,
+                    ]}
+                    onPress={() => handleRequestTypeChange('one_time')}
+                  >
                     <Ionicons
-                      name="arrow-forward"
-                      size={16}
-                      color={palette.textTertiary}
+                      name="calendar-outline"
+                      size={20}
+                      color={requestType === 'one_time' ? palette.textInverse : palette.textSecondary}
                     />
-                  </View>
-                  <View style={styles.dateContainer}>
-                    <Text style={styles.dateLabel}>To</Text>
-                    <TouchableOpacity
-                      style={styles.dateDisplay}
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        setShowStartPicker(false); // Close start picker if open
-                        setShowEndPicker(true);
-                      }}
+                    <Text
+                      style={[
+                        styles.typeText,
+                        requestType === 'one_time' && styles.typeTextActive,
+                      ]}
                     >
-                      <Ionicons
-                        name="calendar-outline"
-                        size={16}
-                        color={palette.tint}
-                      />
-                      <Text style={styles.dateText}>
-                        {endDate ? format(endDate, 'MMM dd, yyyy') : 'Select date'}
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-                {dayCount > 0 && (
-                  <View style={styles.dayCountContainer}>
-                    <Ionicons name="time-outline" size={16} color={palette.tint} />
-                    <Text style={styles.dayCountText}>
-                      {dayCount} {dayCount === 1 ? 'day' : 'days'}
+                      One-time
                     </Text>
-                  </View>
-                )}
-                {startDate && isWeekend(startDate) && (
-                  <Text style={styles.weekendWarning}>
-                    ⚠️ Start date falls on a weekend
-                  </Text>
-                )}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.typeCard,
+                      requestType === 'recurring' && styles.typeCardActive,
+                    ]}
+                    onPress={() => handleRequestTypeChange('recurring')}
+                  >
+                    <Ionicons
+                      name="sync-outline"
+                      size={20}
+                      color={requestType === 'recurring' ? palette.textInverse : palette.textSecondary}
+                    />
+                    <Text
+                      style={[
+                        styles.typeText,
+                        requestType === 'recurring' && styles.typeTextActive,
+                      ]}
+                    >
+                      Recurring
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Cover Arrangement */}
-              <View style={styles.section}>
-                <TouchableOpacity
-                  style={styles.checkboxRow}
-                  onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    setHasCoverArranged(!hasCoverArranged);
-                  }}
-                  activeOpacity={0.7}
-                >
-                  <View style={[styles.checkbox, hasCoverArranged && styles.checkboxChecked]}>
-                    {hasCoverArranged && (
-                      <Ionicons name="checkmark" size={16} color={palette.textInverse} />
-                    )}
+              {/* Date Selection for One-Time */}
+              {requestType === 'one_time' && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Dates</Text>
+                  <View style={styles.dateRow}>
+                    <View style={styles.dateContainer}>
+                      <Text style={styles.dateLabel}>From</Text>
+                      <TouchableOpacity
+                        style={styles.dateDisplay}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setShowEndPicker(false);
+                          setShowStartPicker(true);
+                        }}
+                      >
+                        <Ionicons name="calendar-outline" size={16} color={palette.tint} />
+                        <Text style={styles.dateText}>
+                          {startDate ? format(startDate, 'MMM dd, yyyy') : 'Select date'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                    <View style={styles.dateSeparator}>
+                      <Ionicons name="arrow-forward" size={16} color={palette.textTertiary} />
+                    </View>
+                    <View style={styles.dateContainer}>
+                      <Text style={styles.dateLabel}>To</Text>
+                      <TouchableOpacity
+                        style={styles.dateDisplay}
+                        onPress={() => {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          setShowStartPicker(false);
+                          setShowEndPicker(true);
+                        }}
+                      >
+                        <Ionicons name="calendar-outline" size={16} color={palette.tint} />
+                        <Text style={styles.dateText}>
+                          {endDate ? format(endDate, 'MMM dd, yyyy') : 'Select date'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <Text style={styles.checkboxLabel}>Has cover been arranged?</Text>
-                </TouchableOpacity>
+                </View>
+              )}
+
+              {/* Day and Duration for Recurring */}
+              {requestType === 'recurring' && (
+                <>
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Day of the Week</Text>
+                    <View style={styles.daysGrid}>
+                      {DAYS_OF_WEEK.map((day) => (
+                        <TouchableOpacity
+                          key={day.value}
+                          style={[
+                            styles.dayCard,
+                            dayOfWeek === day.value && styles.dayCardActive,
+                          ]}
+                          onPress={() => handleDaySelect(day.value)}
+                        >
+                          <Text
+                            style={[
+                              styles.dayText,
+                              dayOfWeek === day.value && styles.dayTextActive,
+                            ]}
+                          >
+                            {day.short}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+
+                  <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>Duration (weeks)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={durationWeeks}
+                      onChangeText={setDurationWeeks}
+                      placeholder="Number of weeks (1-52)"
+                      placeholderTextColor={palette.textTertiary}
+                      keyboardType="numeric"
+                      maxLength={2}
+                    />
+                  </View>
+                </>
+              )}
+
+              {/* Preferred Club */}
+              <View style={styles.section}>
+                <Dropdown
+                  label="Preferred Club (Optional)"
+                  value={selectedClub?.id?.toString() || ''}
+                  options={clubs.map(club => ({
+                    label: club.name,
+                    value: club.id.toString(),
+                  }))}
+                  onValueChange={handleClubSelect}
+                  placeholder="Select a club"
+                />
               </View>
 
               {/* Notes */}
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>
-                  {hasCoverArranged ? 'Helper Names & Additional Notes' : 'Additional Notes (Optional)'}
-                </Text>
+                <Text style={styles.sectionTitle}>Additional Notes (Optional)</Text>
                 <TextInput
                   style={styles.notesInput}
                   value={notes}
                   onChangeText={setNotes}
-                  placeholder={
-                    hasCoverArranged
-                      ? "Enter helper names and any additional information..."
-                      : "Add any additional information..."
-                  }
+                  placeholder="Add any additional information..."
                   placeholderTextColor={palette.textTertiary}
                   multiline
                   numberOfLines={4}
@@ -303,7 +464,7 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
                   color={palette.statusInfo}
                 />
                 <Text style={styles.infoText}>
-                  Your request will be sent to an admin for approval. You'll be notified
+                  Your overtime request will be sent to an admin for approval. You'll be notified
                   once it's been reviewed.
                 </Text>
               </View>
@@ -322,7 +483,7 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
                 variant="primary"
                 onPress={handleSubmit}
                 loading={isSubmitting}
-                disabled={!startDate || !endDate || isSubmitting}
+                disabled={isSubmitting}
                 style={styles.actionButton}
               >
                 Submit Request
@@ -332,7 +493,7 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
         </KeyboardAvoidingView>
       </Animated.View>
 
-      {/* iOS Date Pickers in Modal */}
+      {/* iOS Date Pickers */}
       {Platform.OS === 'ios' && showStartPicker && (
         <Modal
           transparent
@@ -371,7 +532,6 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
                 onChange={(event, selectedDate) => {
                   if (selectedDate) {
                     setStartDate(selectedDate);
-                    // If end date is before start date, update end date
                     if (endDate && selectedDate > endDate) {
                       setEndDate(selectedDate);
                     }
@@ -440,7 +600,6 @@ export const HolidayRequestModal: React.FC<HolidayRequestModalProps> = ({
             setShowStartPicker(false);
             if (event.type === 'set' && selectedDate) {
               setStartDate(selectedDate);
-              // If end date is before start date, update end date
               if (endDate && selectedDate > endDate) {
                 setEndDate(selectedDate);
               }
@@ -513,6 +672,52 @@ const createStyles = (palette: ThemeColors) =>
       color: palette.textPrimary,
       marginBottom: Theme.spacing.md,
     },
+    typeRow: {
+      flexDirection: 'row',
+      gap: Theme.spacing.md,
+    },
+    typeCard: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Theme.spacing.sm,
+      padding: Theme.spacing.md,
+      backgroundColor: palette.backgroundSecondary,
+      borderRadius: Theme.borderRadius.md,
+      borderWidth: 1,
+      borderColor: palette.borderLight,
+    },
+    typeCardActive: {
+      backgroundColor: palette.tint,
+      borderColor: palette.tint,
+    },
+    typeText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.medium,
+      color: palette.textSecondary,
+    },
+    typeTextActive: {
+      color: palette.textInverse,
+    },
+    quickSelectRow: {
+      flexDirection: 'row',
+      gap: Theme.spacing.sm,
+      marginBottom: Theme.spacing.md,
+    },
+    quickSelectChip: {
+      paddingHorizontal: Theme.spacing.md,
+      paddingVertical: Theme.spacing.sm,
+      backgroundColor: palette.backgroundSecondary,
+      borderRadius: Theme.borderRadius.full || 999,
+      borderWidth: 1,
+      borderColor: palette.borderLight,
+    },
+    quickSelectText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.medium,
+      color: palette.textPrimary,
+    },
     dateRow: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -546,100 +751,67 @@ const createStyles = (palette: ThemeColors) =>
       color: palette.textPrimary,
       flex: 1,
     },
-    dayCountContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Theme.spacing.xs,
-      marginTop: Theme.spacing.sm,
-      padding: Theme.spacing.sm,
-      backgroundColor: `${palette.tint}10`,
-      borderRadius: Theme.borderRadius.sm,
-      alignSelf: 'flex-start',
-    },
-    dayCountText: {
-      fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
-      color: palette.tint,
-    },
-    quickSelectRow: {
-      flexDirection: 'row',
-      gap: Theme.spacing.sm,
-    },
-    quickSelectChip: {
-      paddingHorizontal: Theme.spacing.md,
-      paddingVertical: Theme.spacing.sm,
-      backgroundColor: palette.backgroundSecondary,
-      borderRadius: Theme.borderRadius.full || 999,
-      borderWidth: 1,
-      borderColor: palette.borderLight,
-    },
-    quickSelectText: {
-      fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
-      color: palette.textPrimary,
-    },
-    weekendWarning: {
-      fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
-      color: palette.statusWarning,
-      marginTop: Theme.spacing.xs,
-    },
-    charCount: {
-      fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
-      color: palette.textTertiary,
-      textAlign: 'right',
-      marginTop: Theme.spacing.xs,
-    },
-    checkboxRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Theme.spacing.md,
-    },
-    checkbox: {
-      width: 24,
-      height: 24,
-      borderRadius: Theme.borderRadius.sm,
-      borderWidth: 2,
-      borderColor: palette.borderDefault,
-      backgroundColor: palette.backgroundSecondary,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    checkboxChecked: {
-      backgroundColor: palette.tint,
-      borderColor: palette.tint,
-    },
-    checkboxLabel: {
-      fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.medium,
-      color: palette.textPrimary,
-    },
-    reasonGrid: {
+    daysGrid: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      justifyContent: 'space-between',
+      gap: Theme.spacing.xs,
     },
-    reasonCard: {
-      width: '48%',
-      padding: Theme.spacing.md,
+    dayCard: {
+      width: 44,
+      height: 44,
       backgroundColor: palette.backgroundSecondary,
       borderRadius: Theme.borderRadius.md,
       borderWidth: 1,
       borderColor: palette.borderLight,
       alignItems: 'center',
-      marginBottom: Theme.spacing.sm,
+      justifyContent: 'center',
     },
-    reasonCardActive: {
+    dayCardActive: {
       backgroundColor: palette.tint,
       borderColor: palette.tint,
     },
-    reasonText: {
+    dayText: {
       fontSize: Theme.typography.sizes.sm,
       fontFamily: Theme.typography.fonts.medium,
       color: palette.textSecondary,
     },
-    reasonTextActive: {
+    dayTextActive: {
+      color: palette.textInverse,
+    },
+    input: {
+      padding: Theme.spacing.md,
+      backgroundColor: palette.backgroundSecondary,
+      borderRadius: Theme.borderRadius.md,
+      borderWidth: 1,
+      borderColor: palette.borderLight,
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.regular,
+      color: palette.textPrimary,
+    },
+    timeGrid: {
+      flexDirection: 'row',
+      gap: Theme.spacing.sm,
+    },
+    timeCard: {
+      flex: 1,
+      alignItems: 'center',
+      gap: Theme.spacing.xs,
+      padding: Theme.spacing.md,
+      backgroundColor: palette.backgroundSecondary,
+      borderRadius: Theme.borderRadius.md,
+      borderWidth: 1,
+      borderColor: palette.borderLight,
+    },
+    timeCardActive: {
+      backgroundColor: palette.tint,
+      borderColor: palette.tint,
+    },
+    timeText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.medium,
+      color: palette.textSecondary,
+    },
+    timeTextActive: {
       color: palette.textInverse,
     },
     notesInput: {
@@ -652,6 +824,13 @@ const createStyles = (palette: ThemeColors) =>
       fontFamily: Theme.typography.fonts.regular,
       color: palette.textPrimary,
       minHeight: 100,
+    },
+    charCount: {
+      fontSize: Theme.typography.sizes.xs,
+      fontFamily: Theme.typography.fonts.regular,
+      color: palette.textTertiary,
+      textAlign: 'right',
+      marginTop: Theme.spacing.xs,
     },
     infoContainer: {
       flexDirection: 'row',

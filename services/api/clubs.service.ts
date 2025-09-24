@@ -6,9 +6,10 @@ interface ClubsResponse {
 }
 
 export class ClubsService {
-  async getClubs(): Promise<Club[]> {
+  async getClubs(includeAll: boolean = false): Promise<Club[]> {
     try {
-      const response = await apiClient.get<ClubsResponse>('/clubs');
+      const params = includeAll ? { include_all: true } : {};
+      const response = await apiClient.get<ClubsResponse>('/clubs', { params });
       return response.data.data;
     } catch (error) {
       console.error('Failed to fetch clubs:', error);

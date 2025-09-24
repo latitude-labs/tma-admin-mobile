@@ -1,27 +1,25 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { NotificationItem } from '@/components/ui/NotificationItem';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { useNotificationStore } from '@/store/notificationStore';
+import { Notification, NotificationGroup } from '@/types/notification';
+import { Ionicons } from '@expo/vector-icons';
+import { format, isToday, isYesterday } from 'date-fns';
+import { Stack } from 'expo-router';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
+  Alert,
   RefreshControl,
   SectionList,
-  Alert,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
 import Animated, {
-  useAnimatedStyle,
-  withTiming,
   FadeInDown,
   FadeOutUp,
-  Layout,
+  Layout
 } from 'react-native-reanimated';
-import { format, isToday, isYesterday } from 'date-fns';
-import { NotificationItem } from '@/components/ui/NotificationItem';
-import { Notification, NotificationGroup } from '@/types/notification';
-import { useNotificationStore } from '@/store/notificationStore';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 export default function NotificationsScreen() {
   const {
@@ -38,8 +36,8 @@ export default function NotificationsScreen() {
     isLoading,
   } = useNotificationStore();
   const [refreshing, setRefreshing] = useState(false);
-  const colors = useThemeColors();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
 
   useEffect(() => {
     // Just fetch notifications when screen is opened
@@ -156,7 +154,7 @@ export default function NotificationsScreen() {
         <Ionicons
           name="notifications-off-outline"
           size={64}
-          color={colors.textTertiary}
+          color={palette.textTertiary}
         />
       </View>
       <Text style={styles.emptyTitle}>
@@ -175,7 +173,9 @@ export default function NotificationsScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Notifications</Text>
@@ -196,7 +196,7 @@ export default function NotificationsScreen() {
                 <Ionicons
                   name="checkmark-done"
                   size={20}
-                  color={colors.tint}
+                  color={palette.tint}
                 />
               </TouchableOpacity>
               <TouchableOpacity
@@ -206,7 +206,7 @@ export default function NotificationsScreen() {
                 <Ionicons
                   name="trash-outline"
                   size={20}
-                  color={colors.textTertiary}
+                  color={palette.textTertiary}
                 />
               </TouchableOpacity>
             </>
@@ -279,12 +279,13 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor={colors.tint}
+            tintColor={palette.tint}
           />
         }
         ListEmptyComponent={EmptyState}
       />
-    </View>
+      </View>
+    </>
   );
 }
 

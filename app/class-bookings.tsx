@@ -87,10 +87,10 @@ export default function ClassBookingsScreen() {
     cancelled: { color: palette.statusWarning, icon: 'alert-circle' },
   };
 
-  const tshirtSizes = ['X Small Youth', 'Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
-  const trouserSizes = ['7XS', '6XS', '5XS', '4XS', '3XS', '2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL'];
-  const gloveSizes = ['6oz', '10oz', '16oz'];
-  const shinpadSizes = ['XS', 'S', 'M', 'L', 'XL'];
+  const tshirtSizes = ['Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'Small', 'Medium', 'Large', 'XL', '2XL', '3XL'];
+  const trouserSizes = ['Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'Small', 'Medium', 'Large', 'XL', '2XL', '3XL'];
+  const gloveSizes = ['8oz', '10oz', '12oz', '14oz', '16oz'];
+  const shinpadSizes = ['Small', 'Medium', 'Large', 'XL'];
 
   useEffect(() => {
     loadBookings();

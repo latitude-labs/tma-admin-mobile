@@ -1,27 +1,26 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
+import { Avatar } from '@/components/ui/Avatar';
+import { Card } from '@/components/ui/Card';
+import { Theme } from '@/constants/Theme';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { useAuthStore } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import React, { useMemo } from 'react';
+import {
+  Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import Animated, {
   FadeInRight,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useAuthStore } from '@/store/authStore';
-import Colors from '@/constants/Colors';
-import { Theme } from '@/constants/Theme';
-import { Card } from '@/components/ui/Card';
-import { Avatar } from '@/components/ui/Avatar';
 
 type MenuSection = {
   title: string;
@@ -40,8 +39,8 @@ type MenuItem = {
 
 export default function MoreScreen() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const { user, logout } = useAuthStore();
 
   const handleLogout = () => {
@@ -63,6 +62,11 @@ export default function MoreScreen() {
       title: 'Operations',
       items: [
         {
+          title: 'Kit Orders',
+          icon: 'shirt-outline' as keyof typeof Ionicons.glyphMap,
+          route: '/kit-orders',
+        },
+        {
           title: 'End of Day',
           icon: 'clipboard-outline' as keyof typeof Ionicons.glyphMap,
           route: '/eod-reports',
@@ -82,6 +86,11 @@ export default function MoreScreen() {
     ...(user?.is_admin ? [{
       title: 'Admin',
       items: [
+        {
+          title: 'Club Health',
+          icon: 'analytics-outline' as keyof typeof Ionicons.glyphMap,
+          route: '/club-health',
+        },
         {
           title: 'Reports',
           icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
@@ -142,7 +151,7 @@ export default function MoreScreen() {
         entering={FadeInRight.delay(index * 50).springify()}
       >
         <TouchableOpacity
-          style={[styles.menuItem, { borderBottomColor: currentTheme.border }]}
+          style={styles.menuItem}
           onPress={handlePress}
           activeOpacity={0.7}
         >
@@ -167,46 +176,46 @@ export default function MoreScreen() {
               style={[
                 styles.menuItemText,
                 {
-                  color: item.color || currentTheme.text,
+                  color: item.color || palette.textPrimary,
                 },
               ]}
             >
               {item.title}
             </Text>
           </View>
-          {!item.action && (
+          {!item.action ? (
             <Ionicons
               name="chevron-forward"
               size={20}
-              color={currentTheme.tabIconDefault}
+              color={palette.textSecondary}
             />
-          )}
+          ) : null}
         </TouchableOpacity>
       </Animated.View>
     );
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: currentTheme.background }]}>
+    <ScrollView style={styles.container}>
       <Card variant="filled" style={styles.profileCard}>
         <View style={styles.profileContent}>
           <Avatar
             name={user?.name || 'User'}
-            size={60}
+            size={'md'}
             style={styles.avatar}
           />
           <View style={styles.profileInfo}>
-            <Text style={[styles.profileName, { color: currentTheme.text }]}>
-              {user?.name}
+            <Text style={styles.profileName}>
+              {user?.name || ''}
             </Text>
-            <Text style={[styles.profileEmail, { color: currentTheme.tabIconDefault }]}>
-              {user?.email}
+            <Text style={styles.profileEmail}>
+              {user?.email || ''}
             </Text>
-            {user?.is_admin && (
+            {user?.is_admin ? (
               <View style={styles.adminBadge}>
                 <Text style={styles.adminBadgeText}>Admin</Text>
               </View>
-            )}
+            ) : null}
           </View>
         </View>
       </Card>
@@ -214,14 +223,14 @@ export default function MoreScreen() {
       {menuSections.map((section, sectionIndex) => (
         <View key={section.title} style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: currentTheme.tabIconDefault }]}>
+            <Text style={styles.sectionTitle}>
               {section.title}
             </Text>
-            {section.title === 'Admin' && (
+            {section.title === 'Admin' ? (
               <View style={styles.adminBadgeSmall}>
                 <Ionicons name="shield" size={12} color="#FFFFFF" />
               </View>
-            )}
+            ) : null}
           </View>
           <Card
             variant="outlined"
@@ -245,7 +254,7 @@ export default function MoreScreen() {
       ))}
 
       <View style={styles.footer}>
-        <Text style={[styles.versionText, { color: currentTheme.tabIconDefault }]}>
+        <Text style={styles.versionText}>
           TMA Admin v1.0.0
         </Text>
       </View>
@@ -253,9 +262,10 @@ export default function MoreScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: palette.background,
   },
   profileCard: {
     margin: 16,
@@ -274,11 +284,13 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
     marginBottom: 4,
   },
   profileEmail: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
+    color: palette.textSecondary,
     marginBottom: 8,
   },
   adminBadge: {
@@ -289,7 +301,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   adminBadgeText: {
-    color: '#FFFFFF',
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.medium,
   },
@@ -306,6 +318,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
+    color: palette.textSecondary,
     textTransform: 'uppercase',
   },
   adminBadgeSmall: {
@@ -326,6 +339,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.borderLight,
   },
   menuItemLeft: {
     flexDirection: 'row',
@@ -336,6 +351,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: Theme.borderRadius.md,
+    backgroundColor: palette.backgroundSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -343,6 +359,7 @@ const styles = StyleSheet.create({
   menuItemText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
+    color: palette.textPrimary,
   },
   footer: {
     alignItems: 'center',
@@ -351,5 +368,6 @@ const styles = StyleSheet.create({
   versionText: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
+    color: palette.textTertiary,
   },
 });

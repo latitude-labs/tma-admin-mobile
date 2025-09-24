@@ -1,4 +1,4 @@
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { Notification, NotificationType } from '@/types/notification';
 import { Ionicons } from '@expo/vector-icons';
 import { format, formatDistanceToNow, isToday, isYesterday } from 'date-fns';
@@ -11,7 +11,6 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -35,9 +34,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 }) => {
   const swipeX = useSharedValue(0);
   const opacity = useSharedValue(1);
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
-  const styles = React.useMemo(() => createStyles(colors), [colors]);
+  const palette = useThemeColors();
+  const styles = React.useMemo(() => createStyles(palette), [palette]);
   const router = useRouter();
 
   const getNotificationIcon = (type: NotificationType) => {
@@ -54,14 +52,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
 
   const getIconColor = (type: NotificationType) => {
     const colorMap: Record<NotificationType, string> = {
-      system: colors.textSecondary,
-      message: colors.tint,
-      reminder: colors.statusInfo,
-      achievement: colors.statusSuccess,
-      warning: colors.statusWarning,
-      info: colors.statusInfo,
+      system: palette.textSecondary,
+      message: palette.tint,
+      reminder: palette.statusInfo,
+      achievement: palette.statusSuccess,
+      warning: palette.statusWarning,
+      info: palette.statusInfo,
     };
-    return colorMap[type] ?? colors.tint;
+    return colorMap[type] ?? palette.tint;
   };
 
   const formatTimestamp = (date: Date) => {
@@ -94,9 +92,9 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       style={[
         styles.container,
         !notification.read && {
-          backgroundColor: colors.notificationUnread,
+          backgroundColor: palette.notificationUnread || palette.backgroundSecondary,
           borderLeftWidth: 3,
-          borderLeftColor: colors.tint,
+          borderLeftColor: palette.tint,
         },
         animatedStyle,
       ]}
@@ -129,7 +127,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             </Text>
             {notification.priority === 'high' && (
               <View style={styles.priorityBadge}>
-                <Ionicons name="alert-circle" size={14} color={colors.statusError} />
+                <Ionicons name="alert-circle" size={14} color={palette.statusError} />
               </View>
             )}
           </View>
@@ -177,7 +175,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             style={styles.clearButton}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Ionicons name="close" size={20} color={colors.textTertiary} />
+            <Ionicons name="close" size={20} color={palette.textTertiary} />
           </TouchableOpacity>
         )}
       </View>
@@ -185,9 +183,8 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   );
 };
 
-type Palette = (typeof ColorPalette)['light'];
 
-const createStyles = (palette: Palette) =>
+const createStyles = (palette: ThemeColors) =>
   StyleSheet.create({
     container: {
       backgroundColor: palette.background,

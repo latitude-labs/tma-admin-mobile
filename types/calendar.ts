@@ -4,6 +4,10 @@ export type EventStatus = 'scheduled' | 'confirmed' | 'cancelled' | 'completed';
 export type HolidayReason = 'holiday' | 'sick' | 'personal' | 'other';
 export type HolidayStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 export type CoverageStatus = 'pending' | 'confirmed' | 'declined';
+export type OvertimeType = 'one_time' | 'recurring';
+export type OvertimeStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type DayOfWeek = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
+export type TimePreference = 'morning' | 'afternoon' | 'evening';
 
 // Calendar Views
 export type CalendarView = 'month' | 'week' | 'day';
@@ -68,6 +72,40 @@ export interface HolidayRequest {
     email?: string;
   };
   rotas?: CalendarEvent[];
+}
+
+// Overtime Request (matching backend /api/overtime-requests response)
+export interface OvertimeRequest {
+  id: number;
+  user_id: number;
+  type: OvertimeType;
+  start_date?: string | null; // YYYY-MM-DD for one_time
+  end_date?: string | null; // YYYY-MM-DD for one_time
+  day_of_week?: DayOfWeek | null; // for recurring
+  duration_weeks?: number | null; // for recurring
+  preferred_club_id?: number | null;
+  preferred_club?: {
+    id: number;
+    name: string;
+  } | null;
+  time_preference?: TimePreference | null;
+  notes?: string | null;
+  status: OvertimeStatus;
+  approved_by?: number | null;
+  approved_at?: string | null;
+  rejection_reason?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  user?: {
+    id: number;
+    name: string;
+    email?: string;
+  };
+  approvedBy?: {
+    id: number;
+    name: string;
+    email?: string;
+  };
 }
 
 // Affected Class (for holiday requests)
@@ -204,6 +242,10 @@ export interface CalendarState {
   holidayRequests: HolidayRequest[];
   holidayRequestsLoading: boolean;
 
+  // Overtime Requests
+  overtimeRequests: OvertimeRequest[];
+  overtimeRequestsLoading: boolean;
+
   // Coverage
   coverageAssignments: CoverageAssignment[];
   availableCoaches: AvailableCoach[];
@@ -255,6 +297,29 @@ export interface CreateHolidayRequest {
   end_date: string;
   reason: HolidayReason;
   notes?: string;
+  has_cover_arranged?: boolean;
+}
+
+export interface CreateOvertimeRequest {
+  type: OvertimeType;
+  start_date?: string | null; // for one_time
+  end_date?: string | null; // for one_time
+  day_of_week?: DayOfWeek | null; // for recurring
+  duration_weeks?: number | null; // for recurring
+  preferred_club_id?: number | null;
+  time_preference?: TimePreference | null;
+  notes?: string | null;
+}
+
+export interface UpdateOvertimeRequest {
+  type?: OvertimeType;
+  start_date?: string | null;
+  end_date?: string | null;
+  day_of_week?: DayOfWeek | null;
+  duration_weeks?: number | null;
+  preferred_club_id?: number | null;
+  time_preference?: TimePreference | null;
+  notes?: string | null;
 }
 
 export interface AssignCoverageRequest {
@@ -319,6 +384,22 @@ export interface HolidayRequestsResponse {
     current_page: number;
     last_page: number;
   };
+}
+
+export interface OvertimeRequestsResponse {
+  data: OvertimeRequest[];
+  meta?: {
+    total: number;
+    current_page: number;
+    last_page: number;
+  };
+}
+
+export interface OvertimeRequestSummary {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
 }
 
 export interface TeamCalendarResponse {

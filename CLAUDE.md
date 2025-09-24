@@ -260,6 +260,134 @@ EXPO_PUBLIC_API_URL=https://api.example.com
 EXPO_PUBLIC_APP_NAME=TMA Admin
 ```
 
+## React Hooks Rules
+
+### CRITICAL: Never Use Hooks Inside Render Functions or Loops
+1. **Hooks must be called at the top level** - Never use hooks inside map(), conditional logic, or nested functions
+2. **Extract components for repeated elements** - Create separate components instead of using hooks in render functions
+3. **Common mistake to avoid:**
+   ```typescript
+   // ❌ WRONG - Hooks inside map() will cause "Rendered more hooks than during the previous render" error
+   const MyComponent = () => {
+     return (
+       <View>
+         {items.map((item) => {
+           const animatedValue = useSharedValue(0); // ERROR!
+           return <AnimatedView />;
+         })}
+       </View>
+     );
+   };
+
+   // ✅ CORRECT - Extract to separate component
+   const ItemComponent = ({ item }) => {
+     const animatedValue = useSharedValue(0); // OK - at component top level
+     return <AnimatedView />;
+   };
+
+   const MyComponent = () => {
+     return (
+       <View>
+         {items.map((item) => (
+           <ItemComponent key={item.id} item={item} />
+         ))}
+       </View>
+     );
+   };
+   ```
+
+4. **State in render functions** - Never use useState inside render functions
+   ```typescript
+   // ❌ WRONG - useState inside render function
+   const renderModal = () => {
+     const [selected, setSelected] = useState(''); // ERROR!
+     return <Modal />;
+   };
+
+   // ✅ CORRECT - Move state to parent component
+   const MyComponent = () => {
+     const [modalSelected, setModalSelected] = useState(''); // OK
+
+     const renderModal = () => {
+       return <Modal selected={modalSelected} />;
+     };
+   };
+   ```
+
+## React Native Text Rendering Rules
+
+### CRITICAL: Text Component Requirements
+1. **ALL text must be wrapped in `<Text>` components** - React Native does NOT allow bare text strings
+2. **Handle undefined/null values** - Always use fallbacks: `{value || ''}` instead of `{value}`
+3. **No text outside Text components** - Even whitespace or line breaks between components can cause errors
+4. **NEVER use && for conditional rendering** - Always use ternary operator with explicit null
+5. **Common mistakes to avoid:**
+   ```typescript
+   // ❌ WRONG - undefined will cause "Text strings must be rendered within a <Text> component" error
+   <Text>{user?.name}</Text>
+
+   // ✅ CORRECT - Always provide fallback for potentially undefined values
+   <Text>{user?.name || ''}</Text>
+
+   // ❌ WRONG - Conditional rendering that might return undefined
+   <Text>{isAdmin && 'Admin'}</Text>
+
+   // ✅ CORRECT - Ensure falsy values return null or empty string
+   <Text>{isAdmin ? 'Admin' : ''}</Text>
+
+   // ❌ WRONG - && operator can render false/undefined
+   {user?.is_admin && <AdminBadge />}
+
+   // ✅ CORRECT - Ternary with explicit null
+   {user?.is_admin ? <AdminBadge /> : null}
+   ```
+
+## CRITICAL: Theme Color Implementation
+
+### ⚠️ ALWAYS Use Dynamic Theme Colors - Never Static Colors
+
+**This is mandatory for dark mode support.** Every component MUST use the `useThemeColors` hook and dynamic styles.
+
+#### ❌ WRONG - Static colors break dark mode:
+```typescript
+// NEVER do this - breaks dark mode
+import ColorPalette from '@/constants/Colors';
+import { useColorScheme } from 'react-native';
+
+const colorScheme = useColorScheme();
+const colors = ColorPalette[colorScheme ?? 'light'];
+```
+
+#### ✅ CORRECT - Dynamic theme colors:
+```typescript
+// ALWAYS do this for proper dark mode support
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import React, { useMemo } from 'react';
+
+export default function MyComponent() {
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
+
+  // Use palette.background, palette.textPrimary, etc.
+}
+
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  container: {
+    backgroundColor: palette.background, // Dynamic color
+    // NEVER use: backgroundColor: '#FFFFFF' or ColorPalette.light.background
+  },
+});
+```
+
+#### Key Rules:
+1. **ALWAYS** use `useThemeColors()` hook in components
+2. **ALWAYS** pass palette to `createStyles` function
+3. **NEVER** hardcode hex colors like `#FFFFFF` or `#000000`
+4. **NEVER** use `useColorScheme` with `ColorPalette` directly
+5. **ALWAYS** use `useMemo` to optimize style recreation
+6. **Theme.colors** is OK for static theme constants (primary, success, error)
+7. **palette** should be used for colors that change with theme (background, text, borders)
+
 ## Best Practices for 2025
 
 ### Performance

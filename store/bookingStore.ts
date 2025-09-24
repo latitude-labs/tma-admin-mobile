@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { Booking } from '@/types/api';
 import { bookingsService } from '@/services/api/bookings.service';
 import { offlineStorage } from '@/services/offline/storage';
+import { useAuthStore } from './authStore';
 
 interface BookingFilters {
   status?: 'scheduled' | 'completed' | 'no-show' | 'cancelled';
@@ -21,13 +22,16 @@ interface PaginationState {
 
 interface BookingState {
   bookings: Booking[];
+  allBookings: Booking[]; // Store all bookings for offline access
   isLoading: boolean;
   error: string | null;
   isOffline: boolean;
   lastSync: string | null;
   filters: BookingFilters;
   pagination: PaginationState;
+  viewMode: 'mine' | 'all';
   setFilters: (filters: BookingFilters) => void;
+  setViewMode: (mode: 'mine' | 'all') => void;
   fetchBookings: (forceRefresh?: boolean) => Promise<void>;
   fetchBookingsPage: (page: number) => Promise<void>;
   refreshBookings: () => Promise<void>;
@@ -36,15 +40,18 @@ interface BookingState {
   getTodaysBookings: () => Booking[];
   updateBookingStatus: (bookingId: number, status: 'completed' | 'no-show') => Promise<void>;
   setSearchQuery: (query: string) => void;
+  applyFiltersAndPagination: () => void;
 }
 
 export const useBookingStore = create<BookingState>((set, get) => ({
   bookings: [],
+  allBookings: [],
   isLoading: false,
   error: null,
   isOffline: false,
   lastSync: null,
   filters: {},
+  viewMode: 'mine',
   pagination: {
     currentPage: 1,
     totalPages: 1,
@@ -56,6 +63,37 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     set({ filters });
   },
 
+  setViewMode: (mode: 'mine' | 'all') => {
+    set({ viewMode: mode });
+    // Re-apply filters when view mode changes
+    get().applyFiltersAndPagination();
+  },
+
+  applyFiltersAndPagination: () => {
+    const state = get();
+    const filtered = get().getFilteredBookings();
+
+    // Calculate pagination based on filtered results
+    const totalItems = filtered.length;
+    const perPage = state.pagination.perPage;
+    const totalPages = Math.ceil(totalItems / perPage);
+    const currentPage = Math.min(state.pagination.currentPage, totalPages || 1);
+
+    // Get paginated subset
+    const start = (currentPage - 1) * perPage;
+    const paginatedBookings = filtered.slice(start, start + perPage);
+
+    set({
+      bookings: paginatedBookings,
+      pagination: {
+        ...state.pagination,
+        currentPage,
+        totalPages,
+        totalItems,
+      },
+    });
+  },
+
   fetchBookings: async (forceRefresh = false) => {
     set({ isLoading: true, error: null });
 
@@ -63,34 +101,27 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       const isOnline = await offlineStorage.isOnline();
 
       if (isOnline && forceRefresh) {
-        // Force fetch from API with pagination
+        // Force fetch ALL bookings for offline capability
         try {
-          const response = await bookingsService.getBookings({
+          const allBookings = await bookingsService.getAllBookings({
             start_date: get().filters.startDate,
             end_date: get().filters.endDate,
-            club_id: get().filters.clubId,
-            class_time_id: get().filters.classTimeId,
-            page: get().pagination.currentPage,
-            per_page: get().pagination.perPage,
           });
 
-          // Save to offline storage
-          await offlineStorage.saveBookings(response.data);
+          // Save ALL bookings to offline storage
+          await offlineStorage.saveBookings(allBookings);
 
           const syncInfo = await offlineStorage.getLastSync();
 
           set({
-            bookings: response.data,
-            pagination: {
-              currentPage: response.meta.current_page,
-              totalPages: response.meta.last_page,
-              totalItems: response.meta.total,
-              perPage: response.meta.per_page,
-            },
+            allBookings,
             isLoading: false,
             isOffline: false,
             lastSync: syncInfo.bookings || null,
           });
+
+          // Apply filters and pagination after fetching
+          get().applyFiltersAndPagination();
         } catch (apiError) {
           // If API fails, load from cache
           const cachedBookings = await offlineStorage.getBookings();
@@ -98,11 +129,12 @@ export const useBookingStore = create<BookingState>((set, get) => ({
           if (cachedBookings) {
             const syncInfo = await offlineStorage.getLastSync();
             set({
-              bookings: cachedBookings,
+              allBookings: cachedBookings,
               isLoading: false,
               isOffline: true,
               lastSync: syncInfo.bookings || null,
             });
+            get().applyFiltersAndPagination();
           } else {
             throw apiError;
           }
@@ -114,65 +146,48 @@ export const useBookingStore = create<BookingState>((set, get) => ({
         if (cachedBookings && cachedBookings.length > 0) {
           const syncInfo = await offlineStorage.getLastSync();
           set({
-            bookings: cachedBookings,
+            allBookings: cachedBookings,
             isLoading: false,
             isOffline: false,
             lastSync: syncInfo.bookings || null,
           });
+          get().applyFiltersAndPagination();
 
           // Fetch fresh data in background
           try {
-            const response = await bookingsService.getBookings({
+            const allBookings = await bookingsService.getAllBookings({
               start_date: get().filters.startDate,
               end_date: get().filters.endDate,
-              club_id: get().filters.clubId,
-              class_time_id: get().filters.classTimeId,
-              page: get().pagination.currentPage,
-              per_page: get().pagination.perPage,
             });
 
-            await offlineStorage.saveBookings(response.data);
+            await offlineStorage.saveBookings(allBookings);
             const freshSyncInfo = await offlineStorage.getLastSync();
 
             set({
-              bookings: response.data,
-              pagination: {
-                currentPage: response.meta.current_page,
-                totalPages: response.meta.last_page,
-                totalItems: response.meta.total,
-                perPage: response.meta.per_page,
-              },
+              allBookings,
               lastSync: freshSyncInfo.bookings || null,
             });
+            get().applyFiltersAndPagination();
           } catch (error) {
             console.warn('Background refresh failed:', error);
           }
         } else {
           // No cache, fetch from API
-          const response = await bookingsService.getBookings({
+          const allBookings = await bookingsService.getAllBookings({
             start_date: get().filters.startDate,
             end_date: get().filters.endDate,
-            club_id: get().filters.clubId,
-            class_time_id: get().filters.classTimeId,
-            page: get().pagination.currentPage,
-            per_page: get().pagination.perPage,
           });
 
-          await offlineStorage.saveBookings(response.data);
+          await offlineStorage.saveBookings(allBookings);
           const syncInfo = await offlineStorage.getLastSync();
 
           set({
-            bookings: response.data,
-            pagination: {
-              currentPage: response.meta.current_page,
-              totalPages: response.meta.last_page,
-              totalItems: response.meta.total,
-              perPage: response.meta.per_page,
-            },
+            allBookings,
             isLoading: false,
             isOffline: false,
             lastSync: syncInfo.bookings || null,
           });
+          get().applyFiltersAndPagination();
         }
       } else {
         // Offline - load from storage
@@ -181,11 +196,12 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
         if (cachedBookings) {
           set({
-            bookings: cachedBookings,
+            allBookings: cachedBookings,
             isLoading: false,
             isOffline: true,
             lastSync: syncInfo.bookings || null,
           });
+          get().applyFiltersAndPagination();
         } else {
           set({
             isLoading: false,
@@ -207,7 +223,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     set({
       pagination: { ...state.pagination, currentPage: page }
     });
-    await get().fetchBookings(true);
+    get().applyFiltersAndPagination();
   },
 
   refreshBookings: async () => {
@@ -215,8 +231,18 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   getFilteredBookings: () => {
-    const { bookings, filters } = get();
-    let filtered = [...bookings];
+    const { allBookings, filters, viewMode } = get();
+    const user = useAuthStore.getState().user;
+    let filtered = [...allBookings];
+
+    // Apply view mode filter
+    if (viewMode === 'mine' && user?.class_time_ids && user.class_time_ids.length > 0) {
+      // Filter to only show bookings for the user's assigned class times
+      filtered = filtered.filter(booking =>
+        booking.class_time?.id && user.class_time_ids?.includes(booking.class_time.id)
+      );
+    }
+    // 'all' mode shows everything (no additional filtering needed)
 
     // Apply search filter
     if (filters.searchQuery && filters.searchQuery.trim()) {
@@ -267,14 +293,25 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     set({
       filters: { ...state.filters, searchQuery: query }
     });
+    get().applyFiltersAndPagination();
   },
 
   getUpcomingBookings: (days = 7) => {
-    const { bookings } = get();
+    const { allBookings, viewMode } = get();
+    const user = useAuthStore.getState().user;
     const cutoff = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     const now = new Date();
 
-    return bookings
+    let bookingsToFilter = allBookings;
+
+    // Apply view mode filter
+    if (viewMode === 'mine' && user?.class_time_ids && user.class_time_ids.length > 0) {
+      bookingsToFilter = bookingsToFilter.filter(booking =>
+        booking.class_time?.id && user.class_time_ids?.includes(booking.class_time.id)
+      );
+    }
+
+    return bookingsToFilter
       .filter(booking => {
         const startTime = new Date(booking.start_time);
         return startTime >= now &&
@@ -288,13 +325,23 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   getTodaysBookings: () => {
-    const { bookings } = get();
+    const { allBookings, viewMode } = get();
+    const user = useAuthStore.getState().user;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    return bookings
+    let bookingsToFilter = allBookings;
+
+    // Apply view mode filter
+    if (viewMode === 'mine' && user?.class_time_ids && user.class_time_ids.length > 0) {
+      bookingsToFilter = bookingsToFilter.filter(booking =>
+        booking.class_time?.id && user.class_time_ids?.includes(booking.class_time.id)
+      );
+    }
+
+    return bookingsToFilter
       .filter(booking => {
         const startTime = new Date(booking.start_time);
         return startTime >= today &&
@@ -307,10 +354,10 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   updateBookingStatus: async (bookingId: number, status: 'completed' | 'no-show') => {
-    const { bookings } = get();
+    const { allBookings } = get();
 
     // Optimistically update the UI immediately
-    const updatedBookings = bookings.map(booking => {
+    const updatedBookings = allBookings.map(booking => {
       if (booking.id === bookingId) {
         if (status === 'no-show') {
           return {
@@ -330,10 +377,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       return booking;
     });
 
-    set({ bookings: updatedBookings });
+    set({ allBookings: updatedBookings });
+    get().applyFiltersAndPagination();
     await offlineStorage.saveBookings(updatedBookings);
 
     // Queue the operation for sync (handles both online and offline)
     await bookingsService.updateBookingAttendanceStatusOffline(bookingId, status);
   },
-}));
+}))

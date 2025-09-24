@@ -770,27 +770,6 @@ export default function CoachDashboardScreen() {
         </View>
         <View style={{ height: 150 }} />
       </ScrollView>
-
-      <View style={styles.floatingActions}>
-        <TouchableOpacity
-          style={[styles.fab, styles.fabSecondary]}
-          onPress={() => router.push('/clubs')}
-          activeOpacity={0.9}
-        >
-          <Ionicons name="business" size={22} color={colors.tint} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.fab, styles.fabPrimary]}
-          onPress={() => router.push('/eod-wizard')}
-          activeOpacity={0.9}
-        >
-          <View style={styles.fabContent}>
-            <Ionicons name="document-text" size={26} color="#fff" />
-            <Text style={styles.fabLabel}>EOD</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
     </Animated.View>
   );
 }

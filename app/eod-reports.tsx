@@ -1,5 +1,6 @@
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
@@ -9,7 +10,7 @@ import { EndOfDayReport } from '@/types/endOfDay';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, parseISO } from 'date-fns';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import {
   ActivityIndicator,
@@ -337,31 +338,25 @@ export default function EoDReportsScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <Animated.View
-        entering={FadeInDown.duration(400).springify()}
-        style={styles.header}
-      >
-        <View>
-          <Text style={styles.headerTitle}>
-            {isAdmin ? 'All Reports' : 'My Reports'}
-          </Text>
-          <Text style={styles.headerSubtitle}>End of Day Reports</Text>
-        </View>
-        {!isAdmin && canCreateReport && selectedClub && (
-          <AnimatedPressable
-            onPress={handleCreateReport}
-            style={({ pressed }) => [
-              styles.createHeaderButton,
-              pressed && styles.createHeaderButtonPressed
-            ]}
-          >
-            <Ionicons name="add-circle" size={24} color={palette.textInverse} />
-            <Text style={styles.createHeaderButtonText}>New</Text>
-          </AnimatedPressable>
-        )}
-      </Animated.View>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+      <View style={styles.container}>
+        <ScreenHeader
+          title="End of Day Reports"
+          rightAction={
+            !isAdmin && canCreateReport && selectedClub ? (
+              <AnimatedPressable
+                onPress={handleCreateReport}
+                style={({ pressed }) => [
+                  styles.createHeaderButton,
+                  pressed && styles.createHeaderButtonPressed
+                ]}
+              >
+                <Ionicons name="add-circle" size={24} color={palette.textInverse} />
+              </AnimatedPressable>
+            ) : undefined
+          }
+        />
 
       {renderClubFilter()}
 
@@ -384,7 +379,8 @@ export default function EoDReportsScreen() {
         ListEmptyComponent={renderEmptyState()}
         showsVerticalScrollIndicator={false}
       />
-    </View>
+      </View>
+    </>
   );
 }
 
@@ -415,7 +411,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingHorizontal: Theme.spacing.lg,
-    paddingTop: Theme.spacing.lg,
+    paddingTop: 60,
     paddingBottom: Theme.spacing.md,
   },
   headerTitle: {

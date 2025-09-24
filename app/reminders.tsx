@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import {
   Platform,
   KeyboardAvoidingView,
   ScrollView,
-  useColorScheme,
 } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
@@ -22,8 +21,9 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Chip } from '@/components/ui/Chip';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { remindersService } from '@/services/api/reminders.service';
 import { useAuthStore } from '@/store/authStore';
 
@@ -45,8 +45,8 @@ type FilterPriority = 'all' | 'low' | 'medium' | 'high' | 'urgent';
 
 export default function RemindersScreen() {
   const { user } = useAuthStore();
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -411,7 +411,7 @@ export default function RemindersScreen() {
                   >
                     <Text style={[
                       styles.priorityButtonText,
-                      { color: newReminder.priority === priority ? colors.textInverse : getPriorityColor(priority) },
+                      { color: newReminder.priority === priority ? palette.textInverse : getPriorityColor(priority) },
                     ]}>
                       {priority}
                     </Text>
@@ -499,22 +499,22 @@ export default function RemindersScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: 'Reminders',
-          headerRight: () => (
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={[styles.container, { backgroundColor: palette.backgroundSecondary }]}>
+        <ScreenHeader
+          title="Reminders"
+          rightAction={
             <TouchableOpacity
               onPress={() => setShowAddModal(true)}
               style={styles.headerButton}
             >
-              <Ionicons name="add" size={24} color={Theme.colors.primary} />
+              <Ionicons name="add-circle" size={32} color={Theme.colors.primary} />
             </TouchableOpacity>
-          ),
-        }}
-      />
+          }
+        />
 
-      <View style={[styles.container, { backgroundColor: colors.backgroundSecondary }]}>
-        <View style={[styles.filterSection, { backgroundColor: colors.background, borderBottomColor: colors.borderLight }]}>
+        <View style={[styles.filterSection, { backgroundColor: palette.background, borderBottomColor: palette.borderLight }]}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
             <View style={styles.filterGroup}>
               <Text style={styles.filterLabel}>Status:</Text>
@@ -575,16 +575,30 @@ export default function RemindersScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Theme.colors.background.secondary,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: 60,
+    paddingBottom: Theme.spacing.md,
+    backgroundColor: palette.background,
+  },
+  headerTitle: {
+    fontSize: Theme.typography.sizes['2xl'],
+    fontFamily: Theme.typography.fonts.bold,
+    color: palette.textPrimary,
+  },
   headerButton: {
-    padding: Theme.spacing.sm,
+    padding: 4,
   },
   filterSection: {
-    backgroundColor: ColorPalette.light.background,
+    backgroundColor: palette.background,
     paddingVertical: Theme.spacing.sm,
     paddingHorizontal: Theme.spacing.lg,
     borderBottomWidth: 1,
@@ -715,11 +729,11 @@ const styles = StyleSheet.create({
   // Modal Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: ColorPalette.light.overlay,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: ColorPalette.light.background,
+    backgroundColor: palette.background,
     borderTopLeftRadius: Theme.borderRadius.xl,
     borderTopRightRadius: Theme.borderRadius.xl,
     paddingHorizontal: Theme.spacing.lg,

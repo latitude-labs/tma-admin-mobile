@@ -12,6 +12,7 @@ import {
   Modal,
   TouchableOpacity,
   Alert,
+  Dimensions,
 } from 'react-native';
 import { Card, Button, Badge, Chip, Dropdown } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
@@ -33,7 +34,8 @@ import Animated, {
   FadeInUp,
   Layout,
   Easing,
-  SlideInRight
+  SlideInRight,
+  interpolate
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
@@ -41,6 +43,8 @@ import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
+const { width: screenWidth } = Dimensions.get('window');
 
 type BookingStatus = 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
 
@@ -54,8 +58,10 @@ export default function TrialsScreen() {
   const styles = useMemo(() => createStyles(palette), [palette]);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<'mine' | 'all'>('mine');
   const searchFocused = useSharedValue(0);
   const pulseOpacity = useSharedValue(0.3);
+  const tabIndicatorPosition = useSharedValue(0);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<BookingStatus | null>(null);
@@ -73,6 +79,8 @@ export default function TrialsScreen() {
     isOffline,
     lastSync,
     pagination,
+    viewMode: storeViewMode,
+    setViewMode: storeSetViewMode,
     fetchBookings,
     fetchBookingsPage,
     refreshBookings,
@@ -80,17 +88,29 @@ export default function TrialsScreen() {
     getFilteredBookings,
     updateBookingStatus,
     setSearchQuery: updateSearchQuery,
+    applyFiltersAndPagination,
   } = useBookingStore();
   const { clubs } = useClubStore();
 
   useEffect(() => {
     fetchBookings();
-  }, []);
+  }, [viewMode]);
 
   useEffect(() => {
     setFilters({ status: filterStatus as any, searchQuery });
     updateSearchQuery(searchQuery);
+    applyFiltersAndPagination();
   }, [filterStatus, searchQuery]);
+
+  const switchViewMode = (mode: 'mine' | 'all') => {
+    setViewMode(mode);
+    storeSetViewMode(mode);
+    tabIndicatorPosition.value = withSpring(mode === 'mine' ? 0 : 1);
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    fetchBookings(true);
+  };
 
   const statusConfig: Record<string, { color: string; icon: string }> = {
     
@@ -140,10 +160,10 @@ export default function TrialsScreen() {
     }
   };
 
-  const tshirtSizes = ['X Small Youth', 'Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'S', 'M', 'L', 'XL', '2XL', '3XL'];
-  const trouserSizes = ['7XS', '6XS', '5XS', '4XS', '3XS', '2XS', 'XS', 'S', 'M', 'L', 'XL', '2XL'];
-  const gloveSizes = ['6oz', '10oz', '16oz'];
-  const shinpadSizes = ['XS', 'S', 'M', 'L', 'XL'];
+  const tshirtSizes = ['Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'Small', 'Medium', 'Large', 'XL', '2XL', '3XL'];
+  const trouserSizes = ['Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'Small', 'Medium', 'Large', 'XL', '2XL', '3XL'];
+  const gloveSizes = ['8oz', '10oz', '12oz', '14oz', '16oz'];
+  const shinpadSizes = ['Small', 'Medium', 'Large', 'XL'];
 
   const handleAttendanceStatusUpdate = (bookingId: number, newStatus: string) => {
     if (Platform.OS === 'ios') {
@@ -470,6 +490,56 @@ export default function TrialsScreen() {
               );
             })}
           </ScrollView>
+        </Animated.View>
+
+        <Animated.View
+          entering={FadeInDown.delay(250).duration(400).springify()}
+          style={styles.viewModeContainer}
+        >
+          <View style={styles.viewModeTabs}>
+            <Pressable
+              style={styles.viewModeTab}
+              onPress={() => switchViewMode('mine')}
+            >
+              <Text
+                style={[
+                  styles.viewModeTabText,
+                  viewMode === 'mine' && { color: palette.tint }
+                ]}
+              >
+                Mine
+              </Text>
+            </Pressable>
+            <Pressable
+              style={styles.viewModeTab}
+              onPress={() => switchViewMode('all')}
+            >
+              <Text
+                style={[
+                  styles.viewModeTabText,
+                  viewMode === 'all' && { color: palette.tint }
+                ]}
+              >
+                All
+              </Text>
+            </Pressable>
+          </View>
+          <Animated.View
+            style={[
+              styles.viewModeIndicator,
+              useAnimatedStyle(() => ({
+                transform: [
+                  {
+                    translateX: interpolate(
+                      tabIndicatorPosition.value,
+                      [0, 1],
+                      [4, screenWidth / 2 - 12]
+                    ),
+                  },
+                ],
+              }))
+            ]}
+          />
         </Animated.View>
 
         {sortedBookings.length > 0 ? (
@@ -1438,6 +1508,37 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,
+  },
+  viewModeContainer: {
+    marginBottom: Theme.spacing.lg,
+    backgroundColor: palette.background,
+    borderRadius: Theme.borderRadius.lg,
+    ...Theme.shadows.sm,
+  },
+  viewModeTabs: {
+    flexDirection: 'row',
+    padding: Theme.spacing.xs,
+    width: '100%',
+  },
+  viewModeTab: {
+    flex: 1,
+    paddingVertical: Theme.spacing.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  viewModeTabText: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textSecondary,
+  },
+  viewModeIndicator: {
+    position: 'absolute',
+    bottom: 0,
+    left: Theme.spacing.xs,
+    width: '48%',
+    height: 3,
+    backgroundColor: palette.tint,
+    borderRadius: 1.5,
   },
   clearSearchButton: {
     marginTop: Theme.spacing.lg,
