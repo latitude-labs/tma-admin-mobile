@@ -1,28 +1,28 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-  TouchableOpacity,
-  Animated,
-  Alert,
-  ActivityIndicator,
-  Dimensions
-} from 'react-native';
 import { Theme } from '@/constants/Theme';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
-import { Ionicons } from '@expo/vector-icons';
-import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
 import { useOffline } from '@/hooks/useOffline';
-import { useSyncStore } from '@/store/syncStore';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { bookingsService } from '@/services/api/bookings.service';
+import { clubsService } from '@/services/api/clubs.service';
+import { useAuthStore } from '@/store/authStore';
 import { useBookingStore } from '@/store/bookingStore';
 import { useClubStore } from '@/store/clubStore';
 import { useFacebookStore } from '@/store/facebookStore';
-import { useAuthStore } from '@/store/authStore';
-import { bookingsService } from '@/services/api/bookings.service';
-import { clubsService } from '@/services/api/clubs.service';
+import { useSyncStore } from '@/store/syncStore';
+import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Animated,
+  Dimensions,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -48,6 +48,7 @@ export default function AdminDashboardScreen() {
   const [stats, setStats] = useState({
     monthlyBookings: 0,
     todaysBookings: 0,
+    todaysTrials: 0,
     upcomingBookings: 0,
     totalClubs: 0
   });
@@ -80,6 +81,7 @@ export default function AdminDashboardScreen() {
       setStats({
         monthlyBookings: bookingTotals.month || 0,
         todaysBookings: bookingTotals.today || 0,
+        todaysTrials: bookingTotals.trials_today || 0,
         upcomingBookings: bookingTotals.upcoming || 0,
         totalClubs: clubsCount.total || 0
       });
@@ -95,12 +97,13 @@ export default function AdminDashboardScreen() {
     const loadData = async () => {
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      fetchClubs();
-      fetchBookings();
+      // Only fetch stats - other data is handled by AppStateManager
       fetchStats();
 
-      if (user?.is_admin) {
-        fetchFacebookPages();
+      // Check if we need to load data (only if not already loaded)
+      const bookingState = useBookingStore.getState();
+      if (!bookingState.isInitialized || bookingState.allBookings.length === 0) {
+        fetchBookings();
       }
 
       // Fade in animation
@@ -114,7 +117,7 @@ export default function AdminDashboardScreen() {
     };
 
     loadData();
-  }, [user]);
+  }, []);
 
   // Update current time every minute for sync time display
   useEffect(() => {
@@ -300,42 +303,125 @@ export default function AdminDashboardScreen() {
         <View style={styles.overviewContainer}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Today's Overview</Text>
-            {stats.todaysBookings > 0 && <Text style={styles.celebrateEmoji}>🎉</Text>}
+            {(stats.todaysBookings > 0 || stats.todaysTrials > 0) && <Text style={styles.celebrateEmoji}>🎉</Text>}
           </View>
-          <View style={styles.overviewCard}>
-            <View style={styles.statsRow}>
-              <View style={styles.statItem}>
-                <View style={styles.statContent}>
-                  <Text style={[styles.statNumber, { color: colors.tint }]}>
-                    {statsLoading ? '—' : stats.monthlyBookings}
-                  </Text>
-                  <Text style={styles.statLabel}>This Month</Text>
+
+          <View style={styles.statsGrid}>
+            {/* Bookings Today Card */}
+            <TouchableOpacity
+              style={[styles.statCard, { backgroundColor: colors.statusSuccess + '08' }]}
+              activeOpacity={0.95}
+            >
+              <View style={styles.statCardContent}>
+                <View style={styles.statCardLeft}>
+                  <View style={[styles.statIconContainer, { backgroundColor: colors.statusSuccess + '15' }]}>
+                    <Ionicons name="calendar-outline" size={20} color={colors.statusSuccess} />
+                  </View>
+                  <View style={styles.statCardInfo}>
+                    <Text style={styles.statCardLabel}>Bookings Today</Text>
+                    <Text style={styles.statCardDescription}>New bookings made today</Text>
+                  </View>
                 </View>
-              </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <View style={styles.statContent}>
-                  <Text style={[styles.statNumber, { color: colors.statusSuccess }]}>
+                <View style={styles.statCardRight}>
+                  <Text style={[styles.statCardValue, { color: colors.statusSuccess }]}>
                     {statsLoading ? '—' : stats.todaysBookings}
                   </Text>
-                  <Text style={styles.statLabel}>Today</Text>
                 </View>
               </View>
-              <View style={styles.statDivider} />
-              <View style={styles.statItem}>
-                <View style={styles.statContent}>
-                  <Text style={[styles.statNumber, { color: colors.statusWarning }]}>
+            </TouchableOpacity>
+
+            {/* Trials Today Card */}
+            <TouchableOpacity
+              style={[styles.statCard, { backgroundColor: colors.statusInfo + '08' }]}
+              activeOpacity={0.95}
+            >
+              <View style={styles.statCardContent}>
+                <View style={styles.statCardLeft}>
+                  <View style={[styles.statIconContainer, { backgroundColor: colors.statusInfo + '15' }]}>
+                    <Ionicons name="people-outline" size={20} color={colors.statusInfo} />
+                  </View>
+                  <View style={styles.statCardInfo}>
+                    <Text style={styles.statCardLabel}>Trials Today</Text>
+                    <Text style={styles.statCardDescription}>Scheduled trial sessions</Text>
+                  </View>
+                </View>
+                <View style={styles.statCardRight}>
+                  <Text style={[styles.statCardValue, { color: colors.statusInfo }]}>
+                    {statsLoading ? '—' : stats.todaysTrials}
+                  </Text>
+                </View>
+              </View>
+            </TouchableOpacity>
+
+            {/* Upcoming Week Card */}
+            <TouchableOpacity
+              style={[styles.statCard, { backgroundColor: colors.statusWarning + '08' }]}
+              activeOpacity={0.95}
+            >
+              <View style={styles.statCardContent}>
+                <View style={styles.statCardLeft}>
+                  <View style={[styles.statIconContainer, { backgroundColor: colors.statusWarning + '15' }]}>
+                    <Ionicons name="time-outline" size={20} color={colors.statusWarning} />
+                  </View>
+                  <View style={styles.statCardInfo}>
+                    <Text style={styles.statCardLabel}>Upcoming Week</Text>
+                    <Text style={styles.statCardDescription}>Next 7 days bookings</Text>
+                  </View>
+                </View>
+                <View style={styles.statCardRight}>
+                  <Text style={[styles.statCardValue, { color: colors.statusWarning }]}>
                     {statsLoading ? '—' : stats.upcomingBookings}
                   </Text>
-                  <Text style={styles.statLabel}>Upcoming</Text>
                 </View>
               </View>
-            </View>
-            {!statsLoading && stats.totalClubs > 0 && (
-              <View style={styles.clubsBadge}>
-                <Ionicons name="business" size={16} color={colors.statusInfo} />
-                <Text style={styles.clubsText}>{stats.totalClubs} Active Clubs</Text>
+            </TouchableOpacity>
+
+            {/* This Month Card */}
+            <TouchableOpacity
+              style={[styles.statCard, { backgroundColor: colors.tint + '08' }]}
+              activeOpacity={0.95}
+            >
+              <View style={styles.statCardContent}>
+                <View style={styles.statCardLeft}>
+                  <View style={[styles.statIconContainer, { backgroundColor: colors.tint + '15' }]}>
+                    <Ionicons name="trending-up" size={20} color={colors.tint} />
+                  </View>
+                  <View style={styles.statCardInfo}>
+                    <Text style={styles.statCardLabel}>This Month</Text>
+                    <Text style={styles.statCardDescription}>Total bookings this month</Text>
+                  </View>
+                </View>
+                <View style={styles.statCardRight}>
+                  <Text style={[styles.statCardValue, { color: colors.tint }]}>
+                    {statsLoading ? '—' : stats.monthlyBookings}
+                  </Text>
+                </View>
               </View>
+            </TouchableOpacity>
+
+            {/* Active Clubs Card */}
+            {!statsLoading && stats.totalClubs > 0 && (
+              <TouchableOpacity
+                style={[styles.statCard, { backgroundColor: colors.backgroundSecondary }]}
+                activeOpacity={0.95}
+              >
+                <View style={styles.statCardContent}>
+                  <View style={styles.statCardLeft}>
+                    <View style={[styles.statIconContainer, { backgroundColor: colors.borderLight }]}>
+                      <Ionicons name="business-outline" size={20} color={colors.textSecondary} />
+                    </View>
+                    <View style={styles.statCardInfo}>
+                      <Text style={styles.statCardLabel}>Active Clubs</Text>
+                      <Text style={styles.statCardDescription}>Total registered venues</Text>
+                    </View>
+                  </View>
+                  <View style={styles.statCardRight}>
+                    <Text style={[styles.statCardValue, { color: colors.textPrimary }]}>
+                      {stats.totalClubs}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
             )}
           </View>
         </View>
@@ -386,7 +472,7 @@ export default function AdminDashboardScreen() {
           </View>
         </View>
 
-        <View style={styles.bookingsSection}>
+        {/* <View style={styles.bookingsSection}>
           <View style={styles.sectionHeaderWithAction}>
             <Text style={styles.sectionTitle}>Today's Bookings</Text>
             {todaysBookings.length > 0 && (
@@ -496,7 +582,7 @@ export default function AdminDashboardScreen() {
               <Text style={styles.emptyDayText}>No upcoming bookings</Text>
             </View>
           )}
-        </View>
+        </View> */}
         <View style={{ height: 150 }} />
       </ScrollView>
     </Animated.View>
@@ -608,64 +694,63 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   celebrateEmoji: {
     fontSize: 24,
   },
-  overviewCard: {
-    borderRadius: 16,
+
+  // Modern Banking App Style Stats
+  statsGrid: {
+    gap: Theme.spacing.sm,
+  },
+  statCard: {
     backgroundColor: palette.background,
-    borderWidth: 1,
-    borderColor: palette.borderLight,
+    borderRadius: 16,
+    padding: Theme.spacing.lg,
+    marginBottom: Theme.spacing.sm,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowOpacity: 0.02,
+    shadowRadius: 4,
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
   },
-  statsRow: {
+  statCardContent: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: Theme.spacing.lg,
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  statItem: {
+  statCardLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: Theme.spacing.md,
   },
-  statContent: {
+  statIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  statNumber: {
-    fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
-    color: palette.textPrimary,
-    lineHeight: Theme.typography.sizes.xl,
+  statCardInfo: {
+    flex: 1,
   },
-  statLabel: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    color: palette.textSecondary,
-    marginTop: Theme.spacing.sm,
-  },
-  statDivider: {
-    width: 1,
-    backgroundColor: palette.borderLight,
-    marginVertical: Theme.spacing.sm,
-  },
-  clubsBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Theme.spacing.xs,
-    backgroundColor: palette.statusInfo + '10',
-    paddingVertical: 10,
-    paddingHorizontal: Theme.spacing.lg,
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
-    borderTopWidth: 1,
-    borderTopColor: palette.statusInfo + '20',
-  },
-  clubsText: {
-    fontSize: Theme.typography.sizes.sm,
+  statCardLabel: {
+    fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: palette.statusInfo,
+    color: palette.textPrimary,
+    marginBottom: 2,
+  },
+  statCardDescription: {
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textTertiary,
+  },
+  statCardRight: {
+    alignItems: 'flex-end',
+  },
+  statCardValue: {
+    fontSize: 28,
+    fontFamily: Theme.typography.fonts.bold,
+    lineHeight: 32,
   },
 
   // Quick Actions Styles

@@ -129,22 +129,24 @@ export default function CalendarScreen() {
           }
         />
 
-        <View style={styles.bottomActions}>
-          <View style={styles.bottomButtonsContainer}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.primaryButton]}
-              onPress={() => setShowHolidayModal(true)}
-            >
-              <Text style={styles.primaryButtonText}>Request Holiday</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.outlineButton]}
-              onPress={() => setShowOvertimeModal(true)}
-            >
-              <Text style={styles.outlineButtonText}>Request Overtime</Text>
-            </TouchableOpacity>
+        {!isAdmin ? (
+          <View style={styles.bottomActions}>
+            <View style={styles.bottomButtonsContainer}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.primaryButton]}
+                onPress={() => setShowHolidayModal(true)}
+              >
+                <Text style={styles.primaryButtonText}>Request Holiday</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.outlineButton]}
+                onPress={() => setShowOvertimeModal(true)}
+              >
+                <Text style={styles.outlineButtonText}>Request Overtime</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        ) : null}
       </View>
 
       {isAdmin ? (

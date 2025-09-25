@@ -77,6 +77,11 @@ class ApiClient {
 
           config.headers.Authorization = `Bearer ${token}`;
 
+          // Add If-None-Match header if ETag is provided
+          if (config.headers && config.headers['If-None-Match']) {
+            // ETag header is already set by the caller
+          }
+
           // Debug logging in development
           if (__DEV__) {
             console.log('🔑 API Request with token:', {
@@ -96,7 +101,7 @@ class ApiClient {
       (error: AxiosError) => Promise.reject(error)
     );
 
-    // Response interceptor to handle errors
+    // Response interceptor to handle errors and ETags
     this.client.interceptors.response.use(
       (response: AxiosResponse) => {
         // Clear error count on successful response
@@ -104,6 +109,24 @@ class ApiClient {
         if (apiHealth.errorCount > 0) {
           apiHealth.clearServerError();
         }
+
+        // Handle ETag responses
+        if (response.status === 304) {
+          // 304 Not Modified - data hasn't changed
+          return {
+            ...response,
+            data: { notModified: true },
+          };
+        }
+
+        // Include ETag in response if present
+        if (response.headers.etag) {
+          response.data = {
+            ...response.data,
+            __etag: response.headers.etag,
+          };
+        }
+
         return response;
       },
       async (error: AxiosError) => {

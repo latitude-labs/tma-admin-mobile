@@ -11,11 +11,31 @@ interface BookingsParams {
   status?: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
   per_page?: number;
   page?: number;
+  modified_since?: string;
+  cursor?: string;
+  include_deleted?: boolean;
+}
+
+interface SyncResponse {
+  data: {
+    updated: Booking[];
+    deleted: number[];
+  };
+  meta: {
+    sync_timestamp: string;
+    has_more: boolean;
+    next_cursor?: string;
+    counts: {
+      updated: number;
+      deleted: number;
+    };
+  };
 }
 
 interface UpdateBookingStatusParams {
   status: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
   kit_items?: Array<{ type: string; size: string; }>;
+  package_name?: 'basic' | 'silver' | 'gold';
   reminder_time?: string;
 }
 
@@ -60,13 +80,14 @@ export class BookingsService {
     return allBookings;
   }
 
-  async getBookingsTotals(): Promise<{ month: number; today: number; upcoming: number }> {
+  async getBookingsTotals(): Promise<{ month: number; today: number; trials_today: number; upcoming: number }> {
     try {
-      const response = await apiClient.get<{ data: { today: number; month: number; upcoming: number } }>('/bookings/totals');
+      const response = await apiClient.get<{ data: { today: number; trials_today: number; month: number; upcoming: number } }>('/bookings/totals');
 
       return {
         month: response.data.data.month || 0,
         today: response.data.data.today || 0,
+        trials_today: response.data.data.trials_today || 0,
         upcoming: response.data.data.upcoming || 0
       };
     } catch (error) {
@@ -198,6 +219,46 @@ export class BookingsService {
       return response.data;
     } catch (error) {
       console.error('Failed to complete reminder:', error);
+      throw error;
+    }
+  }
+
+  async syncBookings(params: {
+    modified_since?: string;
+    cursor?: string;
+    include_deleted?: boolean;
+  }): Promise<SyncResponse> {
+    try {
+      // Format the timestamp to match backend expected format: Y-m-d\TH:i:s
+      let formattedSince: string | undefined;
+      if (params.modified_since) {
+        // Convert from ISO 8601 with milliseconds to Y-m-d\TH:i:s format
+        const date = new Date(params.modified_since);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        formattedSince = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      }
+
+      // Map frontend param names to backend expected names
+      const apiParams: any = {};
+      if (formattedSince) {
+        apiParams.since = formattedSince;
+      }
+      if (params.cursor) {
+        apiParams.cursor = params.cursor;
+      }
+      // Note: include_deleted is not in the API spec, removing it
+
+      const response = await apiClient.get<SyncResponse>('/bookings/sync', {
+        params: apiParams,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to sync bookings:', error);
       throw error;
     }
   }

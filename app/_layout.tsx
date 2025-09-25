@@ -13,7 +13,6 @@ import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import { AppState, AppStateStatus } from 'react-native';
 import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -23,13 +22,8 @@ import { AuthStatusProvider } from '../components/AuthStatusProvider';
 import { LoadingScreen } from '../components/LoadingScreen';
 import { ToastProvider } from '@/components/ui/Toast';
 import { apiClient } from '../services/api/client';
-import { syncManager } from '../services/offline/syncManager';
+import { appStateManager } from '../services/AppStateManager';
 import { useAuthStore } from '../store/authStore';
-import { useClubStore } from '../store/clubStore';
-import { useFacebookStore } from '../store/facebookStore';
-import { useNotificationStore } from '../store/notificationStore';
-import { useOffline } from '../hooks/useOffline';
-import NetInfo from '@react-native-community/netinfo';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -77,54 +71,17 @@ export default function RootLayout() {
 function RootLayoutNav() {
   const colorScheme = useColorScheme();
   const { isAuthenticated, isInitialized, checkAuth, user, forceLogout, twoFactorPending } = useAuthStore();
-  const { fetchClubs } = useClubStore();
-  const { fetchFacebookPages } = useFacebookStore();
-  const { initialize: initializeNotifications } = useNotificationStore();
-  const { isConnected } = useOffline();
 
   useEffect(() => {
     // Register logout callback with API client
     apiClient.setLogoutCallback(forceLogout);
 
-    // Initialize offline sync manager
-    syncManager.initialize();
+    // Initialize centralized app state manager
+    appStateManager.initialize();
 
     // Check authentication status on app start
     checkAuth();
-
-    // Initialize push notifications
-    initializeNotifications();
   }, []);
-
-  // Re-initialize notifications when user authenticates
-  useEffect(() => {
-    if (isAuthenticated && user) {
-      // Re-initialize notifications when authenticated
-      initializeNotifications();
-    }
-  }, [isAuthenticated, user]);
-
-  // Sync data when app comes to foreground
-  useEffect(() => {
-    const handleAppStateChange = (nextAppState: AppStateStatus) => {
-      if (nextAppState === 'active' && isAuthenticated) {
-        // Sync all data when app becomes active
-        console.log('App became active, syncing data...');
-        fetchClubs();
-
-        // Only fetch Facebook pages if user is admin
-        if (user?.is_admin) {
-          fetchFacebookPages();
-        }
-
-        // Re-initialize notifications when app becomes active
-        initializeNotifications();
-      }
-    };
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
-  }, [isAuthenticated, user, isConnected]);
 
   useEffect(() => {
     // Only redirect after initialization is complete
@@ -159,10 +116,17 @@ function RootLayoutNav() {
                 <Stack.Screen name="login" options={{ headerShown: false }} />
                 <Stack.Screen name="two-factor-verify" options={{ headerShown: false }} />
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
                 <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
                 <Stack.Screen name="club-health" options={{ headerShown: false }} />
+                <Stack.Screen name="kit-orders" options={{ headerShown: false }} />
+                <Stack.Screen name="eod-reports" options={{ headerShown: false }} />
+                <Stack.Screen name="reminders" options={{ headerShown: false }} />
+                <Stack.Screen name="holiday-requests" options={{ headerShown: false }} />
+                <Stack.Screen name="reports" options={{ headerShown: false }} />
+                <Stack.Screen name="settings" options={{ headerShown: false }} />
+                <Stack.Screen name="class-bookings" options={{ headerShown: false }} />
+                <Stack.Screen name="eod-report-detail" options={{ headerShown: false }} />
               </Stack>
             </AuthStatusProvider>
           </ApiHealthProvider>

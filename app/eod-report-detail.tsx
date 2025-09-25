@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -13,10 +13,13 @@ import { Card } from '@/components/ui/Card';
 import { Ionicons } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
 import { TouchableOpacity } from 'react-native';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 export default function EoDReportDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { currentReport, fetchReport, loading } = useEndOfDayStore();
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
 
   useEffect(() => {
     if (id) {
@@ -57,10 +60,10 @@ export default function EoDReportDetailScreen() {
 
   const renderMetric = (label: string, value: number | string, color?: string) => (
     <View style={styles.metricRow}>
-      <Text style={[styles.metricLabel, { color: Theme.colors.text.secondary }]}>
+      <Text style={[styles.metricLabel, { color: palette.textSecondary }]}>
         {label}
       </Text>
-      <Text style={[styles.metricValue, { color: color || Theme.colors.text.primary }]}>
+      <Text style={[styles.metricValue, { color: color || palette.textPrimary }]}>
         {value}
       </Text>
     </View>
@@ -87,7 +90,7 @@ export default function EoDReportDetailScreen() {
           title: 'Report Details',
           headerLeft: () => (
             <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
-              <Ionicons name="arrow-back" size={24} color={Theme.colors.text.primary} />
+              <Ionicons name="arrow-back" size={24} color={palette.textPrimary} />
             </TouchableOpacity>
           ),
         }}
@@ -98,11 +101,11 @@ export default function EoDReportDetailScreen() {
           <Text style={styles.clubName}>
             {currentReport.club?.name}
           </Text>
-          <Text style={[styles.date, { color: Theme.colors.text.secondary }]}>
+          <Text style={[styles.date, { color: palette.textSecondary }]}>
             {currentReport.report_date ? format(parseISO(currentReport.report_date), 'EEEE, MMMM d, yyyy') : 'No date'}
           </Text>
           {(currentReport.coach || currentReport.user) && (
-            <Text style={[styles.reportedBy, { color: Theme.colors.text.tertiary }]}>
+            <Text style={[styles.reportedBy, { color: palette.textTertiary }]}>
               Reported by: {currentReport.coach?.name || currentReport.user?.name}
             </Text>
           )}
@@ -196,7 +199,7 @@ export default function EoDReportDetailScreen() {
             <>
               {currentReport.signup_names && (
                 <View style={styles.noteItem}>
-                  <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                  <Text style={[styles.noteLabel, { color: palette.textSecondary }]}>
                     Sign-ups:
                   </Text>
                   <Text style={styles.noteText}>
@@ -206,7 +209,7 @@ export default function EoDReportDetailScreen() {
               )}
               {currentReport.helper_names && (
                 <View style={styles.noteItem}>
-                  <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                  <Text style={[styles.noteLabel, { color: palette.textSecondary }]}>
                     Helpers:
                   </Text>
                   <Text style={styles.noteText}>
@@ -216,7 +219,7 @@ export default function EoDReportDetailScreen() {
               )}
               {currentReport.incidents && (
                 <View style={styles.noteItem}>
-                  <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                  <Text style={[styles.noteLabel, { color: palette.textSecondary }]}>
                     Incidents:
                   </Text>
                   <Text style={styles.noteText}>
@@ -226,7 +229,7 @@ export default function EoDReportDetailScreen() {
               )}
               {currentReport.general_notes && (
                 <View style={styles.noteItem}>
-                  <Text style={[styles.noteLabel, { color: Theme.colors.text.secondary }]}>
+                  <Text style={[styles.noteLabel, { color: palette.textSecondary }]}>
                     Notes:
                   </Text>
                   <Text style={styles.noteText}>
@@ -238,10 +241,10 @@ export default function EoDReportDetailScreen() {
           ))}
 
         <View style={styles.timestampsContainer}>
-          <Text style={[styles.timestamp, { color: Theme.colors.text.tertiary }]}>
+          <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
             Created: {currentReport.created_at ? format(parseISO(currentReport.created_at), 'MMM d, yyyy h:mm a') : 'N/A'}
           </Text>
-          <Text style={[styles.timestamp, { color: Theme.colors.text.tertiary }]}>
+          <Text style={[styles.timestamp, { color: palette.textTertiary }]}>
             Updated: {currentReport.updated_at ? format(parseISO(currentReport.updated_at), 'MMM d, yyyy h:mm a') : 'N/A'}
           </Text>
         </View>
@@ -250,10 +253,10 @@ export default function EoDReportDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   centerContent: {
     justifyContent: 'center',
@@ -276,7 +279,7 @@ const styles = StyleSheet.create({
   clubName: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   date: {
@@ -296,7 +299,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     padding: Theme.spacing.sm,
     paddingHorizontal: Theme.spacing.md,
     borderRadius: Theme.borderRadius.sm,
@@ -310,12 +313,12 @@ const styles = StyleSheet.create({
   statLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
   },
   statValue: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   section: {
     marginBottom: Theme.spacing.lg,
@@ -328,7 +331,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginLeft: Theme.spacing.sm,
   },
   metricRow: {
@@ -337,7 +340,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Theme.spacing.sm,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.md,
@@ -346,7 +349,7 @@ const styles = StyleSheet.create({
   metricValue: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   cashAmount: {
     fontSize: Theme.typography.sizes.xxxl,
@@ -365,14 +368,14 @@ const styles = StyleSheet.create({
   noteText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     lineHeight: Theme.typography.sizes.sm * 1.5,
   },
   timestampsContainer: {
     marginTop: Theme.spacing.lg,
     paddingTop: Theme.spacing.lg,
     borderTopWidth: 1,
-    borderTopColor: Theme.colors.border.light,
+    borderTopColor: palette.borderLight,
   },
   timestamp: {
     fontSize: Theme.typography.sizes.xs,

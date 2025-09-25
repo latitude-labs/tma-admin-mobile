@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -26,31 +26,16 @@ export default function LoginScreen() {
   const colorScheme = useColorScheme();
   const styles = useMemo(() => createStyles(colors), [colors]);
 
-  // Auto-fill development credentials if available
-  const isDevelopment = __DEV__;
-  const devEmail = process.env.EXPO_PUBLIC_DEV_EMAIL || '';
-  const devPassword = process.env.EXPO_PUBLIC_DEV_PASSWORD || '';
-
   const {
     control,
     handleSubmit,
     formState: { errors },
   } = useForm<LoginRequest>({
     defaultValues: {
-      email: isDevelopment ? devEmail : '',
-      password: isDevelopment ? devPassword : '',
+      email: '',
+      password: '',
     },
   });
-
-  // Auto-login in development if credentials are set
-  useEffect(() => {
-    if (isDevelopment && devEmail && devPassword) {
-      // Delay to ensure API client is ready and form is visible
-      setTimeout(() => {
-        handleSubmit(onSubmit)();
-      }, 1000);
-    }
-  }, []);
 
   const onSubmit = async (data: LoginRequest) => {
     setIsLoading(true);

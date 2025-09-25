@@ -2,7 +2,7 @@ import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { useClubStore } from '@/store/clubStore';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
@@ -11,7 +11,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { format, isToday, parseISO } from 'date-fns';
 import * as Haptics from 'expo-haptics';
 import { Stack, router } from 'expo-router';
-import React, { useCallback, useEffect, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -454,6 +454,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   listContent: {
     padding: Theme.spacing.lg,
+    gap: Theme.spacing.lg,
   },
   emptyListContent: {
     flex: 1,
@@ -464,7 +465,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     overflow: 'hidden',
   },
   todayCard: {
-    borderColor: palette.tint,
     borderWidth: 2,
   },
   reportHeader: {

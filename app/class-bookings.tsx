@@ -73,6 +73,8 @@ export default function ClassBookingsScreen() {
   const [selectedStatus, setSelectedStatus] = useState<BookingStatus | null>(null);
   const [showKitModal, setShowKitModal] = useState(false);
   const [kitItems, setKitItems] = useState<KitItem[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<'basic' | 'silver' | 'gold' | null>(null);
+  const [kitSelectionStep, setKitSelectionStep] = useState<1 | 2>(1);
   const [showReminderModal, setShowReminderModal] = useState(false);
   const [reminderDate, setReminderDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -218,6 +220,8 @@ export default function ClassBookingsScreen() {
     if (status === 'paid_dd' || status === 'paid_awaiting_dd') {
       // Show kit selection modal
       setKitItems([]);
+      setSelectedPackage(null);
+      setKitSelectionStep(1);
       setShowKitModal(true);
     } else if (status === 'unpaid_coach_call') {
       // Show reminder modal
@@ -237,12 +241,17 @@ export default function ClassBookingsScreen() {
     bookingId: number,
     status: BookingStatus,
     kitItemsData?: KitItem[],
+    packageName?: 'basic' | 'silver' | 'gold',
     reminderTime?: string
   ) => {
     const updateParams: any = { status };
 
     if (kitItemsData && kitItemsData.length > 0) {
       updateParams.kit_items = kitItemsData;
+    }
+
+    if (packageName) {
+      updateParams.package_name = packageName;
     }
 
     if (reminderTime) {
@@ -258,6 +267,8 @@ export default function ClassBookingsScreen() {
       setSelectedBooking(null);
       setSelectedStatus(null);
       setKitItems([]);
+      setSelectedPackage(null);
+      setKitSelectionStep(1);
 
       // Reload bookings
       loadBookings();
@@ -268,6 +279,11 @@ export default function ClassBookingsScreen() {
   };
 
   const handleKitSubmit = () => {
+    if (!selectedPackage) {
+      Alert.alert('Error', 'Please select a package (Basic, Silver, or Gold)');
+      return;
+    }
+
     const validKitItems = kitItems.filter(item => item.type && item.size);
 
     if (validKitItems.length === 0) {
@@ -277,7 +293,7 @@ export default function ClassBookingsScreen() {
 
     setShowKitModal(false);
     if (selectedBooking && selectedStatus) {
-      submitStatusUpdate(selectedBooking.id, selectedStatus, validKitItems);
+      submitStatusUpdate(selectedBooking.id, selectedStatus, validKitItems, selectedPackage);
     }
   };
 
@@ -285,7 +301,7 @@ export default function ClassBookingsScreen() {
     setShowReminderModal(false);
     if (selectedBooking && selectedStatus) {
       // The reminder will be created automatically by the API when updating status with reminder_time
-      submitStatusUpdate(selectedBooking.id, selectedStatus, undefined, reminderDate.toISOString());
+      submitStatusUpdate(selectedBooking.id, selectedStatus, undefined, undefined, reminderDate.toISOString());
     }
   };
 
@@ -311,6 +327,37 @@ export default function ClassBookingsScreen() {
       case 'shinpads': return shinpadSizes;
       case 'kitbag': return ['One Size'];
       default: return [];
+    }
+  };
+
+  const handlePackageSelection = (packageType: 'basic' | 'silver' | 'gold') => {
+    // Auto-populate kit items based on selected package
+    const newKitItems: KitItem[] = [];
+
+    // All packages get T-shirt and Boxing gloves
+    newKitItems.push({ type: 'tshirt', size: '' });
+    newKitItems.push({ type: 'gloves', size: '' });
+
+    // Silver and Gold get Shinpads
+    if (packageType === 'silver' || packageType === 'gold') {
+      newKitItems.push({ type: 'shinpads', size: '' });
+    }
+
+    // Gold gets Kit bag
+    if (packageType === 'gold') {
+      newKitItems.push({ type: 'kitbag', size: 'One Size' });
+    }
+
+    setKitItems(newKitItems);
+    setSelectedPackage(packageType);
+
+    // Move to size selection step
+    setTimeout(() => {
+      setKitSelectionStep(2);
+    }, 200);
+
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
   };
 
@@ -787,58 +834,117 @@ export default function ClassBookingsScreen() {
         >
           <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                Select Kit Items
+              {kitSelectionStep === 2 && (
+                <Pressable
+                  onPress={() => setKitSelectionStep(1)}
+                  style={styles.modalBackButton}
+                >
+                  <Ionicons name="arrow-back" size={24} color={palette.textSecondary} />
+                </Pressable>
+              )}
+              <Text style={[styles.modalTitle, kitSelectionStep === 2 && styles.modalTitleWithBack]}>
+                {kitSelectionStep === 1 ? 'Select Package' : 'Select Sizes'}
               </Text>
               <Pressable
-                onPress={() => setShowKitModal(false)}
+                onPress={() => {
+                  setShowKitModal(false);
+                  setKitSelectionStep(1);
+                }}
                 style={styles.modalCloseButton}
               >
                 <Ionicons name="close" size={24} color={palette.textSecondary} />
               </Pressable>
             </View>
-            <View style={styles.modalSubtitleContainer}>
-              <View style={[styles.modalAvatar, { backgroundColor: `${palette.statusInfo}15` }]}>
-                <Ionicons name="shirt" size={28} color={palette.statusInfo} />
-              </View>
-              <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
-              <Text style={styles.modalDescription}>Select the kit items needed</Text>
-            </View>
+            {kitSelectionStep === 1 ? (
+              // Step 1: Package Selection
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.modalScrollView}
+                contentContainerStyle={styles.modalScrollContent}>
+                <View style={styles.modalCompactHeader}>
+                  <View style={[styles.modalAvatarSmall, { backgroundColor: `${palette.statusInfo}15` }]}>
+                    <Ionicons name="shirt" size={20} color={palette.statusInfo} />
+                  </View>
+                  <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
+                </View>
 
-            {kitItems.length === 0 ? (
-              <Text style={styles.noItemsText}>No items added yet</Text>
+                <View style={styles.packageSelectionContainer}>
+                  <View style={styles.packageOptions}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.packageOption,
+                        pressed && styles.packageOptionPressed
+                      ]}
+                      onPress={() => handlePackageSelection('basic')}
+                    >
+                      <View style={styles.packageOptionContent}>
+                        <Text style={styles.packageOptionLabel}>Basic</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt & Boxing gloves</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
+                    </Pressable>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.packageOption,
+                        pressed && styles.packageOptionPressed
+                      ]}
+                      onPress={() => handlePackageSelection('silver')}
+                    >
+                      <View style={styles.packageOptionContent}>
+                        <Text style={styles.packageOptionLabel}>Silver</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Boxing gloves & Shinpads</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
+                    </Pressable>
+
+                    <Pressable
+                      style={({ pressed }) => [
+                        styles.packageOption,
+                        pressed && styles.packageOptionPressed
+                      ]}
+                      onPress={() => handlePackageSelection('gold')}
+                    >
+                      <View style={styles.packageOptionContent}>
+                        <Text style={styles.packageOptionLabel}>Gold</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Boxing gloves, Shinpads & Kit bag</Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
+                    </Pressable>
+                  </View>
+                </View>
+              </ScrollView>
             ) : (
-              <ScrollView style={styles.kitList} showsVerticalScrollIndicator={false}>
-                {kitItems.map((item, index) => (
-                  <View key={index} style={styles.kitItem}>
-                    <View style={styles.kitItemHeader}>
-                      <Text style={styles.kitItemNumber}>Item {index + 1}</Text>
-                      <TouchableOpacity
-                        onPress={() => removeKitItem(index)}
-                        style={styles.removeButton}
-                      >
-                        <Ionicons name="trash-outline" size={18} color={palette.statusError} />
-                      </TouchableOpacity>
-                    </View>
+              // Step 2: Size Selection
+              <ScrollView
+                showsVerticalScrollIndicator={false}
+                style={styles.modalScrollView}
+                contentContainerStyle={styles.modalScrollContent}>
+                <View style={styles.modalCompactHeader}>
+                  <View style={[styles.modalAvatarSmall, { backgroundColor: `${palette.statusInfo}15` }]}>
+                    <Ionicons name="shirt" size={20} color={palette.statusInfo} />
+                  </View>
+                  <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
+                  <View style={[styles.packageBadge]}>
+                    <Text style={styles.packageBadgeText}>
+                      {selectedPackage?.charAt(0).toUpperCase()}{selectedPackage?.slice(1)}
+                    </Text>
+                  </View>
+                </View>
 
-                    <View style={styles.pickerContainer}>
-                      <Text style={styles.pickerLabel}>Type:</Text>
-                      <Dropdown
-                        value={item.type}
-                        options={[
-                          { label: 'T-Shirt', value: 'tshirt' },
-                          { label: 'Trousers', value: 'trousers' },
-                          { label: 'Gloves', value: 'gloves' },
-                          { label: 'Shin Pads', value: 'shinpads' },
-                          { label: 'Kit Bag', value: 'kitbag' },
-                        ]}
-                        onValueChange={(value) => updateKitItem(index, 'type', value)}
-                        placeholder="Select item type"
-                      />
-                    </View>
-
-                    <View style={styles.pickerContainer}>
-                      <Text style={styles.pickerLabel}>Size:</Text>
+                <View style={styles.sizeSelectionContainer}>
+                  {kitItems.map((item, index) => (
+                    <View key={index} style={styles.sizeItem}>
+                      <View style={styles.sizeItemHeader}>
+                        <Ionicons
+                          name={item.type === 'tshirt' ? 'shirt' : item.type === 'gloves' ? 'hand-left' : item.type === 'shinpads' ? 'shield' : 'bag'}
+                          size={20}
+                          color={palette.tint}
+                        />
+                        <Text style={styles.sizeItemLabel}>
+                          {item.type === 'tshirt' ? 'T-Shirt' : item.type === 'gloves' ? 'Boxing Gloves' : item.type === 'shinpads' ? 'Shin Pads' : 'Kit Bag'}
+                        </Text>
+                      </View>
                       <Dropdown
                         value={item.size}
                         options={getSizeOptions(item.type).map(size => ({
@@ -849,49 +955,39 @@ export default function ClassBookingsScreen() {
                         placeholder="Select size"
                       />
                     </View>
-                  </View>
-                ))}
+                  ))}
+                </View>
               </ScrollView>
             )}
 
-            <Pressable
-              onPress={addKitItem}
-              style={({ pressed }) => [
-                styles.addKitButtonNew,
-                pressed && styles.addKitButtonPressed
-              ]}
-            >
-              <Ionicons name="add-circle" size={20} color={palette.tint} />
-              <Text style={styles.addKitButtonText}>Add Kit Item</Text>
-            </Pressable>
-
-            <View style={styles.modalFooter}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalCancelButton,
-                  pressed && styles.modalButtonPressed
-                ]}
-                onPress={() => setShowKitModal(false)}
-              >
-                <Text style={styles.modalCancelButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalPrimaryButton,
-                  kitItems.length === 0 && styles.modalButtonDisabled,
-                  pressed && !kitItems.length && styles.modalButtonPressed
-                ]}
-                onPress={handleKitSubmit}
-                disabled={kitItems.length === 0}
-              >
-                <Ionicons name="checkmark" size={18} color={palette.textInverse} />
-                <Text style={styles.modalPrimaryButtonText}>Confirm Kit</Text>
-              </Pressable>
-            </View>
+            {kitSelectionStep === 2 && (
+              <View style={styles.modalFooter}>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalCancelButton,
+                    pressed && styles.modalButtonPressed
+                  ]}
+                  onPress={() => setKitSelectionStep(1)}
+                >
+                  <Text style={styles.modalCancelButtonText}>Back</Text>
+                </Pressable>
+                <Pressable
+                  style={({ pressed }) => [
+                    styles.modalPrimaryButton,
+                    kitItems.length === 0 && styles.modalButtonDisabled,
+                    pressed && !kitItems.length && styles.modalButtonPressed
+                  ]}
+                  onPress={handleKitSubmit}
+                  disabled={kitItems.length === 0}
+                >
+                  <Ionicons name="checkmark" size={18} color={palette.textInverse} />
+                  <Text style={styles.modalPrimaryButtonText}>Confirm Kit</Text>
+                </Pressable>
+              </View>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
-
       {/* Reminder Modal */}
       <Modal
         visible={showReminderModal}
@@ -1576,5 +1672,126 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontFamily: Theme.typography.fonts.semibold,
     color: palette.textPrimary,
     flex: 1,
+  },
+  packageSelectionContainer: {
+    paddingHorizontal: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.md,
+  },
+  packageSelectionTitle: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
+    marginBottom: Theme.spacing.md,
+  },
+  packageOptions: {
+    gap: Theme.spacing.sm,
+  },
+  packageOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    borderWidth: 1.5,
+    borderColor: palette.borderDefault,
+    backgroundColor: palette.background,
+    marginBottom: Theme.spacing.xs,
+  },
+  packageOptionSelected: {
+    borderColor: palette.tint,
+    backgroundColor: `${palette.tint}10`,
+  },
+  packageOptionPressed: {
+    opacity: 0.8,
+  },
+  packageOptionContent: {
+    flex: 1,
+  },
+  packageOptionLabel: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
+    marginBottom: 2,
+  },
+  packageOptionLabelSelected: {
+    color: palette.tint,
+  },
+  packageOptionDescription: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textSecondary,
+  },
+  modalScrollView: {
+    maxHeight: '70%',
+  },
+  modalScrollContent: {
+    paddingBottom: Theme.spacing.md,
+  },
+  modalCompactHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: Theme.spacing.xl,
+    paddingTop: Theme.spacing.md,
+    paddingBottom: Theme.spacing.md,
+    gap: Theme.spacing.md,
+  },
+  modalAvatarSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: Theme.borderRadius.full,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBackButton: {
+    padding: Theme.spacing.xs,
+    marginRight: Theme.spacing.xs,
+  },
+  modalTitleWithBack: {
+    marginLeft: 0,
+  },
+  packageBadge: {
+    backgroundColor: palette.tint,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.full,
+  },
+  packageBadgeText: {
+    color: palette.textInverse,
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.semibold,
+  },
+  sizeSelectionContainer: {
+    paddingHorizontal: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.lg,
+  },
+  sizeItem: {
+    marginBottom: Theme.spacing.lg,
+  },
+  sizeItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.sm,
+    marginBottom: Theme.spacing.sm,
+  },
+  sizeItemLabel: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
+  },
+  kitSizeSelectionHeader: {
+    paddingHorizontal: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.sm,
+  },
+  kitSizeSelectionTitle: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
+    marginBottom: Theme.spacing.xs,
+  },
+  kitSizeSelectionSubtitle: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textSecondary,
+    fontStyle: 'italic',
   },
 });

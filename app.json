@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "tma-admin-mobile",
+    "name": "TMA Admin",
     "slug": "tma-admin-mobile",
-    "version": "1.0.0",
+    "version": "0.1.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/ios-dark.png",
     "scheme": "tmaadminmobile",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/images/splash-icon.png",
+      "image": "./assets/ios-light.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
@@ -18,6 +18,10 @@
       "bundleIdentifier": "co.latitudelabs.tma.admin",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
+      },
+      "icon": {
+        "dark": "./assets/ios-dark.png",
+        "light": "./assets/ios-light.png"
       }
     },
     "android": {

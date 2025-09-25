@@ -2,6 +2,7 @@ import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import kitOrdersService from '@/services/api/kitOrders.service';
@@ -642,28 +643,23 @@ export default function KitOrdersScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[styles.container, { backgroundColor: palette.background }]}>
-        <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="arrow-back" size={24} color={palette.text} />
-        </TouchableOpacity>
-
-        <Text style={[styles.headerTitle, { color: palette.text }]}>Kit Orders</Text>
-
-        {activeTab === 'catalog' ? (
-          <TouchableOpacity onPress={() => switchTab('orders')}>
-            <Animated.View style={cartIconStyle}>
-              <Ionicons name="cart" size={24} color={palette.text} />
-              {kitItems.length > 0 ? (
-                <Animated.View style={[styles.cartBadge, cartBadgeStyle]}>
-                  <Text style={styles.cartBadgeText}>{kitItems.length}</Text>
+        <ScreenHeader
+          title="Kit Orders"
+          rightAction={
+            activeTab === 'catalog' ? (
+              <TouchableOpacity onPress={() => switchTab('orders')}>
+                <Animated.View style={cartIconStyle}>
+                  <Ionicons name="cart" size={24} color={palette.text} />
+                  {kitItems.length > 0 ? (
+                    <Animated.View style={[styles.cartBadge, cartBadgeStyle]}>
+                      <Text style={styles.cartBadgeText}>{kitItems.length}</Text>
+                    </Animated.View>
+                  ) : null}
                 </Animated.View>
-              ) : null}
-            </Animated.View>
-          </TouchableOpacity>
-        ) : (
-          <View style={{ width: 24 }} />
-        )}
-      </View>
+              </TouchableOpacity>
+            ) : undefined
+          }
+        />
 
       <View style={styles.tabs}>
         <TouchableOpacity
@@ -739,25 +735,10 @@ const createStyles = (palette: any) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 60, // Account for safe area since we removed native header
-    paddingBottom: 16,
-  },
-  backButton: {
-    padding: 4,
-  },
-  headerTitle: {
-    fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
-  },
   cartBadge: {
     position: 'absolute',
-    top: -8,
-    right: -8,
+    top: -4,
+    right: -4,
     backgroundColor: Theme.colors.status.error,
     borderRadius: 10,
     minWidth: 20,

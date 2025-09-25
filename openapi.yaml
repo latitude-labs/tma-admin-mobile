@@ -1158,6 +1158,150 @@ paths:
                   error:
                     type: string
                     description: Detailed error message from Cadence service
+  /advertising/metrics/batch:
+    post:
+      tags:
+        - Mobile App
+      summary: Get advertising metrics for multiple Facebook pages in batch
+      description: Fetches advertising metrics for multiple Facebook page configurations in a single request. Admin access required.
+      operationId: getAdvertisingMetricsBatch
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - requests
+              properties:
+                requests:
+                  type: array
+                  description: Array of metric requests to process
+                  minItems: 1
+                  maxItems: 50
+                  items:
+                    type: object
+                    required:
+                      - page_uuids
+                      - start_date
+                      - end_date
+                    properties:
+                      page_uuids:
+                        type: array
+                        description: Array of Facebook page UUIDs
+                        minItems: 1
+                        items:
+                          type: string
+                          format: uuid
+                      start_date:
+                        type: string
+                        format: date
+                        description: Start date for metrics in YYYY-MM-DD format
+                        example: '2024-01-01'
+                      end_date:
+                        type: string
+                        format: date
+                        description: End date for metrics in YYYY-MM-DD format
+                        example: '2024-01-31'
+            examples:
+              batch_request:
+                summary: Batch request for multiple pages
+                value:
+                  requests:
+                    - page_uuids:
+                        - 550e8400-e29b-41d4-a716-446655440001
+                      start_date: '2024-01-01'
+                      end_date: '2024-01-31'
+                    - page_uuids:
+                        - 550e8400-e29b-41d4-a716-446655440002
+                        - 550e8400-e29b-41d4-a716-446655440003
+                      start_date: '2024-01-01'
+                      end_date: '2024-01-31'
+      responses:
+        '200':
+          description: Successfully retrieved metrics for all requested pages
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        page_uuids:
+                          type: array
+                          items:
+                            type: string
+                            format: uuid
+                        start_date:
+                          type: string
+                          format: date
+                        end_date:
+                          type: string
+                          format: date
+                        metrics:
+                          type: object
+                          properties:
+                            total_spend:
+                              type: number
+                              format: float
+                              description: Total advertising spend in the period
+                            total_bookings:
+                              type: integer
+                              description: Total number of bookings from Facebook/Instagram
+                            cost_per_booking:
+                              type: number
+                              format: float
+                              nullable: true
+                              description: Average cost per booking
+                            club_bookings:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  club_id:
+                                    type: integer
+                                    nullable: true
+                                  club_name:
+                                    type: string
+                                  bookings:
+                                    type: integer
+                  errors:
+                    type: array
+                    nullable: true
+                    description: Array of errors for failed requests
+                    items:
+                      type: object
+                      properties:
+                        index:
+                          type: integer
+                          description: Index of the failed request
+                        page_uuids:
+                          type: array
+                          items:
+                            type: string
+                            format: uuid
+                        error:
+                          type: string
+                          description: Error message
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          description: Forbidden - Admin access required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /bookings:
     get:
       summary: List bookings
@@ -1272,6 +1416,109 @@ paths:
           description: Unauthorized - Invalid or missing token
         '422':
           description: Validation error
+  /bookings/sync:
+    get:
+      tags:
+        - Bookings
+      summary: Sync bookings incrementally
+      description: Get incremental changes (new, updated, deleted) for bookings since last sync timestamp
+      operationId: syncBookings
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: since
+          in: query
+          required: true
+          description: ISO 8601 timestamp to get changes since
+          schema:
+            type: string
+            format: date-time
+            example: '2024-01-01T00:00:00'
+        - name: page_size
+          in: query
+          required: false
+          description: Number of records to return per page
+          schema:
+            type: integer
+            minimum: 10
+            maximum: 500
+            default: 100
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor for pagination (returned from previous response)
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved sync data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      updated:
+                        type: array
+                        description: Array of new or updated bookings
+                        items:
+                          $ref: '#/components/schemas/Booking'
+                      deleted:
+                        type: array
+                        description: Array of IDs for deleted bookings
+                        items:
+                          type: integer
+                  meta:
+                    type: object
+                    properties:
+                      sync_timestamp:
+                        type: string
+                        format: date-time
+                        description: Current server timestamp for next sync
+                      has_more:
+                        type: boolean
+                        description: Whether there are more records to sync
+                      next_cursor:
+                        type: string
+                        nullable: true
+                        description: Cursor for fetching next page of results
+                      counts:
+                        type: object
+                        properties:
+                          updated:
+                            type: integer
+                            description: Number of updated records in this response
+                          deleted:
+                            type: integer
+                            description: Number of deleted records in this response
+              examples:
+                sync_response:
+                  summary: Example sync response
+                  value:
+                    data:
+                      updated:
+                        - id: 1234
+                          uuid: 550e8400-e29b-41d4-a716-446655440000
+                          student_name: John Doe
+                          start_time: '2024-01-15T10:00:00'
+                          status: scheduled
+                          updated_at: '2024-01-10T14:30:00'
+                      deleted:
+                        - 1001
+                        - 1002
+                    meta:
+                      sync_timestamp: '2024-01-10T15:00:00'
+                      has_more: true
+                      next_cursor: MjAyNC0wMS0xMFQxNDozMDowMHwxMjM0
+                      counts:
+                        updated: 1
+                        deleted: 2
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /bookings/totals:
     get:
       summary: Get booking totals
