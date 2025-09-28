@@ -187,6 +187,10 @@ Using Expo Router with drawer navigation:
 - Smooth transitions between screens
 - Gesture support for drawer
 
+### Admin Section
+
+The admin section of the more tab will contain pages that are more data-heavy, sometimes featuring charts and graphs. The style of this should closely match the rest of the app, but be more functional, and more in the style of a modern banking app like the Starling Bank app.
+
 ## API Integration
 
 ```typescript

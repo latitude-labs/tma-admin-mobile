@@ -119,6 +119,41 @@ class CalendarService {
     }
   }
 
+  async createEvent(data: CreateEventRequest): Promise<{ message: string; data: CalendarEvent }> {
+    // TODO: Replace with actual API call when backend endpoint is ready
+    console.log('[CalendarService] Creating event:', data);
+
+    // Simulate API call
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const mockEvent: CalendarEvent = {
+          id: Math.floor(Math.random() * 10000),
+          title: data.title,
+          type: data.type || 'event',
+          date: data.date,
+          start_time: data.start_time || null,
+          end_time: data.end_time || null,
+          description: data.description || null,
+          location: data.location || null,
+          club_id: 1,
+          user_id: useAuthStore.getState().user?.id || 1,
+          user_name: useAuthStore.getState().user?.name || 'Admin',
+          status: 'confirmed',
+          is_all_day: data.is_all_day || false,
+          visibility: data.visibility || 'all',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        };
+
+        console.log('[CalendarService] Mock event created:', mockEvent);
+        resolve({
+          message: 'Event created successfully',
+          data: mockEvent,
+        });
+      }, 1000);
+    });
+  }
+
   async batchSyncEvents(
     events: CalendarSyncOperation[],
     lastSyncTime?: string

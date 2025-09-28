@@ -44,21 +44,42 @@ const CatalogItem: React.FC<{
   item: KitCatalogItem;
   index: number;
   onPress: (item: KitCatalogItem) => void;
+  onToggleSelect?: (item: KitCatalogItem) => void;
+  isSelected?: boolean;
+  isSelectionMode?: boolean;
   palette: any;
   styles: any;
-}> = ({ item, index, onPress, palette, styles }) => {
+}> = ({ item, index, onPress, onToggleSelect, isSelected = false, isSelectionMode = false, palette, styles }) => {
   const scaleValue = useSharedValue(1);
+  const checkboxScale = useSharedValue(isSelected ? 1 : 0);
+
+  useEffect(() => {
+    checkboxScale.value = withSpring(isSelected ? 1 : 0, { damping: 15, stiffness: 400 });
+  }, [isSelected]);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scaleValue.value }],
   }));
 
+  const checkboxStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkboxScale.value }],
+    opacity: checkboxScale.value,
+  }));
+
   const handlePress = () => {
-    scaleValue.value = withSpring(0.95, { damping: 15, stiffness: 400 }, () => {
-      scaleValue.value = withSpring(1, { damping: 10, stiffness: 200 });
-    });
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    onPress(item);
+    if (isSelectionMode && onToggleSelect) {
+      scaleValue.value = withSpring(0.98, { damping: 15, stiffness: 400 }, () => {
+        scaleValue.value = withSpring(1, { damping: 10, stiffness: 200 });
+      });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onToggleSelect(item);
+    } else {
+      scaleValue.value = withSpring(0.95, { damping: 15, stiffness: 400 }, () => {
+        scaleValue.value = withSpring(1, { damping: 10, stiffness: 200 });
+      });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onPress(item);
+    }
   };
 
   const getIconForType = (type: string) => {
@@ -76,9 +97,15 @@ const CatalogItem: React.FC<{
     <AnimatedPressable
       onPress={handlePress}
       style={animatedStyle}
-      entering={FadeInUp.delay(index * 100).springify()}
+      entering={FadeInUp.delay(index * 50).springify()}
     >
-      <Card variant="filled" style={styles.catalogCard}>
+      <Card
+        variant={isSelected ? "elevated" : "filled"}
+        style={[
+          styles.catalogCard,
+          isSelected && { borderWidth: 2, borderColor: Theme.colors.primary }
+        ]}
+      >
         <View style={styles.catalogRow}>
           {item.image_url ? (
             <Image
@@ -114,6 +141,23 @@ const CatalogItem: React.FC<{
               </Badge>
             </View>
           </View>
+
+          {isSelectionMode ? (
+            <View style={styles.checkboxContainer}>
+              <View style={[
+                styles.checkbox,
+                { borderColor: isSelected ? Theme.colors.primary : palette.border }
+              ]}>
+                <Animated.View style={checkboxStyle}>
+                  <Ionicons
+                    name="checkmark"
+                    size={16}
+                    color={Theme.colors.primary}
+                  />
+                </Animated.View>
+              </View>
+            </View>
+          ) : null}
         </View>
       </Card>
     </AnimatedPressable>
@@ -129,9 +173,12 @@ export default function KitOrdersScreen() {
   const [catalog, setCatalog] = useState<KitCatalogItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'catalog' | 'orders'>('catalog');
+  const [activeTab, setActiveTab] = useState<'catalog' | 'orders' | 'cart'>('catalog');
   const [selectedItem, setSelectedItem] = useState<KitCatalogItem | null>(null);
   const [showItemModal, setShowItemModal] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedItems, setSelectedItems] = useState<Set<number>>(new Set());
+  const [showBatchSizeModal, setShowBatchSizeModal] = useState(false);
 
   // Form state for kit order
   const [studentName, setStudentName] = useState('');
@@ -145,6 +192,8 @@ export default function KitOrdersScreen() {
   const tabIndicatorPosition = useSharedValue(0);
   const cartScale = useSharedValue(1);
   const cartBadgeScale = useSharedValue(0);
+  const fabScale = useSharedValue(0);
+  const fabTranslateY = useSharedValue(100);
 
   useEffect(() => {
     loadData();
@@ -158,6 +207,17 @@ export default function KitOrdersScreen() {
       cartBadgeScale.value = withSpring(0, { damping: 10, stiffness: 200 });
     }
   }, [kitItems.length]);
+
+  useEffect(() => {
+    // Animate FAB when items are selected
+    if (selectedItems.size > 0) {
+      fabScale.value = withSpring(1, { damping: 15, stiffness: 400 });
+      fabTranslateY.value = withSpring(0, { damping: 15, stiffness: 400 });
+    } else {
+      fabScale.value = withSpring(0, { damping: 15, stiffness: 400 });
+      fabTranslateY.value = withSpring(100, { damping: 15, stiffness: 400 });
+    }
+  }, [selectedItems.size]);
 
   const loadData = async () => {
     try {
@@ -256,10 +316,60 @@ export default function KitOrdersScreen() {
     }
   };
 
-  const switchTab = (tab: 'catalog' | 'orders') => {
+  const switchTab = (tab: 'catalog' | 'orders' | 'cart') => {
     setActiveTab(tab);
-    tabIndicatorPosition.value = withSpring(tab === 'catalog' ? 0 : 1);
+    tabIndicatorPosition.value = withSpring(
+      tab === 'catalog' ? 0 : tab === 'cart' ? 1 : 2
+    );
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+    // Exit selection mode when switching tabs
+    if (isSelectionMode) {
+      setIsSelectionMode(false);
+      setSelectedItems(new Set());
+    }
+  };
+
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedItems(new Set());
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+  };
+
+  const toggleItemSelection = (item: KitCatalogItem) => {
+    const newSelected = new Set(selectedItems);
+    if (newSelected.has(item.id)) {
+      newSelected.delete(item.id);
+    } else {
+      newSelected.add(item.id);
+    }
+    setSelectedItems(newSelected);
+  };
+
+  const handleBatchAddToCart = (itemsWithSizes: Array<{item: KitCatalogItem, size: string}>) => {
+    const newItems: KitItem[] = itemsWithSizes.map(({ item, size }) => ({
+      type: item.type,
+      size: size,
+    }));
+
+    setKitItems([...kitItems, ...newItems]);
+
+    // Animate cart icon
+    cartScale.value = withSpring(1.3, { damping: 5, stiffness: 300 }, () => {
+      cartScale.value = withSpring(1, { damping: 10, stiffness: 200 });
+    });
+
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    // Clear selection
+    setSelectedItems(new Set());
+    setIsSelectionMode(false);
+    setShowBatchSizeModal(false);
+
+    // Show success message
+    Alert.alert('Added to Cart', `${newItems.length} items added to your order`);
   };
 
   const tabIndicatorStyle = useAnimatedStyle(() => ({
@@ -267,10 +377,17 @@ export default function KitOrdersScreen() {
       {
         translateX: interpolate(
           tabIndicatorPosition.value,
-          [0, 1],
-          [0, (screenWidth - 32) / 2]
+          [0, 1, 2],
+          [0, (screenWidth - 32) / 3, (screenWidth - 32) * 2 / 3]
         ),
       },
+    ],
+  }));
+
+  const fabStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: fabScale.value },
+      { translateY: fabTranslateY.value },
     ],
   }));
 
@@ -284,11 +401,125 @@ export default function KitOrdersScreen() {
   }));
 
   const handleCatalogItemPress = (item: KitCatalogItem) => {
-    setSelectedItem(item);
-    setShowItemModal(true);
+    if (!isSelectionMode) {
+      setSelectedItem(item);
+      setShowItemModal(true);
+    }
   };
 
   const [modalSelectedSize, setModalSelectedSize] = useState('');
+  const [batchSizes, setBatchSizes] = useState<Record<number, string>>({});
+
+  const renderBatchSizeModal = () => {
+    const selectedCatalogItems = catalog.filter(item => selectedItems.has(item.id));
+
+    return (
+      <Modal
+        visible={showBatchSizeModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowBatchSizeModal(false)}
+      >
+        <Pressable
+          style={styles.modalOverlay}
+          onPress={() => setShowBatchSizeModal(false)}
+        >
+          <Animated.View
+            style={[styles.batchModalContent, { backgroundColor: palette.background }]}
+            entering={FadeInUp.springify()}
+          >
+            <Pressable>
+              <View style={styles.modalHandle} />
+
+              <Text style={[styles.modalTitle, { color: palette.text }]}>
+                Select Sizes for {selectedItems.size} Items
+              </Text>
+
+              <ScrollView style={styles.batchItemsScroll} showsVerticalScrollIndicator={false}>
+                {selectedCatalogItems.map((item) => (
+                  <View key={item.id} style={styles.batchItemContainer}>
+                    <View style={styles.batchItemHeader}>
+                      <Text style={[styles.batchItemName, { color: palette.text }]}>
+                        {item.name}
+                      </Text>
+                      <Text style={[styles.batchItemPrice, { color: Theme.colors.primary }]}>
+                        £{item.price.toFixed(2)}
+                      </Text>
+                    </View>
+
+                    <ScrollView
+                      horizontal
+                      showsHorizontalScrollIndicator={false}
+                      style={styles.sizeScrollView}
+                    >
+                      {item.sizes.map((size) => (
+                        <TouchableOpacity
+                          key={size}
+                          onPress={() => {
+                            setBatchSizes(prev => ({ ...prev, [item.id]: size }));
+                            Haptics.selectionAsync();
+                          }}
+                          style={[
+                            styles.sizeOption,
+                            { borderColor: palette.border },
+                            batchSizes[item.id] === size && {
+                              backgroundColor: Theme.colors.primary,
+                              borderColor: Theme.colors.primary,
+                            },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.sizeOptionText,
+                              { color: batchSizes[item.id] === size ? palette.textInverse : palette.text }
+                            ]}
+                          >
+                            {size}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                ))}
+              </ScrollView>
+
+              <View style={styles.modalActions}>
+                <Button
+                  variant="outline"
+                  onPress={() => {
+                    setShowBatchSizeModal(false);
+                    setBatchSizes({});
+                  }}
+                  style={styles.modalButton}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onPress={() => {
+                    const itemsWithSizes = selectedCatalogItems
+                      .filter(item => batchSizes[item.id])
+                      .map(item => ({ item, size: batchSizes[item.id] }));
+
+                    if (itemsWithSizes.length === selectedItems.size) {
+                      handleBatchAddToCart(itemsWithSizes);
+                      setBatchSizes({});
+                    } else {
+                      Alert.alert('Select All Sizes', 'Please select a size for each item');
+                    }
+                  }}
+                  disabled={Object.keys(batchSizes).length !== selectedItems.size}
+                  style={styles.modalButton}
+                >
+                  Add All to Cart ({Object.keys(batchSizes).length}/{selectedItems.size})
+                </Button>
+              </View>
+            </Pressable>
+          </Animated.View>
+        </Pressable>
+      </Modal>
+    );
+  };
 
   const renderItemModal = () => {
     if (!selectedItem) return null;
@@ -678,6 +909,27 @@ export default function KitOrdersScreen() {
 
         <TouchableOpacity
           style={styles.tab}
+          onPress={() => switchTab('cart')}
+        >
+          <View style={styles.tabWithBadge}>
+            <Text
+              style={[
+                styles.tabText,
+                { color: activeTab === 'cart' ? Theme.colors.primary : palette.textSecondary }
+              ]}
+            >
+              Cart
+            </Text>
+            {kitItems.length > 0 ? (
+              <Animated.View style={[styles.tabBadge, cartBadgeStyle]}>
+                <Text style={styles.tabBadgeText}>{kitItems.length}</Text>
+              </Animated.View>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.tab}
           onPress={() => switchTab('orders')}
         >
           <Text
@@ -693,34 +945,79 @@ export default function KitOrdersScreen() {
         <Animated.View style={[styles.tabIndicator, tabIndicatorStyle]} />
       </View>
 
-      {activeTab === 'catalog' && kitItems.length > 0 ? (
+      {activeTab === 'catalog' ? (
+        <>
+          {isSelectionMode ? (
+            <View style={[styles.selectionHeader, { backgroundColor: palette.backgroundSecondary }]}>
+              <Text style={[styles.selectionHeaderText, { color: palette.text }]}>
+                {selectedItems.size} items selected
+              </Text>
+              <TouchableOpacity onPress={toggleSelectionMode}>
+                <Text style={[styles.selectionHeaderAction, { color: Theme.colors.primary }]}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={[styles.catalogHeader, { backgroundColor: palette.background }]}>
+              <TouchableOpacity
+                onPress={toggleSelectionMode}
+                style={[styles.selectMultipleButton, { borderColor: palette.border }]}
+              >
+                <Ionicons name="checkbox-outline" size={20} color={Theme.colors.primary} />
+                <Text style={[styles.selectMultipleText, { color: Theme.colors.primary }]}>
+                  Select Multiple
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <ScrollView
+            style={styles.catalogContainer}
+            showsVerticalScrollIndicator={false}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+            }
+          >
+            <View style={styles.catalogGrid}>
+              {catalog.map((item, index) => (
+                <CatalogItem
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onPress={handleCatalogItemPress}
+                  onToggleSelect={toggleItemSelection}
+                  isSelected={selectedItems.has(item.id)}
+                  isSelectionMode={isSelectionMode}
+                  palette={palette}
+                  styles={styles}
+                />
+              ))}
+            </View>
+          </ScrollView>
+
+          {selectedItems.size > 0 ? (
+            <Animated.View style={[styles.fab, fabStyle]}>
+              <TouchableOpacity
+                onPress={() => setShowBatchSizeModal(true)}
+                style={styles.fabTouchable}
+              >
+                <Ionicons name="add-circle" size={28} color={palette.textInverse} />
+                <Text style={[styles.fabText, { color: palette.textInverse }]}>
+                  Add {selectedItems.size} to Cart
+                </Text>
+              </TouchableOpacity>
+            </Animated.View>
+          ) : null}
+        </>
+      ) : activeTab === 'cart' ? (
         renderCartView()
-      ) : activeTab === 'catalog' ? (
-        <ScrollView
-          style={styles.catalogContainer}
-          showsVerticalScrollIndicator={false}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-          }
-        >
-          <View style={styles.catalogGrid}>
-            {catalog.map((item, index) => (
-              <CatalogItem
-                key={item.id}
-                item={item}
-                index={index}
-                onPress={handleCatalogItemPress}
-                palette={palette}
-                styles={styles}
-              />
-            ))}
-          </View>
-        </ScrollView>
       ) : (
         renderOrdersTab()
       )}
 
       {renderItemModal()}
+      {renderBatchSizeModal()}
       </View>
     </>
   );

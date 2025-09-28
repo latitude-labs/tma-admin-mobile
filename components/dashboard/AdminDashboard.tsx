@@ -398,31 +398,6 @@ export default function AdminDashboardScreen() {
                 </View>
               </View>
             </TouchableOpacity>
-
-            {/* Active Clubs Card */}
-            {!statsLoading && stats.totalClubs > 0 && (
-              <TouchableOpacity
-                style={[styles.statCard, { backgroundColor: colors.backgroundSecondary }]}
-                activeOpacity={0.95}
-              >
-                <View style={styles.statCardContent}>
-                  <View style={styles.statCardLeft}>
-                    <View style={[styles.statIconContainer, { backgroundColor: colors.borderLight }]}>
-                      <Ionicons name="business-outline" size={20} color={colors.textSecondary} />
-                    </View>
-                    <View style={styles.statCardInfo}>
-                      <Text style={styles.statCardLabel}>Active Clubs</Text>
-                      <Text style={styles.statCardDescription}>Total registered venues</Text>
-                    </View>
-                  </View>
-                  <View style={styles.statCardRight}>
-                    <Text style={[styles.statCardValue, { color: colors.textPrimary }]}>
-                      {stats.totalClubs}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 

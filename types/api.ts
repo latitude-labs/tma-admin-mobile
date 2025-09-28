@@ -15,8 +15,14 @@ export interface Club {
   slug?: string;
   address?: string;
   postcode?: string;
+  directions?: string;
   latitude?: number | null;
   longitude?: number | null;
+  cadence_channel_ids?: string[];
+  acuity_calendar_id?: string;
+  google_place_id?: string;
+  sync_hours_to_google?: boolean;
+  class_prioritisation_enabled?: boolean;
   class_times?: ClassTime[];
 }
 

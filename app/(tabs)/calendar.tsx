@@ -1,6 +1,7 @@
 import { CalendarView } from '@/components/calendar/CalendarView';
 import { HolidayRequestModal } from '@/components/calendar/HolidayRequestModal';
 import { OvertimeRequestModal } from '@/components/calendar/OvertimeRequestModal';
+import { AddEventModal } from '@/components/calendar/AddEventModal';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { calendarSyncService } from '@/services/calendarSync.service';
@@ -38,6 +39,8 @@ export default function CalendarScreen() {
 
   const [showHolidayModal, setShowHolidayModal] = useState(false);
   const [showOvertimeModal, setShowOvertimeModal] = useState(false);
+  const [showAddEventModal, setShowAddEventModal] = useState(false);
+  const [selectedDateForEvent, setSelectedDateForEvent] = useState<Date | undefined>(undefined);
   const [refreshing, setRefreshing] = useState(false);
 
   const isAdmin = user?.is_admin;
@@ -77,22 +80,10 @@ export default function CalendarScreen() {
   const handleDateLongPress = useCallback((date: Date) => {
     // For admins, show option to create event
     if (isAdmin) {
-      Alert.alert(
-        'Create Event',
-        `Create an event for ${format(date, 'MMMM d, yyyy')}?`,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Create',
-            onPress: () => {
-              // Navigate to event creation
-              console.log('Create event for', date);
-            },
-          },
-        ]
-      );
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      setSelectedDateForEvent(date);
+      setShowAddEventModal(true);
     }
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
   }, [isAdmin]);
 
   return (
@@ -152,7 +143,11 @@ export default function CalendarScreen() {
       {isAdmin ? (
         <TouchableOpacity
           style={styles.fab}
-          onPress={() => console.log('Create new event')}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            setSelectedDateForEvent(undefined);
+            setShowAddEventModal(true);
+          }}
         >
           <Ionicons name="add" size={24} color={palette.textInverse} />
         </TouchableOpacity>
@@ -173,6 +168,20 @@ export default function CalendarScreen() {
         onSubmit={() => {
           handleRefresh();
           setShowOvertimeModal(false);
+        }}
+      />
+
+      <AddEventModal
+        visible={showAddEventModal}
+        onClose={() => {
+          setShowAddEventModal(false);
+          setSelectedDateForEvent(undefined);
+        }}
+        initialDate={selectedDateForEvent}
+        onSubmit={() => {
+          handleRefresh();
+          setShowAddEventModal(false);
+          setSelectedDateForEvent(undefined);
         }}
       />
     </View>

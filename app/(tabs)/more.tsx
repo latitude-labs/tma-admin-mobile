@@ -89,7 +89,7 @@ export default function MoreScreen() {
         {
           title: 'Club Health',
           icon: 'analytics-outline' as keyof typeof Ionicons.glyphMap,
-          route: '/club-health',
+          route: '/club-health-overview',
         },
         {
           title: 'Reports',
@@ -134,9 +134,10 @@ export default function MoreScreen() {
 
     const handlePress = () => {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      scale.value = withSpring(0.95, { damping: 15, stiffness: 400 }, () => {
-        scale.value = withSpring(1, { damping: 10, stiffness: 200 });
-      });
+      scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
+      setTimeout(() => {
+        scale.value = withSpring(1, { damping: 15, stiffness: 250 });
+      }, 100);
 
       if (item.action) {
         item.action();

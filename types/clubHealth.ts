@@ -1,4 +1,6 @@
 export type DateRange = 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'last_3_months';
+export type HealthStatus = 'critical' | 'poor' | 'needs_attention' | 'good' | 'excellent';
+export type IssueSeverity = 'warning' | 'critical';
 
 export interface DateRangeOption {
   label: string;
@@ -6,6 +8,106 @@ export interface DateRangeOption {
   getDates: () => { start: Date; end: Date };
 }
 
+export interface IndividualScores {
+  booking_efficiency: number;      // Cost per booking score
+  show_up_rate: number;            // Attendance score
+  enrollment_conversion: number;   // Conversion to membership
+  revenue_health: number;          // ROAS score
+  growth_trajectory: number;       // Growth trend score
+  retention_quality: number;       // Student retention score
+}
+
+export interface HealthIssue {
+  type: string;
+  severity: IssueSeverity;
+  message: string;
+  metric: string;
+  value: number;
+}
+
+export interface MetricsSnapshot {
+  club_id: number;
+  club_name: string;
+  date_range: string;
+  period_start: string;
+  period_end: string;
+  bookings_count: number;
+  enrollment_rate: number;
+  no_show_rate: number;
+  attendance_rate: number;
+  new_students: number;
+  returning_students: number;
+  total_revenue: number;
+  average_class_size: number;
+  bookings_change: number;
+  enrollment_change: number;
+  no_show_change: number;
+  attendance_change: number;
+}
+
+export interface AdMetricsSnapshot {
+  total_spend: number;
+  bookings_from_ads: number;
+  cost_per_booking: number | null;
+  roas: number | null;
+}
+
+export interface ClubHealthScore {
+  club_id: number;
+  club_name: string;
+  overall_score: number;
+  health_status: HealthStatus;
+  individual_scores: IndividualScores;
+  key_issues: HealthIssue[];
+  ai_summary: string | null;
+  metrics_snapshot?: MetricsSnapshot; // For list endpoint
+  ad_metrics_snapshot?: AdMetricsSnapshot; // For list endpoint
+  metrics?: MetricsSnapshot; // For single endpoint
+  ad_metrics?: AdMetricsSnapshot; // For single endpoint
+  calculated_at: string;
+}
+
+export interface ClubHealthDetailResponse {
+  data: ClubHealthScore;
+  calculated: boolean;
+}
+
+export interface TrendPoint {
+  date: string;
+  overall_score: number;
+  health_status: HealthStatus;
+  booking_efficiency: number;
+  show_up_rate: number;
+  enrollment_conversion: number;
+  revenue_health: number;
+  growth_trajectory: number;
+  retention_quality: number;
+}
+
+export interface ClubHealthTrend {
+  club_id: number;
+  club_name: string;
+  period: string;
+  trend_points: TrendPoint[];
+  summary: {
+    start_score: number;
+    end_score: number;
+    average_score: number;
+    min_score: number;
+    max_score: number;
+    improvement: number;
+  };
+}
+
+export interface ClubHealthTrendResponse {
+  data: ClubHealthTrend;
+}
+
+export interface ClubHealthListResponse {
+  data: ClubHealthScore[];
+}
+
+// Legacy interfaces kept for backward compatibility
 export interface ClubMetrics {
   club_id: number;
   club_name: string;

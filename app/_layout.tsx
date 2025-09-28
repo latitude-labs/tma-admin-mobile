@@ -119,6 +119,8 @@ function RootLayoutNav() {
                 <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
                 <Stack.Screen name="club-health" options={{ headerShown: false }} />
+                <Stack.Screen name="club-health-overview" options={{ headerShown: false }} />
+                <Stack.Screen name="club-health-detail" options={{ headerShown: false }} />
                 <Stack.Screen name="kit-orders" options={{ headerShown: false }} />
                 <Stack.Screen name="eod-reports" options={{ headerShown: false }} />
                 <Stack.Screen name="reminders" options={{ headerShown: false }} />
@@ -127,6 +129,7 @@ function RootLayoutNav() {
                 <Stack.Screen name="settings" options={{ headerShown: false }} />
                 <Stack.Screen name="class-bookings" options={{ headerShown: false }} />
                 <Stack.Screen name="eod-report-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="booking-detail" options={{ headerShown: false }} />
               </Stack>
             </AuthStatusProvider>
           </ApiHealthProvider>

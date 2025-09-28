@@ -271,11 +271,17 @@ export interface CalendarState {
 // API Request Types (matching backend endpoints)
 export interface CreateEventRequest {
   title: string;
-  type: EventType;
-  start_date: string;
-  end_date: string;
-  all_day?: boolean;
+  type?: string;
+  date: string;
+  start_time?: string;
+  end_time?: string;
+  is_all_day?: boolean;
   description?: string;
+  location?: string;
+  recurrence?: string;
+  recurrence_end_date?: string;
+  visibility?: string;
+  send_notification?: boolean;
   notes?: string;
   user_id?: number; // Admin only
   club_id?: number;

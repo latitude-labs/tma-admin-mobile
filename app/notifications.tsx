@@ -1,4 +1,5 @@
 import { NotificationItem } from '@/components/ui/NotificationItem';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Notification, NotificationGroup } from '@/types/notification';
@@ -172,47 +173,48 @@ export default function NotificationsScreen() {
     </View>
   );
 
+  const headerRightAction = notifications.length > 0 ? (
+    <View style={styles.headerActions}>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleMarkAllAsRead}
+      >
+        <Ionicons
+          name="checkmark-done"
+          size={20}
+          color={palette.tint}
+        />
+      </TouchableOpacity>
+      <TouchableOpacity
+        style={styles.headerButton}
+        onPress={handleClearAll}
+      >
+        <Ionicons
+          name="trash-outline"
+          size={20}
+          color={palette.textTertiary}
+        />
+      </TouchableOpacity>
+    </View>
+  ) : null;
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Notifications</Text>
-          {unreadCount > 0 && (
-            <Text style={styles.headerSubtitle}>
-              {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
-            </Text>
-          )}
-        </View>
+      <ScreenHeader
+        title="Notifications"
+        rightAction={headerRightAction}
+        onBackPress={() => {}}
+      />
 
-        <View style={styles.headerActions}>
-          {notifications.length > 0 && (
-            <>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleMarkAllAsRead}
-              >
-                <Ionicons
-                  name="checkmark-done"
-                  size={20}
-                  color={palette.tint}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.headerButton}
-                onPress={handleClearAll}
-              >
-                <Ionicons
-                  name="trash-outline"
-                  size={20}
-                  color={palette.textTertiary}
-                />
-              </TouchableOpacity>
-            </>
-          )}
+      {unreadCount > 0 && (
+        <View style={styles.unreadBanner}>
+          <Text style={styles.unreadBannerText}>
+            {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+          </Text>
         </View>
-      </View>
+      )}
 
       <View style={styles.filterContainer}>
         <TouchableOpacity
@@ -295,27 +297,6 @@ const createStyles = (palette: ThemeColors) =>
       flex: 1,
       backgroundColor: palette.backgroundSecondary,
     },
-    header: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      paddingHorizontal: 20,
-      paddingVertical: 16,
-      backgroundColor: palette.background,
-      borderBottomWidth: 1,
-      borderBottomColor: palette.borderLight,
-    },
-    headerTitle: {
-      fontSize: 28,
-      fontFamily: 'Manrope_700Bold',
-      color: palette.textPrimary,
-    },
-    headerSubtitle: {
-      fontSize: 14,
-      fontFamily: 'Manrope_400Regular',
-      color: palette.textSecondary,
-      marginTop: 4,
-    },
     headerActions: {
       flexDirection: 'row',
       gap: 12,
@@ -327,6 +308,18 @@ const createStyles = (palette: ThemeColors) =>
       backgroundColor: palette.backgroundSecondary,
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    unreadBanner: {
+      backgroundColor: palette.background,
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderBottomColor: palette.borderLight,
+    },
+    unreadBannerText: {
+      fontSize: 14,
+      fontFamily: 'Manrope_400Regular',
+      color: palette.textSecondary,
     },
     filterContainer: {
       flexDirection: 'row',

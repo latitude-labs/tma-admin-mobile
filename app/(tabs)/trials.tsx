@@ -1,44 +1,44 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { Badge, Card, Chip, Dropdown } from '@/components/ui';
+import { Theme } from '@/constants/Theme';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { bookingsService } from '@/services/api/bookings.service';
+import { useBookingStore } from '@/store/bookingStore';
+import { useClubStore } from '@/store/clubStore';
+import { Booking } from '@/types/api';
+import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
+  Dimensions,
+  Modal,
+  Platform,
+  Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  View,
-  RefreshControl,
-  ActivityIndicator,
   TextInput,
-  Pressable,
-  Platform,
-  Modal,
   TouchableOpacity,
-  Alert,
-  Dimensions,
+  View,
 } from 'react-native';
-import { Card, Button, Badge, Chip, Dropdown } from '@/components/ui';
-import { Theme } from '@/constants/Theme';
-import { Ionicons } from '@expo/vector-icons';
-import { useBookingStore } from '@/store/bookingStore';
-import { useClubStore } from '@/store/clubStore';
-import { bookingsService } from '@/services/api/bookings.service';
-import { Booking } from '@/types/api';
-import DateTimePicker from '@react-native-community/datetimepicker';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  withSequence,
-  withDelay,
+  Easing,
   FadeIn,
   FadeInDown,
   FadeInUp,
   Layout,
-  Easing,
   SlideInRight,
-  interpolate
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -56,6 +56,7 @@ interface KitItem {
 export default function TrialsScreen() {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const router = useRouter();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -628,6 +629,10 @@ export default function TrialsScreen() {
                       if (Platform.OS === 'ios') {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }
+                      router.push({
+                        pathname: '/booking-detail',
+                        params: { id: booking.id.toString() }
+                      });
                     }}
                   >
                     <AnimatedCard
@@ -654,20 +659,21 @@ export default function TrialsScreen() {
                           </View>
                         </View>
                         <View style={styles.badgeContainer}>
-                          {booking.status && (
+                          {booking.status ? (
                             <Badge
                               variant={getStatusBadgeVariant(booking.status)}
                               size="sm"
                               style={styles.classBadge}
                             >
+                              {booking.status === 'pending' && 'Pending'}
                               {booking.status === 'paid_dd' && 'Paid DD'}
                               {booking.status === 'paid_awaiting_dd' && 'Paid (Awaiting DD)'}
                               {booking.status === 'unpaid_dd' && 'Unpaid DD'}
                               {booking.status === 'unpaid_coach_call' && 'Follow Up'}
                               {booking.status === 'not_joining' && 'Not Joining'}
                             </Badge>
-                          )}
-                          {booking.class_time?.name && (
+                          ) : null}
+                          {booking.class_time?.name ? (
                             <Badge
                               variant={booking.class_time.name.toLowerCase().includes('kid') ? 'warning' : 'info'}
                               size="sm"
@@ -675,7 +681,7 @@ export default function TrialsScreen() {
                             >
                               {booking.class_time.name}
                             </Badge>
-                          )}
+                          ) : null}
                         </View>
                       </View>
 
@@ -717,39 +723,73 @@ export default function TrialsScreen() {
                         </View>
                       </View>
 
-                      {status === 'scheduled' && (
-                        <Animated.View
-                          entering={FadeIn.delay(200).duration(300)}
-                          style={styles.actionButtons}
-                        >
-                          <Pressable
-                            style={({ pressed }) => [
-                              styles.actionButton,
-                              styles.actionButtonOutline,
-                              pressed && styles.actionButtonPressed
-                            ]}
-                            onPress={() => handleAttendanceStatusUpdate(booking.id, 'no-show')}
-                          >
-                            <Ionicons name="close" size={16} color={palette.statusError} />
-                            <Text style={[styles.actionButtonText, { color: palette.statusError }]}>
-                              No Show
-                            </Text>
-                          </Pressable>
-                          <Pressable
-                            style={({ pressed }) => [
-                              styles.actionButton,
-                              styles.actionButtonPrimary,
-                              pressed && styles.actionButtonPressed
-                            ]}
-                            onPress={() => handleBookingPress(booking)}
-                          >
-                            <Ionicons name="checkmark" size={16} color={palette.statusSuccess} />
-                            <Text style={[styles.actionButtonText, { color: palette.statusSuccess }]}>
-                              Check In
-                            </Text>
-                          </Pressable>
-                        </Animated.View>
-                      )}
+                      {/* Show action buttons based on booking state */}
+                      {(() => {
+                        // For pending status bookings that are completed (checked in), show only Kit Status button
+                        if (booking.status === 'pending' && (booking.checked_in_at || status === 'completed')) {
+                          return (
+                            <Animated.View
+                              entering={FadeIn.delay(200).duration(300)}
+                              style={styles.actionButtons}
+                            >
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.actionButton,
+                                  styles.actionButtonPrimary,
+                                  { flex: 1 },
+                                  pressed && styles.actionButtonPressed
+                                ]}
+                                onPress={() => handleBookingPress(booking)}
+                              >
+                                <Ionicons name="shirt" size={16} color={palette.tint} />
+                                <Text style={[styles.actionButtonText, { color: palette.tint }]}>
+                                  Update Kit Status
+                                </Text>
+                              </Pressable>
+                            </Animated.View>
+                          );
+                        }
+
+                        // For pending status bookings that are scheduled (not checked in), show No Show and Check In buttons
+                        if (booking.status === 'pending' && status === 'scheduled') {
+                          return (
+                            <Animated.View
+                              entering={FadeIn.delay(200).duration(300)}
+                              style={styles.actionButtons}
+                            >
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.actionButton,
+                                  styles.actionButtonOutline,
+                                  pressed && styles.actionButtonPressed
+                                ]}
+                                onPress={() => handleAttendanceStatusUpdate(booking.id, 'no-show')}
+                              >
+                                <Ionicons name="close" size={16} color={palette.statusError} />
+                                <Text style={[styles.actionButtonText, { color: palette.statusError }]}>
+                                  No Show
+                                </Text>
+                              </Pressable>
+                              <Pressable
+                                style={({ pressed }) => [
+                                  styles.actionButton,
+                                  styles.actionButtonPrimary,
+                                  pressed && styles.actionButtonPressed
+                                ]}
+                                onPress={() => handleBookingPress(booking)}
+                              >
+                                <Ionicons name="checkmark" size={16} color={palette.statusSuccess} />
+                                <Text style={[styles.actionButtonText, { color: palette.statusSuccess }]}>
+                                  Check In
+                                </Text>
+                              </Pressable>
+                            </Animated.View>
+                          );
+                        }
+
+                        // No action buttons for other states (when status is not pending)
+                        return null;
+                      })()}
                     </AnimatedCard>
                   </AnimatedPressable>
                 );

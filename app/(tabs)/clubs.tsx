@@ -1,7 +1,9 @@
 import { Badge, Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { useClubStore } from '@/store/clubStore';
+import { useAuthStore } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import React, { useEffect, useRef, useMemo } from 'react';
 import {
   ActivityIndicator,
@@ -38,6 +40,8 @@ const ClubItem = React.memo(({
   index,
   isExpanded,
   onToggle,
+  onPress,
+  isAdmin,
   palette,
   styles
 }: {
@@ -45,6 +49,8 @@ const ClubItem = React.memo(({
   index: number;
   isExpanded: boolean;
   onToggle: () => void;
+  onPress: () => void;
+  isAdmin: boolean;
   palette: ThemeColors;
   styles: any;
 }) => {
@@ -64,7 +70,7 @@ const ClubItem = React.memo(({
   }));
 
   return (
-    <AnimatedPressable onPress={onToggle}>
+    <AnimatedPressable onPress={isAdmin ? onPress : onToggle}>
       <AnimatedCard
         variant="elevated"
         style={styles.clubCard}
@@ -92,11 +98,19 @@ const ClubItem = React.memo(({
               expandIconStyle
             ]}
           >
-            <Ionicons
-              name="chevron-down"
-              size={20}
-              color={palette.textSecondary}
-            />
+            {isAdmin ? (
+              <Ionicons
+                name="chevron-forward"
+                size={20}
+                color={palette.textSecondary}
+              />
+            ) : (
+              <Ionicons
+                name="chevron-down"
+                size={20}
+                color={palette.textSecondary}
+              />
+            )}
           </Animated.View>
         </View>
 
@@ -109,7 +123,7 @@ const ClubItem = React.memo(({
           </View>
         )}
 
-        {isExpanded && club.class_times && club.class_times.length > 0 && (
+        {!isAdmin && isExpanded && club.class_times && club.class_times.length > 0 && (
           <Animated.View
             entering={FadeIn.duration(300)}
             style={styles.expandedContent}
@@ -164,6 +178,8 @@ const ClubItem = React.memo(({
 export default function ClubsScreen() {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const user = useAuthStore((state) => state.user);
+  const isAdmin = user?.is_admin || false;
   const {
     clubs,
     isLoading,
@@ -179,10 +195,18 @@ export default function ClubsScreen() {
   const expandedCards = useRef<Set<string>>(new Set()).current;
   const [, forceUpdate] = React.useReducer(x => x + 1, 0);
   const pulseOpacity = useSharedValue(0.3);
+  const fabScale = useSharedValue(1);
+  const fabRotation = useSharedValue(0);
 
   useEffect(() => {
-    fetchClubs();
-  }, []);
+    if (isAdmin) {
+      // Admin users see all clubs from admin endpoint
+      useClubStore.getState().fetchAdminClubs();
+    } else {
+      // Regular users see their assigned clubs
+      fetchClubs();
+    }
+  }, [isAdmin]);
 
   useEffect(() => {
     if (isLoading && clubs.length === 0) {
@@ -252,6 +276,35 @@ export default function ClubsScreen() {
     forceUpdate();
   };
 
+  const handleClubPress = (clubId: number) => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push(`/club-detail?id=${clubId}`);
+  };
+
+  const handleCreateClub = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    fabScale.value = withSequence(
+      withSpring(0.9, { duration: 100 }),
+      withSpring(1, { duration: 100 })
+    );
+    fabRotation.value = withSequence(
+      withSpring(45, { duration: 200 }),
+      withSpring(0, { duration: 200 })
+    );
+    router.push('/club-form');
+  };
+
+  const fabAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: fabScale.value },
+      { rotate: `${fabRotation.value}deg` },
+    ],
+  }));
+
   return (
     <ScrollView
       style={styles.container}
@@ -313,6 +366,8 @@ export default function ClubsScreen() {
               index={index}
               isExpanded={expandedCards.has(String(club.id))}
               onToggle={() => toggleCardExpansion(String(club.id))}
+              onPress={() => handleClubPress(club.id)}
+              isAdmin={isAdmin}
               palette={palette}
               styles={styles}
             />
@@ -332,6 +387,30 @@ export default function ClubsScreen() {
           </Animated.View>
         )}
       </View>
+
+      {/* Floating Action Button for Admins */}
+      {isAdmin && (
+        <Animated.View
+          style={[
+            styles.fab,
+            fabAnimatedStyle,
+          ]}
+          entering={FadeIn.delay(500).duration(300).springify()}
+        >
+          <Pressable
+            style={styles.fabButton}
+            onPress={handleCreateClub}
+            onPressIn={() => {
+              fabScale.value = withSpring(0.9);
+            }}
+            onPressOut={() => {
+              fabScale.value = withSpring(1);
+            }}
+          >
+            <Ionicons name="add" size={28} color={palette.textInverse} />
+          </Pressable>
+        </Animated.View>
+      )}
     </ScrollView>
   );
 }
@@ -600,5 +679,20 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     textAlign: 'center',
     maxWidth: 280,
     lineHeight: 22,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: Theme.spacing.xl,
+    right: Theme.spacing.xl,
+  },
+  fabButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: palette.tint,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...Theme.shadows.lg,
+    elevation: 8,
   },
 });

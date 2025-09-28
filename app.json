@@ -57,6 +57,12 @@
           "color": "#FF8133",
           "sounds": []
         }
+      ],
+      [
+        "@rnmapbox/maps",
+        {
+          "RNMapboxMapsDownloadToken": "pk.eyJ1IjoicGVyaWhlbGlhc29mdHdvcmtzIiwiYSI6ImNsaWFvbDg5azA1b2wza29iMXF5em9xeXMifQ.R8aUCifGQoBq4m3LlGbeNA"
+        }
       ]
     ],
     "experiments": {

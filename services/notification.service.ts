@@ -1,16 +1,17 @@
-import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
-import Constants from 'expo-constants';
-import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { apiClient } from './api/client';
+import Constants from 'expo-constants';
+import * as Device from 'expo-device';
+import * as Notifications from 'expo-notifications';
+import { Platform } from 'react-native';
+import apiClient from './api/client';
 
 // Configure how notifications should be presented when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -132,9 +133,12 @@ class NotificationService {
   /**
    * Send test push notification via backend
    */
-  async sendTestNotification(): Promise<void> {
+  async sendTestNotification(title: string = 'Test Notification', body: string = 'This is a test push notification'): Promise<void> {
     try {
-      const response = await apiClient.post('/push-notifications/test');
+      const response = await apiClient.post('/push-notifications/test', {
+        title,
+        body,
+      });
       console.log('Test notification sent:', response.data.message);
     } catch (error: any) {
       if (error.response?.status === 404) {
@@ -203,6 +207,7 @@ class NotificationService {
         badge: 1,
       },
       trigger: {
+        type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         seconds,
       },
     });

@@ -772,6 +772,410 @@ paths:
                       - count
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+  /admin/clubs:
+    get:
+      get:
+        summary: List all clubs (Admin only)
+        description: Returns a list of all clubs in the system with optional search filtering. Requires admin privileges.
+        operationId: listClubs
+        tags:
+          - Admin - Clubs
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: search
+            in: query
+            description: Optional search term to filter clubs by name or address
+            required: false
+            schema:
+              type: string
+            example: Manchester
+        responses:
+          '200':
+            description: List of clubs successfully retrieved
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      type: array
+                      items:
+                        $ref: ../../../components/schemas/Club.yaml
+                example:
+                  data:
+                    - id: 1
+                      name: Temple Manchester - City Center
+                      address: 123 Main St, Manchester M1 1AA
+                      directions: Near the central train station
+                      latitude: 53.4808
+                      longitude: -2.2426
+                      cadence_channel_ids:
+                        - channel_123
+                        - channel_456
+                      acuity_calendar_id: '12345'
+                      google_place_id: ChIJ2dGMjxMe2EcRqVqkuXQkj7c
+                      sync_hours_to_google: true
+                      class_prioritisation_enabled: false
+          '401':
+            $ref: ../../../components/responses/UnauthorizedError.yaml
+          '403':
+            $ref: ../../../components/responses/Forbidden.yaml
+    post:
+      post:
+        summary: Create a new club (Admin only)
+        description: Creates a new club in the system. Requires admin privileges.
+        operationId: createClub
+        tags:
+          - Admin - Clubs
+        security:
+          - BearerAuth: []
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - name
+                  - address
+                  - latitude
+                  - longitude
+                properties:
+                  name:
+                    type: string
+                    maxLength: 255
+                    description: Name of the club
+                  address:
+                    type: string
+                    maxLength: 500
+                    description: Full address of the club
+                  directions:
+                    type: string
+                    nullable: true
+                    description: Additional directions or notes for finding the club
+                  latitude:
+                    type: number
+                    format: float
+                    minimum: -90
+                    maximum: 90
+                    description: Latitude coordinate of the club location
+                  longitude:
+                    type: number
+                    format: float
+                    minimum: -180
+                    maximum: 180
+                    description: Longitude coordinate of the club location
+                  cadence_channel_ids:
+                    type: array
+                    nullable: true
+                    items:
+                      type: string
+                    description: Array of Cadence channel IDs associated with this club
+                  acuity_calendar_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Acuity Scheduling calendar ID
+                  google_place_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Google Places ID for this location
+                  google_account_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Google My Business account ID
+                  google_location_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Google My Business location ID
+                  sync_hours_to_google:
+                    type: boolean
+                    nullable: true
+                    default: false
+                    description: Whether to sync opening hours to Google My Business
+                  class_prioritisation_enabled:
+                    type: boolean
+                    nullable: true
+                    default: false
+                    description: Whether class prioritisation is enabled for this club
+              example:
+                name: Temple Manchester - New Location
+                address: 456 High Street, Manchester M2 2BB
+                directions: Next to the shopping center
+                latitude: 53.483
+                longitude: -2.245
+                cadence_channel_ids:
+                  - channel_789
+                sync_hours_to_google: true
+        responses:
+          '201':
+            description: Club created successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      $ref: ../../../components/schemas/Club.yaml
+                    message:
+                      type: string
+                example:
+                  data:
+                    id: 2
+                    name: Temple Manchester - New Location
+                    address: 456 High Street, Manchester M2 2BB
+                    directions: Next to the shopping center
+                    latitude: 53.483
+                    longitude: -2.245
+                    cadence_channel_ids:
+                      - channel_789
+                    sync_hours_to_google: true
+                    class_prioritisation_enabled: false
+                  message: Club created successfully
+          '401':
+            $ref: ../../../components/responses/UnauthorizedError.yaml
+          '403':
+            $ref: ../../../components/responses/Forbidden.yaml
+          '422':
+            $ref: ../../../components/responses/ValidationError.yaml
+  /admin/clubs/{id}:
+    get:
+      get:
+        summary: Get a specific club (Admin only)
+        description: Returns detailed information about a specific club. Requires admin privileges.
+        operationId: showClub
+        tags:
+          - Admin - Clubs
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: id
+            in: path
+            description: Club ID
+            required: true
+            schema:
+              type: integer
+            example: 1
+        responses:
+          '200':
+            description: Club details successfully retrieved
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      $ref: ../../../components/schemas/Club.yaml
+                example:
+                  data:
+                    id: 1
+                    name: Temple Manchester - City Center
+                    address: 123 Main St, Manchester M1 1AA
+                    directions: Near the central train station
+                    latitude: 53.4808
+                    longitude: -2.2426
+                    cadence_channel_ids:
+                      - channel_123
+                      - channel_456
+                    acuity_calendar_id: '12345'
+                    google_place_id: ChIJ2dGMjxMe2EcRqVqkuXQkj7c
+                    sync_hours_to_google: true
+                    class_prioritisation_enabled: false
+                    class_times:
+                      - id: 1
+                        day: Monday
+                        name: Kids 1
+                        start_time: '17:00:00'
+                        end_time: '18:00:00'
+          '401':
+            $ref: ../../../components/responses/UnauthorizedError.yaml
+          '403':
+            $ref: ../../../components/responses/Forbidden.yaml
+          '404':
+            $ref: ../../../components/responses/NotFound.yaml
+    put:
+      put:
+        summary: Update a club (Admin only)
+        description: Updates an existing club's information. Requires admin privileges.
+        operationId: updateClub
+        tags:
+          - Admin - Clubs
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: id
+            in: path
+            description: Club ID
+            required: true
+            schema:
+              type: integer
+            example: 1
+        requestBody:
+          required: true
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    maxLength: 255
+                    description: Name of the club
+                  address:
+                    type: string
+                    maxLength: 500
+                    description: Full address of the club
+                  directions:
+                    type: string
+                    nullable: true
+                    description: Additional directions or notes for finding the club
+                  latitude:
+                    type: number
+                    format: float
+                    minimum: -90
+                    maximum: 90
+                    description: Latitude coordinate of the club location
+                  longitude:
+                    type: number
+                    format: float
+                    minimum: -180
+                    maximum: 180
+                    description: Longitude coordinate of the club location
+                  cadence_channel_ids:
+                    type: array
+                    nullable: true
+                    items:
+                      type: string
+                    description: Array of Cadence channel IDs associated with this club
+                  acuity_calendar_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Acuity Scheduling calendar ID
+                  google_place_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Google Places ID for this location
+                  google_account_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Google My Business account ID
+                  google_location_id:
+                    type: string
+                    nullable: true
+                    maxLength: 255
+                    description: Google My Business location ID
+                  sync_hours_to_google:
+                    type: boolean
+                    nullable: true
+                    description: Whether to sync opening hours to Google My Business
+                  class_prioritisation_enabled:
+                    type: boolean
+                    nullable: true
+                    description: Whether class prioritisation is enabled for this club
+              example:
+                name: Temple Manchester - City Center Updated
+                address: 123 Main St, Manchester M1 1AA
+                directions: Updated directions - use side entrance
+                sync_hours_to_google: false
+        responses:
+          '200':
+            description: Club updated successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    data:
+                      $ref: ../../../components/schemas/Club.yaml
+                    message:
+                      type: string
+                example:
+                  data:
+                    id: 1
+                    name: Temple Manchester - City Center Updated
+                    address: 123 Main St, Manchester M1 1AA
+                    directions: Updated directions - use side entrance
+                    latitude: 53.4808
+                    longitude: -2.2426
+                    cadence_channel_ids:
+                      - channel_123
+                      - channel_456
+                    sync_hours_to_google: false
+                    class_prioritisation_enabled: false
+                  message: Club updated successfully
+          '401':
+            $ref: ../../../components/responses/UnauthorizedError.yaml
+          '403':
+            $ref: ../../../components/responses/Forbidden.yaml
+          '404':
+            $ref: ../../../components/responses/NotFound.yaml
+          '422':
+            $ref: ../../../components/responses/ValidationError.yaml
+    delete:
+      delete:
+        summary: Delete a club (Admin only)
+        description: |
+          Deletes a club from the system. Requires admin privileges.
+          Note: A club cannot be deleted if it has existing class times. All class times must be removed first.
+        operationId: deleteClub
+        tags:
+          - Admin - Clubs
+        security:
+          - BearerAuth: []
+        parameters:
+          - name: id
+            in: path
+            description: Club ID
+            required: true
+            schema:
+              type: integer
+            example: 1
+        responses:
+          '200':
+            description: Club deleted successfully
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                example:
+                  message: Club deleted successfully
+          '401':
+            $ref: ../../../components/responses/UnauthorizedError.yaml
+          '403':
+            $ref: ../../../components/responses/Forbidden.yaml
+          '404':
+            $ref: ../../../components/responses/NotFound.yaml
+          '422':
+            description: Validation error - Club has existing relationships
+            content:
+              application/json:
+                schema:
+                  type: object
+                  properties:
+                    message:
+                      type: string
+                    errors:
+                      type: object
+                      properties:
+                        club:
+                          type: array
+                          items:
+                            type: string
+                example:
+                  message: The given data was invalid.
+                  errors:
+                    club:
+                      - Cannot delete club with existing class times. Please remove all class times first.
   /class-times:
     get:
       summary: Get class times
@@ -3817,6 +4221,232 @@ paths:
                     example: Failed to fetch Facebook ads metrics
                   error:
                     type: string
+  /api/clubs/health:
+    get:
+      summary: Get health scores for all clubs
+      description: Returns comprehensive health scores and metrics for all clubs, sorted by score (lowest first to highlight clubs needing attention)
+      operationId: getClubHealthScores
+      tags:
+        - Club Health
+      security:
+        - coachBearerAuth: []
+      parameters:
+        - in: query
+          name: date_range
+          required: false
+          schema:
+            type: string
+            enum:
+              - today
+              - yesterday
+              - last_7_days
+              - last_30_days
+              - last_3_months
+            default: last_30_days
+          description: Date range for metrics calculation
+        - in: query
+          name: status
+          required: false
+          schema:
+            type: string
+            enum:
+              - critical
+              - poor
+              - needs_attention
+              - good
+              - excellent
+          description: Filter by health status
+        - in: query
+          name: latest_only
+          required: false
+          schema:
+            type: boolean
+            default: true
+          description: Return only the latest score for each club
+      responses:
+        '200':
+          description: Successfully retrieved club health scores
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ClubHealthScore'
+                  summary:
+                    type: object
+                    properties:
+                      total_clubs:
+                        type: integer
+                        description: Total number of clubs
+                      average_score:
+                        type: number
+                        description: Average health score across all clubs
+                      critical_count:
+                        type: integer
+                        description: Number of clubs in critical condition
+                      poor_count:
+                        type: integer
+                        description: Number of clubs in poor condition
+                      needs_attention_count:
+                        type: integer
+                        description: Number of clubs needing attention
+                      good_count:
+                        type: integer
+                        description: Number of clubs in good health
+                      excellent_count:
+                        type: integer
+                        description: Number of clubs in excellent health
+  /api/clubs/health/{clubId}:
+    get:
+      summary: Get health score for a specific club
+      description: Returns detailed health metrics for a single club, with option to recalculate
+      operationId: getClubHealthScore
+      tags:
+        - Club Health
+      security:
+        - coachBearerAuth: []
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            type: integer
+          description: The club ID
+        - in: query
+          name: date_range
+          required: false
+          schema:
+            type: string
+            enum:
+              - today
+              - yesterday
+              - last_7_days
+              - last_30_days
+              - last_3_months
+            default: last_30_days
+          description: Date range for metrics calculation
+        - in: query
+          name: recalculate
+          required: false
+          schema:
+            type: boolean
+            default: false
+          description: Force recalculation of health score
+      responses:
+        '200':
+          description: Successfully retrieved club health score
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ClubHealthDetail'
+                  calculated:
+                    type: boolean
+                    description: Whether the score was freshly calculated or retrieved from cache
+        '404':
+          description: Club not found
+  /api/clubs/health/{clubId}/trend:
+    get:
+      summary: Get health trend for a specific club
+      description: Returns historical health scores to show trends over time
+      operationId: getClubHealthTrend
+      tags:
+        - Club Health
+      security:
+        - coachBearerAuth: []
+      parameters:
+        - in: path
+          name: clubId
+          required: true
+          schema:
+            type: integer
+          description: The club ID
+        - in: query
+          name: period
+          required: false
+          schema:
+            type: string
+            enum:
+              - 7_days
+              - 30_days
+              - 3_months
+            default: 30_days
+          description: Time period for trend data
+      responses:
+        '200':
+          description: Successfully retrieved club health trend
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      club_id:
+                        type: integer
+                      club_name:
+                        type: string
+                      period:
+                        type: string
+                      trend_points:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            date:
+                              type: string
+                              format: date
+                            overall_score:
+                              type: integer
+                            health_status:
+                              type: string
+                            booking_efficiency:
+                              type: integer
+                              nullable: true
+                            show_up_rate:
+                              type: integer
+                              nullable: true
+                            enrollment_conversion:
+                              type: integer
+                              nullable: true
+                            revenue_health:
+                              type: integer
+                              nullable: true
+                            growth_trajectory:
+                              type: integer
+                              nullable: true
+                            retention_quality:
+                              type: integer
+                              nullable: true
+                      summary:
+                        type: object
+                        properties:
+                          start_score:
+                            type: integer
+                            nullable: true
+                          end_score:
+                            type: integer
+                            nullable: true
+                          average_score:
+                            type: number
+                          min_score:
+                            type: integer
+                            nullable: true
+                          max_score:
+                            type: integer
+                            nullable: true
+                          improvement:
+                            type: integer
+                            nullable: true
+                            description: Point difference between start and end scores
+        '404':
+          description: Club not found
   /v1/notifications:
     get:
       summary: Get list of notifications
@@ -5153,6 +5783,128 @@ components:
                 type: string
               active:
                 type: boolean
+    ClubHealthScore:
+      type: object
+      properties:
+        club_id:
+          type: integer
+          description: The club's ID
+        club_name:
+          type: string
+          description: The club's name
+        overall_score:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Overall health score (0-100)
+        health_status:
+          type: string
+          enum:
+            - critical
+            - poor
+            - needs_attention
+            - good
+            - excellent
+          description: Categorized health status
+        individual_scores:
+          type: object
+          properties:
+            booking_efficiency:
+              type: integer
+              description: Score for cost per booking efficiency (0-100)
+            show_up_rate:
+              type: integer
+              description: Score for booking show-up rate (0-100)
+            enrollment_conversion:
+              type: integer
+              description: Score for enrollment conversion rate (0-100)
+            revenue_health:
+              type: integer
+              description: Score for revenue/ROAS performance (0-100)
+            growth_trajectory:
+              type: integer
+              description: Score for growth trends (0-100)
+            retention_quality:
+              type: integer
+              description: Score for student retention (0-100)
+        key_issues:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                description: Issue type identifier
+              severity:
+                type: string
+                enum:
+                  - warning
+                  - critical
+              message:
+                type: string
+                description: Human-readable issue description
+              metric:
+                type: string
+                description: Related metric name
+              value:
+                type: number
+                description: Current value of the problematic metric
+        ai_summary:
+          type: string
+          nullable: true
+          description: AI-generated summary of club health
+        calculated_at:
+          type: string
+          format: date-time
+          description: When the score was calculated
+    ClubHealthDetail:
+      allOf:
+        - $ref: '#/components/schemas/ClubHealthScore'
+        - type: object
+          properties:
+            metrics:
+              type: object
+              description: Detailed metrics snapshot
+              properties:
+                bookings_count:
+                  type: integer
+                enrollment_rate:
+                  type: number
+                no_show_rate:
+                  type: number
+                attendance_rate:
+                  type: number
+                new_students:
+                  type: integer
+                returning_students:
+                  type: integer
+                average_class_size:
+                  type: number
+                bookings_change:
+                  type: number
+                  description: Percentage change from previous period
+                enrollment_change:
+                  type: number
+                attendance_change:
+                  type: number
+                total_revenue:
+                  type: number
+            ad_metrics:
+              type: object
+              nullable: true
+              description: Advertising metrics snapshot
+              properties:
+                total_spend:
+                  type: number
+                bookings_from_ads:
+                  type: integer
+                cost_per_booking:
+                  type: number
+                  nullable: true
+                roas:
+                  type: number
+                  nullable: true
+                  description: Return on ad spend
   responses:
     LoginSuccessResponse:
       description: A successful login response
