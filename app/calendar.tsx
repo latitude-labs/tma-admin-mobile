@@ -11,7 +11,7 @@ import { CalendarEvent } from '@/types/calendar';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
 import * as Haptics from 'expo-haptics';
-import { useRouter } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
@@ -87,7 +87,10 @@ export default function CalendarScreen() {
   }, [isAdmin]);
 
   return (
-    <View style={styles.container}>
+    <>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Calendar</Text>
         <View style={styles.headerActions}>
@@ -185,6 +188,7 @@ export default function CalendarScreen() {
         }}
       />
     </View>
+    </>
   );
 }
 

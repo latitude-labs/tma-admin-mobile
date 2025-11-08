@@ -1,6 +1,6 @@
+import * as Haptics from 'expo-haptics';
 import * as LocalAuthentication from 'expo-local-authentication';
 import * as SecureStore from 'expo-secure-store';
-import * as Haptics from 'expo-haptics';
 
 export interface BiometricAuthResult {
   success: boolean;
@@ -21,6 +21,7 @@ class BiometricService {
   private readonly BIOMETRIC_TOKEN_KEY = 'tma_biometric_token';
   private readonly DEVICE_ID_KEY = 'tma_device_id';
   private readonly BIOMETRIC_ENROLLED_KEY = 'tma_biometric_enrolled';
+  private readonly BIOMETRIC_CREDENTIALS_KEY = 'tma_biometric_credentials';
 
   private constructor() {}
 
@@ -154,7 +155,7 @@ class BiometricService {
     }
   }
 
-  async enrollBiometric(userId: string, token: string): Promise<boolean> {
+  async enrollBiometric(userId: string, email: string, password: string): Promise<boolean> {
     try {
       const capabilities = await this.checkBiometricCapabilities();
 
@@ -179,7 +180,12 @@ class BiometricService {
         await SecureStore.setItemAsync(this.DEVICE_ID_KEY, deviceId);
       }
 
+      // Store the credentials securely (they are encrypted by SecureStore)
+      const credentials = JSON.stringify({ email, password });
+      await SecureStore.setItemAsync(this.BIOMETRIC_CREDENTIALS_KEY, credentials);
+
       // Store the biometric token securely
+      const token = `${userId}_biometric_${Date.now()}`;
       await SecureStore.setItemAsync(this.BIOMETRIC_TOKEN_KEY, token);
       await SecureStore.setItemAsync(this.BIOMETRIC_ENROLLED_KEY, 'true');
 
@@ -221,10 +227,30 @@ class BiometricService {
     }
   }
 
+  async getStoredCredentials(): Promise<{ email: string; password: string } | null> {
+    try {
+      const isEnrolled = await SecureStore.getItemAsync(this.BIOMETRIC_ENROLLED_KEY);
+      if (isEnrolled !== 'true') {
+        return null;
+      }
+
+      const credentialsJson = await SecureStore.getItemAsync(this.BIOMETRIC_CREDENTIALS_KEY);
+      if (!credentialsJson) {
+        return null;
+      }
+
+      return JSON.parse(credentialsJson);
+    } catch (error) {
+      console.error('Error getting stored credentials:', error);
+      return null;
+    }
+  }
+
   async removeBiometricEnrollment(): Promise<void> {
     try {
       await SecureStore.deleteItemAsync(this.BIOMETRIC_TOKEN_KEY);
       await SecureStore.deleteItemAsync(this.BIOMETRIC_ENROLLED_KEY);
+      await SecureStore.deleteItemAsync(this.BIOMETRIC_CREDENTIALS_KEY);
     } catch (error) {
       console.error('Error removing biometric enrollment:', error);
     }

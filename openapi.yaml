@@ -1314,6 +1314,377 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ValidationError'
+  /admin/class-times:
+    post:
+      summary: Create a new class time
+      description: Create a new class time in the system (Admin only)
+      operationId: createClassTime
+      tags:
+        - Class Times - Admin
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - club_id
+                - day
+                - name
+                - start_time
+                - end_time
+              properties:
+                club_id:
+                  type: integer
+                  description: ID of the club this class time belongs to
+                  example: 1
+                day:
+                  type: string
+                  enum:
+                    - Monday
+                    - Tuesday
+                    - Wednesday
+                    - Thursday
+                    - Friday
+                    - Saturday
+                    - Sunday
+                  description: Day of the week
+                  example: Monday
+                name:
+                  type: string
+                  description: Name of the class
+                  example: Morning Training
+                start_time:
+                  type: string
+                  format: time
+                  description: Start time in HH:MM:SS format
+                  example: '09:00:00'
+                end_time:
+                  type: string
+                  format: time
+                  description: End time in HH:MM:SS format
+                  example: '10:30:00'
+                helpers:
+                  type: array
+                  items:
+                    type: string
+                  description: List of helper names
+                  example:
+                    - John Doe
+                    - Jane Smith
+                priority:
+                  type: integer
+                  minimum: 0
+                  description: Priority for ordering (lower numbers appear first)
+                  example: 0
+                is_accepting_bookings:
+                  type: boolean
+                  description: Whether this class time is accepting bookings
+                  example: true
+      responses:
+        '201':
+          description: Class time created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      club_id:
+                        type: integer
+                        example: 1
+                      day:
+                        type: string
+                        example: Monday
+                      name:
+                        type: string
+                        example: Morning Class
+                      start_time:
+                        type: string
+                        format: time
+                        example: '09:00:00'
+                      end_time:
+                        type: string
+                        format: time
+                        example: '10:30:00'
+                      helpers:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - John Doe
+                          - Jane Smith
+                      priority:
+                        type: integer
+                        example: 0
+                      is_accepting_bookings:
+                        type: boolean
+                        example: true
+                      club:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: Downtown Club
+                  message:
+                    type: string
+                    example: Class time created successfully
+        '403':
+          description: Unauthorized - Admin access required
+        '422':
+          description: Validation error
+  /admin/class-times/{id}:
+    get:
+      summary: Get specific class time details
+      description: Get full details of a specific class time (Admin only)
+      operationId: getClassTime
+      tags:
+        - Class Times - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Class time ID
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      club_id:
+                        type: integer
+                        example: 1
+                      day:
+                        type: string
+                        example: Monday
+                      name:
+                        type: string
+                        example: Morning Class
+                      start_time:
+                        type: string
+                        format: time
+                        example: '09:00:00'
+                      end_time:
+                        type: string
+                        format: time
+                        example: '10:30:00'
+                      helpers:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - John Doe
+                          - Jane Smith
+                      priority:
+                        type: integer
+                        example: 0
+                      is_accepting_bookings:
+                        type: boolean
+                        example: true
+                      club:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: Downtown Club
+        '403':
+          description: Unauthorized - Admin access required
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '404':
+          description: Class time not found
+    put:
+      summary: Update an existing class time
+      description: Update an existing class time (Admin only)
+      operationId: updateClassTime
+      tags:
+        - Class Times - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Class time ID
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                club_id:
+                  type: integer
+                  description: ID of the club this class time belongs to
+                day:
+                  type: string
+                  enum:
+                    - Monday
+                    - Tuesday
+                    - Wednesday
+                    - Thursday
+                    - Friday
+                    - Saturday
+                    - Sunday
+                  description: Day of the week
+                name:
+                  type: string
+                  description: Name of the class
+                start_time:
+                  type: string
+                  format: time
+                  description: Start time in HH:MM:SS format
+                end_time:
+                  type: string
+                  format: time
+                  description: End time in HH:MM:SS format
+                helpers:
+                  type: array
+                  items:
+                    type: string
+                  description: List of helper names
+                priority:
+                  type: integer
+                  minimum: 0
+                  description: Priority for ordering
+                is_accepting_bookings:
+                  type: boolean
+                  description: Whether this class time is accepting bookings
+      responses:
+        '200':
+          description: Class time updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      club_id:
+                        type: integer
+                        example: 1
+                      day:
+                        type: string
+                        example: Monday
+                      name:
+                        type: string
+                        example: Morning Class
+                      start_time:
+                        type: string
+                        format: time
+                        example: '09:00:00'
+                      end_time:
+                        type: string
+                        format: time
+                        example: '10:30:00'
+                      helpers:
+                        type: array
+                        items:
+                          type: string
+                        example:
+                          - John Doe
+                          - Jane Smith
+                      priority:
+                        type: integer
+                        example: 0
+                      is_accepting_bookings:
+                        type: boolean
+                        example: true
+                      club:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+                          name:
+                            type: string
+                            example: Downtown Club
+                  message:
+                    type: string
+                    example: Class time updated successfully
+        '403':
+          description: Unauthorized - Admin access required
+        '404':
+          description: Class time not found
+        '422':
+          description: Validation error
+    delete:
+      summary: Delete a class time
+      description: Soft delete a class time (Admin only). Cannot delete if there are active future bookings.
+      operationId: deleteClassTime
+      tags:
+        - Class Times - Admin
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: Class time ID
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Class time deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Class time deleted successfully
+        '403':
+          description: Unauthorized - Admin access required
+        '404':
+          description: Class time not found
+        '422':
+          description: Cannot delete - active bookings exist
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Cannot delete class time with active future bookings
   /facebook-pages:
     get:
       tags:
@@ -3825,6 +4196,254 @@ paths:
           $ref: '#/components/responses/UnauthorizedError'
         '404':
           description: User not found
+  /coaches:
+    post:
+      summary: Create a new coach
+      operationId: createCoach
+      tags:
+        - Coaches
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                email:
+                  type: string
+                  format: email
+                phone_number:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '201':
+          description: Coach created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Coach created successfully
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    get:
+      summary: List all coaches
+      operationId: listCoaches
+      tags:
+        - Coaches
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+          description: Search by name, email, or phone number
+        - name: sort_by
+          in: query
+          schema:
+            type: string
+            enum:
+              - name
+              - email
+              - created_at
+            default: name
+          description: Field to sort by
+        - name: sort_order
+          in: query
+          schema:
+            type: string
+            enum:
+              - asc
+              - desc
+            default: asc
+          description: Sort order
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 15
+          description: Items per page
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  links:
+                    type: object
+                  meta:
+                    type: object
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+  /coaches/{id}:
+    put:
+      summary: Update a coach
+      operationId: updateCoach
+      tags:
+        - Coaches
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                email:
+                  type: string
+                  format: email
+                phone_number:
+                  type: string
+                  maxLength: 255
+                  nullable: true
+                password:
+                  type: string
+                  minLength: 8
+                  description: Optional - only provide if changing password
+      responses:
+        '200':
+          description: Coach updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Coach updated successfully
+                  data:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Coach not found
+        '422':
+          $ref: '#/components/responses/ValidationError'
+    delete:
+      summary: Delete a coach
+      operationId: deleteCoach
+      tags:
+        - Coaches
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Coach deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Coach deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          description: Coach not found
+    parameters:
+      - schema:
+          type: integer
+        name: id
+        in: path
+        required: true
+        description: Coach ID
+    get:
+      summary: Get coach by ID
+      operationId: getCoachById
+      tags:
+        - Coaches
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Coach not found
+  /coaches/{id}/stats:
+    parameters:
+      - schema:
+          type: integer
+        name: id
+        in: path
+        required: true
+        description: Coach ID
+    get:
+      summary: Get coach statistics
+      operationId: getCoachStats
+      tags:
+        - Coaches
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date_range
+          in: query
+          schema:
+            type: string
+            enum:
+              - past_week
+              - past_month
+              - past_year
+            default: past_month
+          description: Date range for statistics
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CoachStats'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Coach not found
+        '422':
+          $ref: '#/components/responses/ValidationError'
   /api/clubs/summary:
     get:
       summary: Get clubs summary
@@ -5253,6 +5872,37 @@ components:
             not_joining:
               type: integer
               example: 5
+    CoachStats:
+      title: CoachStats
+      type: object
+      description: Statistics for a coach's performance
+      properties:
+        enrollment_rate_on_day:
+          type: number
+          format: float
+          description: Percentage of trials who enrolled on the same day as their trial (for selected period)
+          example: 45.5
+        enrollment_rate_ytd:
+          type: number
+          format: float
+          description: Overall enrollment percentage for the full year (includes delayed enrollments)
+          example: 62.3
+        total_trials_period:
+          type: integer
+          description: Total number of trials during the selected period
+          example: 25
+        total_on_day_enrollments_period:
+          type: integer
+          description: Number of people who enrolled on the same day as their trial (during selected period)
+          example: 12
+        total_trials_ytd:
+          type: integer
+          description: Total number of trials for the full year
+          example: 150
+        total_enrollments_ytd:
+          type: integer
+          description: Total number of enrollments for the full year (same day OR came back later)
+          example: 94
     KitOrder:
       type: object
       properties:

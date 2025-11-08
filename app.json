@@ -1,4 +1,9 @@
 {
+  "build": {
+    "preview": {
+      "distribution": "internal"
+    }
+  },
   "expo": {
     "name": "TMA Admin",
     "slug": "tma-admin-mobile",
@@ -61,7 +66,7 @@
       [
         "@rnmapbox/maps",
         {
-          "RNMapboxMapsDownloadToken": "pk.eyJ1IjoicGVyaWhlbGlhc29mdHdvcmtzIiwiYSI6ImNsaWFvbDg5azA1b2wza29iMXF5em9xeXMifQ.R8aUCifGQoBq4m3LlGbeNA"
+          "RNMapboxMapsDownloadToken": "sk.eyJ1IjoicGVyaWhlbGlhc29mdHdvcmtzIiwiYSI6ImNtZzNyZGEyNjA5M3oydHNhYXUwYnVmMmwifQ._jd4pFyKjRkIEqbhqcE1uw"
         }
       ]
     ],

@@ -15,7 +15,7 @@ import {
 import { useLocalSearchParams, router, Stack } from 'expo-router';
 import { useClubStore } from '@/store/clubStore';
 import { MapView } from '@/components/ui/MapView';
-import { Card } from '@/components/ui';
+import { Card, ScreenHeader } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -32,7 +32,6 @@ const AnimatedCard = Animated.createAnimatedComponent(Card);
 interface FormData {
   name: string;
   address: string;
-  postcode: string;
   directions: string;
   latitude: number | null;
   longitude: number | null;
@@ -96,7 +95,7 @@ const FormInput = React.memo(({
           placeholder={placeholder}
           placeholderTextColor={palette.textTertiary}
           multiline={multiline}
-          numberOfLines={multiline ? 3 : 1}
+          numberOfLines={multiline ? 4 : 1}
           keyboardType={keyboardType}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -167,7 +166,6 @@ export default function ClubFormScreen() {
   const [formData, setFormData] = useState<FormData>({
     name: '',
     address: '',
-    postcode: '',
     directions: '',
     latitude: null,
     longitude: null,
@@ -191,7 +189,6 @@ export default function ClubFormScreen() {
       setFormData({
         name: selectedClub.name || '',
         address: selectedClub.address || '',
-        postcode: selectedClub.postcode || '',
         directions: selectedClub.directions || '',
         latitude: selectedClub.latitude || null,
         longitude: selectedClub.longitude || null,
@@ -238,7 +235,6 @@ export default function ClubFormScreen() {
       const dataToSave = {
         name: formData.name,
         address: formData.address,
-        postcode: formData.postcode,
         directions: formData.directions,
         latitude: formData.latitude,
         longitude: formData.longitude,
@@ -286,10 +282,12 @@ export default function ClubFormScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: isEdit ? 'Edit Club' : 'Create Club',
-          headerRight: () => (
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={styles.container}>
+        <ScreenHeader
+          title={isEdit ? 'Edit Club' : 'Create Club'}
+          rightAction={
             <Pressable
               onPress={handleSave}
               disabled={isCreating || isUpdating}
@@ -301,15 +299,14 @@ export default function ClubFormScreen() {
                 <Text style={styles.headerSaveText}>Save</Text>
               )}
             </Pressable>
-          ),
-        }}
-      />
+          }
+        />
 
-      <KeyboardAvoidingView
-        style={styles.container}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-      >
+        <KeyboardAvoidingView
+          style={styles.keyboardContainer}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+        >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -346,22 +343,13 @@ export default function ClubFormScreen() {
               value={formData.address}
               onChangeText={(text) => updateField('address', text)}
               placeholder="Enter full address"
+              multiline
               required
               icon="location"
               palette={palette}
               styles={styles}
             />
             {errors.address && <Text style={styles.errorText}>{errors.address}</Text>}
-
-            <FormInput
-              label="Postcode"
-              value={formData.postcode}
-              onChangeText={(text) => updateField('postcode', text)}
-              placeholder="e.g., M1 1AA"
-              icon="mail"
-              palette={palette}
-              styles={styles}
-            />
 
             <FormInput
               label="Directions"
@@ -497,6 +485,7 @@ export default function ClubFormScreen() {
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
+      </View>
     </>
   );
 }
@@ -505,6 +494,9 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: palette.backgroundSecondary,
+  },
+  keyboardContainer: {
+    flex: 1,
   },
   scrollView: {
     flex: 1,
@@ -583,7 +575,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     color: palette.textPrimary,
   },
   textArea: {
-    minHeight: 60,
+    minHeight: 80,
     textAlignVertical: 'top',
   },
   errorText: {

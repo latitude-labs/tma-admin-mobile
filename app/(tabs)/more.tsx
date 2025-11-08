@@ -62,6 +62,11 @@ export default function MoreScreen() {
       title: 'Operations',
       items: [
         {
+          title: 'Calendar',
+          icon: 'calendar-outline' as keyof typeof Ionicons.glyphMap,
+          route: '/calendar',
+        },
+        {
           title: 'Kit Orders',
           icon: 'shirt-outline' as keyof typeof Ionicons.glyphMap,
           route: '/kit-orders',
@@ -70,11 +75,6 @@ export default function MoreScreen() {
           title: 'End of Day',
           icon: 'clipboard-outline' as keyof typeof Ionicons.glyphMap,
           route: '/eod-reports',
-        },
-        {
-          title: 'Reminders',
-          icon: 'alarm-outline' as keyof typeof Ionicons.glyphMap,
-          route: '/reminders',
         },
         {
           title: 'Holiday Requests',
@@ -95,6 +95,11 @@ export default function MoreScreen() {
           title: 'Reports',
           icon: 'stats-chart-outline' as keyof typeof Ionicons.glyphMap,
           route: '/reports',
+        },
+        {
+          title: 'Coaches',
+          icon: 'people-outline' as keyof typeof Ionicons.glyphMap,
+          route: '/coaches',
         },
         {
           title: 'Facebook Ads',

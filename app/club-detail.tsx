@@ -1,30 +1,32 @@
-import React, { useEffect, useState, useMemo } from 'react';
-import {
-  ScrollView,
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-  Pressable,
-  Alert,
-  Platform,
-} from 'react-native';
-import { useLocalSearchParams, router, Stack } from 'expo-router';
-import { useClubStore } from '@/store/clubStore';
-import { useAuthStore } from '@/store/authStore';
+import { Badge, Card, ScreenHeader, toast } from '@/components/ui';
 import { MapView } from '@/components/ui/MapView';
-import { Badge, Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { classTimesService } from '@/services/api/classTimes.service';
+import { useAuthStore } from '@/store/authStore';
+import { useClubStore } from '@/store/clubStore';
+import { ClassTime } from '@/types/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { router, Stack, useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import Animated, {
   FadeInDown,
-  FadeIn,
+  FadeOut,
   useAnimatedStyle,
   useSharedValue,
-  withSpring,
+  withSpring
 } from 'react-native-reanimated';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 
@@ -49,7 +51,7 @@ const InfoRow = React.memo(({
       <View style={styles.infoIconContainer}>
         <Ionicons name={icon as any} size={18} color={palette.tint} />
       </View>
-      <View style={styles.infoContent}>
+      <View style={{ flex: 1 }}>
         <Text style={styles.infoLabel}>{label}</Text>
         <Text style={styles.infoValue}>{value}</Text>
       </View>
@@ -74,7 +76,7 @@ export default function ClubDetailScreen() {
     clearError,
   } = useClubStore();
 
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deletingClassTimeId, setDeletingClassTimeId] = useState<number | null>(null);
   const scaleValue = useSharedValue(1);
 
   useEffect(() => {
@@ -95,6 +97,60 @@ export default function ClubDetailScreen() {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
     router.push(`/club-form?id=${id}`);
+  };
+
+  const handleEditClassTime = (classTime: ClassTime) => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push(`/class-time-form?clubId=${id}&classTimeId=${classTime.id}`);
+  };
+
+  const handleDeleteClassTime = (classTime: ClassTime) => {
+    if (Platform.OS === 'ios') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+    }
+
+    Alert.alert(
+      'Delete Class Time',
+      `Are you sure you want to delete ${classTime.name} on ${classTime.day}? This action cannot be undone.`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setDeletingClassTimeId(classTime.id);
+            try {
+              await classTimesService.deleteClassTime(classTime.id);
+              if (Platform.OS === 'ios') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+              }
+              // Refresh the club data to get updated class times
+              await fetchAdminClub(parseInt(id));
+              toast.success('Class time deleted successfully');
+            } catch (error) {
+              if (Platform.OS === 'ios') {
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+              }
+              toast.error('Failed to delete class time. It may have active bookings.');
+            } finally {
+              setDeletingClassTimeId(null);
+            }
+          },
+        },
+      ],
+    );
+  };
+
+  const handleAddClassTime = () => {
+    if (Platform.OS === 'ios') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push(`/class-time-form?clubId=${id}`);
   };
 
   const handleDelete = () => {
@@ -135,10 +191,13 @@ export default function ClubDetailScreen() {
   if (isLoading) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Loading...' }} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={palette.tint} />
-          <Text style={styles.loadingText}>Loading club details...</Text>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.container}>
+          <ScreenHeader title="Loading..." />
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={palette.tint} />
+            <Text style={styles.loadingText}>Loading club details...</Text>
+          </View>
         </View>
       </>
     );
@@ -147,14 +206,17 @@ export default function ClubDetailScreen() {
   if (error) {
     return (
       <>
-        <Stack.Screen options={{ title: 'Error' }} />
-        <View style={styles.errorContainer}>
-          <Ionicons name="alert-circle" size={56} color={palette.statusError} />
-          <Text style={styles.errorTitle}>Failed to load club</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <Pressable style={styles.retryButton} onPress={() => fetchAdminClub(parseInt(id))}>
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </Pressable>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={styles.container}>
+          <ScreenHeader title="Error" />
+          <View style={styles.errorContainer}>
+            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
+            <Text style={styles.errorTitle}>Failed to load club</Text>
+            <Text style={styles.errorMessage}>{error}</Text>
+            <Pressable style={styles.retryButton} onPress={() => fetchAdminClub(parseInt(id))}>
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </Pressable>
+          </View>
         </View>
       </>
     );
@@ -166,10 +228,12 @@ export default function ClubDetailScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          title: selectedClub.name,
-          headerRight: () =>
+      <Stack.Screen options={{ headerShown: false }} />
+
+      <View style={styles.container}>
+        <ScreenHeader
+          title={selectedClub.name}
+          rightAction={
             isAdmin ? (
               <View style={styles.headerActions}>
                 <Pressable
@@ -185,15 +249,15 @@ export default function ClubDetailScreen() {
                   <Ionicons name="trash" size={24} color={palette.statusError} />
                 </Pressable>
               </View>
-            ) : null,
-        }}
-      />
+            ) : undefined
+          }
+        />
 
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
+        <ScrollView
+          style={styles.scrollContainer}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
         {/* Map Section */}
         {(selectedClub.latitude && selectedClub.longitude) ? (
           <Animated.View entering={FadeInDown.duration(400).springify()}>
@@ -231,9 +295,6 @@ export default function ClubDetailScreen() {
           entering={FadeInDown.delay(100).duration(400).springify()}
         >
           <View style={styles.infoHeader}>
-            <View style={styles.infoHeaderIcon}>
-              <Ionicons name="information-circle" size={24} color={palette.tint} />
-            </View>
             <Text style={styles.infoHeaderText}>Club Information</Text>
           </View>
 
@@ -242,13 +303,6 @@ export default function ClubDetailScreen() {
               icon="location"
               label="Address"
               value={selectedClub.address}
-              palette={palette}
-              styles={styles}
-            />
-            <InfoRow
-              icon="mail"
-              label="Postcode"
-              value={selectedClub.postcode}
               palette={palette}
               styles={styles}
             />
@@ -263,24 +317,34 @@ export default function ClubDetailScreen() {
         </AnimatedCard>
 
         {/* Class Schedule */}
-        {selectedClub.class_times && selectedClub.class_times.length > 0 && (
-          <AnimatedCard
-            variant="elevated"
-            style={styles.scheduleCard}
-            entering={FadeInDown.delay(200).duration(400).springify()}
-          >
-            <View style={styles.scheduleHeader}>
-              <View style={styles.scheduleHeaderIcon}>
-                <Ionicons name="calendar" size={24} color={palette.tint} />
-              </View>
-              <Text style={styles.scheduleHeaderText}>Class Schedule</Text>
+        <AnimatedCard
+          variant="elevated"
+          style={styles.scheduleCard}
+          entering={FadeInDown.delay(200).duration(400).springify()}
+        >
+          <View style={styles.scheduleHeader}>
+            <View style={styles.scheduleHeaderIcon}>
+              <Ionicons name="calendar" size={24} color={palette.tint} />
+            </View>
+            <Text style={styles.scheduleHeaderText}>Class Schedule</Text>
+            {selectedClub.class_times && selectedClub.class_times.length > 0 && (
               <View style={styles.classBadge}>
                 <Text style={styles.classBadgeText}>
                   {selectedClub.class_times.length} classes
                 </Text>
               </View>
-            </View>
+            )}
+            {isAdmin && (
+              <Pressable
+                onPress={handleAddClassTime}
+                style={styles.addClassButton}
+              >
+                <Ionicons name="add-circle" size={24} color={palette.tint} />
+              </Pressable>
+            )}
+          </View>
 
+          {selectedClub.class_times && selectedClub.class_times.length > 0 ? (
             <View style={styles.scheduleList}>
               {selectedClub.class_times
                 .sort((a, b) => {
@@ -290,39 +354,87 @@ export default function ClubDetailScreen() {
                   if (dayA !== dayB) return dayA - dayB;
                   return (a.start_time || '').localeCompare(b.start_time || '');
                 })
-                .map((classTime, index) => (
-                  <Animated.View
-                    key={classTime.id}
-                    entering={FadeInDown.delay(250 + index * 50).duration(300)}
-                    style={styles.classItem}
-                  >
-                    <View style={styles.classDay}>
-                      <Text style={styles.classDayText}>
-                        {classTime.day.substring(0, 3).toUpperCase()}
-                      </Text>
-                      <Text style={styles.classTime}>
-                        {classTime.start_time?.substring(0, 5)}
-                      </Text>
-                    </View>
-                    <View style={styles.classInfo}>
-                      <Text style={styles.className}>{classTime.name || 'Class'}</Text>
-                      {classTime.coaches && (
-                        <Text style={styles.classCoaches}>Coach: {classTime.coaches}</Text>
-                      )}
-                    </View>
-                    <Badge
-                      variant={classTime.name?.toLowerCase().includes('kid') ? 'warning' : 'info'}
-                      size="sm"
+                .map((classTime, index) => {
+                  const isDeleting = deletingClassTimeId === classTime.id;
+                  return (
+                    <Animated.View
+                      key={classTime.id}
+                      entering={FadeInDown.delay(250 + index * 50).duration(300)}
+                      exiting={FadeOut.duration(200)}
+                      style={[styles.classItem, isDeleting && styles.classItemDeleting]}
                     >
-                      {classTime.todays_booking_count
-                        ? `${classTime.todays_booking_count} bookings`
-                        : 'No bookings'}
-                    </Badge>
-                  </Animated.View>
-                ))}
+                      <View style={styles.classDay}>
+                        <Text style={styles.classDayText}>
+                          {classTime.day.substring(0, 3).toUpperCase()}
+                        </Text>
+                        <Text style={styles.classTime}>
+                          {classTime.start_time?.substring(0, 5)}
+                        </Text>
+                      </View>
+                      <View style={styles.classInfo}>
+                        <Text style={styles.className}>{classTime.name || 'Class'}</Text>
+                        {classTime.coaches && (
+                          <Text style={styles.classCoaches}>Coach: {classTime.coaches}</Text>
+                        )}
+                      </View>
+                      {isAdmin ? (
+                        <View style={styles.classActions}>
+                          {isDeleting ? (
+                            <ActivityIndicator size="small" color={palette.textTertiary} />
+                          ) : (
+                            <>
+                              <Pressable
+                                onPress={() => handleEditClassTime(classTime)}
+                                style={styles.classActionButton}
+                                disabled={isDeleting}
+                              >
+                                <Ionicons name="pencil" size={18} color={palette.tint} />
+                              </Pressable>
+                              <Pressable
+                                onPress={() => handleDeleteClassTime(classTime)}
+                                style={styles.classActionButton}
+                                disabled={isDeleting}
+                              >
+                                <Ionicons name="trash" size={18} color={palette.statusError} />
+                              </Pressable>
+                            </>
+                          )}
+                        </View>
+                      ) : (
+                        <Badge
+                          variant={classTime.name?.toLowerCase().includes('kid') ? 'warning' : 'info'}
+                          size="sm"
+                        >
+                          {classTime.todays_booking_count
+                            ? `${classTime.todays_booking_count} bookings`
+                            : 'No bookings'}
+                        </Badge>
+                      )}
+                    </Animated.View>
+                  );
+                })}
             </View>
-          </AnimatedCard>
-        )}
+          ) : (
+            <View style={styles.emptySchedule}>
+              <Ionicons name="calendar-outline" size={48} color={palette.textTertiary} />
+              <Text style={styles.emptyScheduleText}>No classes scheduled</Text>
+              {isAdmin && (
+                <>
+                  <Text style={styles.emptyScheduleSubtext}>
+                    Add your first class to get started
+                  </Text>
+                  <Pressable
+                    style={styles.emptyScheduleButton}
+                    onPress={handleAddClassTime}
+                  >
+                    <Ionicons name="add-circle" size={20} color={palette.textInverse} />
+                    <Text style={styles.emptyScheduleButtonText}>Add Class</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          )}
+        </AnimatedCard>
 
         {/* Admin Settings */}
         {isAdmin && (
@@ -402,7 +514,8 @@ export default function ClubDetailScreen() {
             </Pressable>
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      </View>
     </>
   );
 }
@@ -411,6 +524,9 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: palette.backgroundSecondary,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   scrollContent: {
     paddingBottom: Theme.spacing['3xl'],
@@ -520,6 +636,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   infoRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
+    flex: 1,
   },
   infoIconContainer: {
     width: 32,
@@ -534,12 +651,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.medium,
     color: palette.textTertiary,
-    marginBottom: 2,
   },
   infoValue: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
     color: palette.textPrimary,
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   scheduleCard: {
     margin: Theme.spacing.lg,
@@ -575,6 +693,9 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.semibold,
+  },
+  addClassButton: {
+    padding: Theme.spacing.xs,
   },
   scheduleList: {
     gap: Theme.spacing.md,
@@ -614,6 +735,49 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontFamily: Theme.typography.fonts.regular,
     color: palette.textSecondary,
     marginTop: 2,
+  },
+  classItemDeleting: {
+    opacity: 0.5,
+  },
+  classActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.sm,
+  },
+  classActionButton: {
+    padding: Theme.spacing.xs,
+  },
+  emptySchedule: {
+    alignItems: 'center',
+    paddingVertical: Theme.spacing['2xl'],
+  },
+  emptyScheduleText: {
+    marginTop: Theme.spacing.md,
+    fontSize: Theme.typography.sizes.lg,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
+  },
+  emptyScheduleSubtext: {
+    marginTop: Theme.spacing.xs,
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textSecondary,
+  },
+  emptyScheduleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.sm,
+    marginTop: Theme.spacing.xl,
+    backgroundColor: palette.tint,
+    paddingHorizontal: Theme.spacing.xl,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.full,
+    ...Theme.shadows.sm,
+  },
+  emptyScheduleButtonText: {
+    color: palette.textInverse,
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
   },
   settingsCard: {
     margin: Theme.spacing.lg,

@@ -28,6 +28,7 @@ export default function SecuritySettingsScreen() {
   const [twoFactorStatus, setTwoFactorStatus] = useState<TwoFactorStatus | null>(null);
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricType, setBiometricType] = useState('Biometric');
+  const [biometricEnabled, setBiometricEnabled] = useState(false);
 
   useEffect(() => {
     loadSecurityStatus();
@@ -44,6 +45,10 @@ export default function SecuritySettingsScreen() {
       const capabilities = await biometricService.checkBiometricCapabilities();
       setBiometricAvailable(capabilities.hasHardware && capabilities.isEnrolled);
       setBiometricType(biometricService.getBiometricTypeString(capabilities.biometricType));
+
+      // Check if biometric is enrolled for this app
+      const isEnrolled = await biometricService.isBiometricEnrolled();
+      setBiometricEnabled(isEnrolled);
     } catch (error) {
       console.error('Error loading security status:', error);
     } finally {
@@ -72,7 +77,7 @@ export default function SecuritySettingsScreen() {
                   { text: 'Cancel', style: 'cancel' },
                   {
                     text: 'Confirm',
-                    onPress: async (code) => {
+                    onPress: async (code?: string) => {
                       if (!code) return;
                       try {
                         await twoFactorService.disable2FA(code);
@@ -115,27 +120,66 @@ export default function SecuritySettingsScreen() {
     }
   };
 
-  const handleEnrollBiometric = async () => {
+  const handleToggleBiometric = async () => {
     if (!user || !biometricAvailable) return;
 
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
-      const result = await twoFactorService.enrollBiometric(
-        user.id,
-        `${biometricType} on Mobile`
-      );
-
-      if (result.enrolled) {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        Alert.alert('Success', `${biometricType} has been enrolled for quick authentication`);
-        await loadSecurityStatus();
+      if (biometricEnabled) {
+        // Disable biometric
+        Alert.alert(
+          `Disable ${biometricType}`,
+          `Are you sure you want to disable ${biometricType} authentication?`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Disable',
+              style: 'destructive',
+              onPress: async () => {
+                await biometricService.removeBiometricEnrollment();
+                setBiometricEnabled(false);
+                await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                Alert.alert('Success', `${biometricType} has been disabled`);
+              },
+            },
+          ]
+        );
       } else {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        Alert.alert('Failed', `Unable to enroll ${biometricType}`);
+        // Enable biometric - need to ask for password
+        Alert.prompt(
+          `Enable ${biometricType}`,
+          'Enter your password to enable biometric authentication',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Enable',
+              onPress: async (password?: string) => {
+                if (!password) return;
+
+                // Enroll with user credentials
+                const result = await biometricService.enrollBiometric(
+                  user.id.toString(),
+                  user.email,
+                  password
+                );
+
+                if (result) {
+                  setBiometricEnabled(true);
+                  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  Alert.alert('Success', `${biometricType} has been enabled for quick authentication`);
+                } else {
+                  await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+                  Alert.alert('Failed', `Unable to enable ${biometricType}. Please check your password and try again.`);
+                }
+              }
+            }
+          ],
+          'secure-text'
+        );
       }
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to enroll biometric');
+      Alert.alert('Error', error.message || 'Failed to configure biometric');
     }
   };
 
@@ -233,30 +277,25 @@ export default function SecuritySettingsScreen() {
                 <MaterialIcons
                   name="fingerprint"
                   size={32}
-                  color={twoFactorStatus?.biometricEnrolled ? colors.statusSuccess : colors.textTertiary}
+                  color={biometricEnabled ? colors.statusSuccess : colors.textTertiary}
                 />
                 <View style={styles.cardHeaderText}>
                   <Text style={[styles.cardTitle, { color: colors.textPrimary }]}>
                     {biometricType} Authentication
                   </Text>
                   <Text style={[styles.cardSubtitle, { color: colors.textSecondary }]}>
-                    {twoFactorStatus?.biometricEnrolled
+                    {biometricEnabled
                       ? `${biometricType} is enabled for quick login`
                       : `Use ${biometricType} for faster authentication`}
                   </Text>
                 </View>
+                <Switch
+                  value={biometricEnabled}
+                  onValueChange={handleToggleBiometric}
+                  trackColor={{ false: colors.border, true: colors.tint }}
+                  thumbColor={colors.background}
+                />
               </View>
-
-              {!twoFactorStatus?.biometricEnrolled && twoFactorStatus?.enabled && (
-                <Button
-                  variant="outline"
-                  onPress={handleEnrollBiometric}
-                  fullWidth
-                  style={styles.enrollButton}
-                >
-                  Enable {biometricType}
-                </Button>
-              )}
             </Card>
           )}
 

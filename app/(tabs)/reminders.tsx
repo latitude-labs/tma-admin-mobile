@@ -232,7 +232,7 @@ export default function RemindersScreen() {
     return {
       text: format(date, 'MMM d'),
       subtext: format(date, 'h:mm a'),
-      color: Theme.colors.text.secondary,
+      color: palette.textSecondary,
     };
   };
 
@@ -245,7 +245,7 @@ export default function RemindersScreen() {
       case 'medium':
         return Theme.colors.status.info;
       default:
-        return Theme.colors.text.tertiary;
+        return palette.textTertiary;
     }
   };
 
@@ -330,7 +330,7 @@ export default function RemindersScreen() {
                   onPress={() => handleSnoozeReminder(item)}
                   style={styles.actionButton}
                 >
-                  <Ionicons name="time-outline" size={18} color={Theme.colors.text.secondary} />
+                  <Ionicons name="time-outline" size={18} color={palette.textSecondary} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -362,7 +362,7 @@ export default function RemindersScreen() {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>New Reminder</Text>
             <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <Ionicons name="close" size={24} color={Theme.colors.text.primary} />
+              <Ionicons name="close" size={24} color={palette.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -374,7 +374,7 @@ export default function RemindersScreen() {
                 value={newReminder.title}
                 onChangeText={(text) => setNewReminder({ ...newReminder, title: text })}
                 placeholder="Enter reminder title"
-                placeholderTextColor={Theme.colors.text.tertiary}
+                placeholderTextColor={palette.textTertiary}
                 returnKeyType="next"
                 blurOnSubmit={false}
               />
@@ -387,7 +387,7 @@ export default function RemindersScreen() {
                 value={newReminder.description}
                 onChangeText={(text) => setNewReminder({ ...newReminder, description: text })}
                 placeholder="Add details (optional)"
-                placeholderTextColor={Theme.colors.text.tertiary}
+                placeholderTextColor={palette.textTertiary}
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -558,7 +558,7 @@ export default function RemindersScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="notifications-off" size={48} color={Theme.colors.text.tertiary} />
+              <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
               <Text style={styles.emptyText}>No reminders found</Text>
               <Text style={styles.emptySubtext}>
                 {statusFilter !== 'all' || priorityFilter !== 'all'
@@ -578,7 +578,7 @@ export default function RemindersScreen() {
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -602,7 +602,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.sm,
     paddingHorizontal: Theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
   },
   filterGroup: {
     flexDirection: 'row',
@@ -612,7 +612,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   filterLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginRight: Theme.spacing.sm,
   },
   filterChip: {
@@ -651,7 +651,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   reminderTitle: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginLeft: Theme.spacing.sm,
     flex: 1,
   },
@@ -659,7 +659,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.sm,
     paddingVertical: 2,
     borderRadius: Theme.borderRadius.sm,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
   },
   statusText: {
     fontSize: Theme.typography.sizes.xs,
@@ -669,7 +669,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   reminderDescription: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginBottom: Theme.spacing.sm,
     lineHeight: Theme.typography.sizes.sm * 1.4,
   },
@@ -690,7 +690,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   timeSubtext: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.tertiary,
+    color: palette.textTertiary,
   },
   reminderActions: {
     flexDirection: 'row',
@@ -700,7 +700,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -715,13 +715,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   emptyText: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     marginTop: Theme.spacing.md,
   },
   emptySubtext: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginTop: Theme.spacing.xs,
     textAlign: 'center',
   },
@@ -746,13 +746,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     paddingVertical: Theme.spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: Theme.colors.border.light,
+    borderBottomColor: palette.borderLight,
     marginBottom: Theme.spacing.lg,
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   formGroup: {
     marginBottom: Theme.spacing.lg,
@@ -760,19 +760,19 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   formLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.secondary,
+    color: palette.textSecondary,
     marginBottom: Theme.spacing.sm,
   },
   textInput: {
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     borderRadius: Theme.borderRadius.md,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.md,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
   },
   textArea: {
     minHeight: 80,
@@ -804,18 +804,18 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   dateTimeButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Theme.colors.background.secondary,
+    backgroundColor: palette.backgroundSecondary,
     borderRadius: Theme.borderRadius.md,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.md,
     borderWidth: 1,
-    borderColor: Theme.colors.border.light,
+    borderColor: palette.borderLight,
     gap: Theme.spacing.sm,
   },
   dateTimeText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.primary,
+    color: palette.textPrimary,
   },
   modalFooter: {
     flexDirection: 'row',

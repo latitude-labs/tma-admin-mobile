@@ -175,6 +175,29 @@ export default function NotificationSettingsScreen() {
           </View>
         </Card>
 
+        <Card variant="outlined" style={styles.card}>
+          <Text style={styles.sectionTitle}>Notification Preferences</Text>
+          {[
+            { key: 'newSignups', title: 'New Signups', description: 'Notify me of new user signups.' },
+            { key: 'endOfDay', title: 'End of Day Summary', description: 'Receive a summary at the end of each day.' },
+            { key: 'reminders', title: 'Reminders', description: 'Get reminders for important tasks.' },
+            { key: 'systemAlerts', title: 'System Alerts', description: 'Be alerted about system issues.' },
+          ].map(({ key, title, description }) => (
+            <View key={key} style={styles.preferenceItem}>
+              <View style={styles.preferenceInfo}>
+                <Text style={styles.preferenceTitle}>{title}</Text>
+                <Text style={styles.preferenceDescription}>{description}</Text>
+              </View>
+              <Button
+                onPress={() => togglePreference(key as keyof typeof notificationPreferences)}
+                variant={notificationPreferences[key as keyof typeof notificationPreferences] ? 'primary' : 'outline'}
+              >
+                {notificationPreferences[key as keyof typeof notificationPreferences] ? 'On' : 'Off'}
+              </Button>
+            </View>
+          ))}
+        </Card>
+
         {/* Debug Information */}
         {__DEV__ && (
           <Card variant="filled" style={[styles.card, styles.debugCard]}>

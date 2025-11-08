@@ -1,21 +1,21 @@
-import React, { useEffect } from 'react';
-import { Tabs, useRouter } from 'expo-router';
-import { View, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { Logo } from '@/components/Logo';
+import { NotificationBadge } from '@/components/ui/NotificationBadge';
+import { useColorScheme } from '@/components/useColorScheme';
+import Colors from '@/constants/Colors';
+import { Theme } from '@/constants/Theme';
+import { useAuthStore } from '@/store/authStore';
+import { useNotificationStore } from '@/store/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
+import { BlurView } from 'expo-blur';
+import * as Haptics from 'expo-haptics';
+import { Tabs, useRouter } from 'expo-router';
+import React, { useEffect } from 'react';
+import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { useColorScheme } from '@/components/useColorScheme';
-import { useAuthStore } from '@/store/authStore';
-import Colors from '@/constants/Colors';
-import { Theme } from '@/constants/Theme';
-import { Logo } from '@/components/Logo';
-import { NotificationBadge } from '@/components/ui/NotificationBadge';
-import { useNotificationStore } from '@/store/notificationStore';
-import { BlurView } from 'expo-blur';
 
 // Tab Icon Component - separated to avoid hooks in render
 function TabIcon({ route, isFocused, index, descriptors, navigation, animatedStyle, tabAnimation, unreadCount }: any) {
@@ -63,8 +63,8 @@ function TabIcon({ route, isFocused, index, descriptors, navigation, animatedSty
     case 'dashboard':
       iconName = isFocused ? 'home' : 'home-outline';
       break;
-    case 'calendar':
-      iconName = isFocused ? 'calendar' : 'calendar-outline';
+    case 'reminders':
+      iconName = isFocused ? 'alarm' : 'alarm-outline';
       break;
     case 'more':
       iconName = isFocused ? 'grid' : 'grid-outline';
@@ -290,6 +290,7 @@ export default function TabsLayout() {
         headerTitleStyle: {
           fontFamily: Theme.typography.fonts.semibold,
           fontSize: Theme.typography.sizes.lg,
+          marginBottom: Theme.spacing.xl,
         },
         headerTitle: () => <Logo width={80} height={72} variant="auto" />,
         headerRight: () => <NotificationButton />,
@@ -317,10 +318,10 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="calendar"
+        name="reminders"
         options={{
-          title: 'Calendar',
-          tabBarLabel: 'Calendar',
+          title: 'Reminders',
+          tabBarLabel: 'Reminders',
         }}
       />
       <Tabs.Screen

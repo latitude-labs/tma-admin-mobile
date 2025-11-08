@@ -326,8 +326,9 @@ export default function TrialsScreen() {
     // Auto-populate kit items based on selected package
     const newKitItems: KitItem[] = [];
 
-    // All packages get T-shirt and Boxing gloves
+    // All packages get T-shirt, Trousers and Boxing gloves
     newKitItems.push({ type: 'tshirt', size: '' });
+    newKitItems.push({ type: 'trousers', size: '' });
     newKitItems.push({ type: 'gloves', size: '' });
 
     // Silver and Gold get Shinpads
@@ -735,7 +736,6 @@ export default function TrialsScreen() {
                               <Pressable
                                 style={({ pressed }) => [
                                   styles.actionButton,
-                                  styles.actionButtonPrimary,
                                   { flex: 1 },
                                   pressed && styles.actionButtonPressed
                                 ]}
@@ -1067,7 +1067,7 @@ export default function TrialsScreen() {
                     >
                       <View style={styles.packageOptionContent}>
                         <Text style={styles.packageOptionLabel}>Basic</Text>
-                        <Text style={styles.packageOptionDescription}>T-shirt & Boxing gloves</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers & Boxing gloves</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
                     </Pressable>
@@ -1081,7 +1081,7 @@ export default function TrialsScreen() {
                     >
                       <View style={styles.packageOptionContent}>
                         <Text style={styles.packageOptionLabel}>Silver</Text>
-                        <Text style={styles.packageOptionDescription}>T-shirt, Boxing gloves & Shinpads</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers, Boxing gloves & Shinpads</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
                     </Pressable>
@@ -1095,7 +1095,7 @@ export default function TrialsScreen() {
                     >
                       <View style={styles.packageOptionContent}>
                         <Text style={styles.packageOptionLabel}>Gold</Text>
-                        <Text style={styles.packageOptionDescription}>T-shirt, Boxing gloves, Shinpads & Kit bag</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers, Boxing gloves, Shinpads & Kit bag</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
                     </Pressable>
@@ -1125,12 +1125,12 @@ export default function TrialsScreen() {
                     <View key={index} style={styles.sizeItem}>
                       <View style={styles.sizeItemHeader}>
                         <Ionicons
-                          name={item.type === 'tshirt' ? 'shirt' : item.type === 'gloves' ? 'hand-left' : item.type === 'shinpads' ? 'shield' : 'bag'}
+                          name={item.type === 'tshirt' ? 'shirt' : item.type === 'trousers' ? 'body' : item.type === 'gloves' ? 'hand-left' : item.type === 'shinpads' ? 'shield' : 'bag'}
                           size={20}
                           color={palette.tint}
                         />
                         <Text style={styles.sizeItemLabel}>
-                          {item.type === 'tshirt' ? 'T-Shirt' : item.type === 'gloves' ? 'Boxing Gloves' : item.type === 'shinpads' ? 'Shin Pads' : 'Kit Bag'}
+                          {item.type === 'tshirt' ? 'T-Shirt' : item.type === 'trousers' ? 'Trousers' : item.type === 'gloves' ? 'Boxing Gloves' : item.type === 'shinpads' ? 'Shin Pads' : 'Kit Bag'}
                         </Text>
                       </View>
                       <Dropdown
@@ -1725,7 +1725,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderRadius: Theme.borderRadius.xl,
     width: '90%',
     maxWidth: 400,
-    maxHeight: '80%',
+    maxHeight: '85%',
     ...Theme.shadows.lg,
   },
   modalHeader: {
@@ -1970,7 +1970,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   modalScrollView: {
-    maxHeight: '70%',
+    maxHeight: '75%',
   },
   modalScrollContent: {
     paddingBottom: Theme.spacing.md,

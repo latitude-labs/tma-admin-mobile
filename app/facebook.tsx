@@ -119,16 +119,34 @@ export default function FacebookScreen() {
     if (!a.metrics) return 1; // Put pages without metrics at the end
     if (!b.metrics) return -1;
 
-    // Handle null cost_per_booking (no bookings = infinite cost)
     const aCost = a.metrics.cost_per_booking;
     const bCost = b.metrics.cost_per_booking;
+    const aSpend = a.metrics.total_spend;
+    const bSpend = b.metrics.total_spend;
 
-    // Both have no bookings (infinite cost)
-    if (aCost === null && bCost === null) return 0;
+    // Both have no bookings - sort by spend (highest spend = worst)
+    if (aCost === null && bCost === null) {
+      // Pages with no spend go to the end (inactive pages)
+      if (aSpend === 0 && bSpend === 0) return 0;
+      if (aSpend === 0) return 1;  // a is inactive, goes last
+      if (bSpend === 0) return -1; // b is inactive, goes last
+      // Both have spend but no bookings - highest spend first (worst)
+      return bSpend - aSpend;
+    }
 
-    // Pages with no bookings (infinite cost) should appear first
-    if (aCost === null) return -1; // a has infinite cost, goes first
-    if (bCost === null) return 1;  // b has infinite cost, goes first
+    // One has no bookings (infinite cost) - compare with the other
+    if (aCost === null) {
+      // a has no bookings - only put it first if it has significant spend
+      if (aSpend === 0) return 1; // a is inactive, goes after pages with bookings
+      // a has spend but no bookings - always worse than any page with bookings
+      return -1;
+    }
+    if (bCost === null) {
+      // b has no bookings - only put it first if it has significant spend
+      if (bSpend === 0) return -1; // b is inactive, goes after pages with bookings
+      // b has spend but no bookings - always worse than any page with bookings
+      return 1;
+    }
 
     // Both have bookings, sort by cost per booking descending (highest/worst first)
     return bCost - aCost;

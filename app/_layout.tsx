@@ -13,14 +13,14 @@ import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
-import 'react-native-reanimated';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import 'react-native-reanimated';
 
+import { ToastProvider } from '@/components/ui/Toast';
 import { useColorScheme } from '@/components/useColorScheme';
 import { ApiHealthProvider } from '../components/ApiHealthProvider';
 import { AuthStatusProvider } from '../components/AuthStatusProvider';
 import { LoadingScreen } from '../components/LoadingScreen';
-import { ToastProvider } from '@/components/ui/Toast';
 import { apiClient } from '../services/api/client';
 import { appStateManager } from '../services/AppStateManager';
 import { useAuthStore } from '../store/authStore';
@@ -118,6 +118,7 @@ function RootLayoutNav() {
                 <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
                 <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
                 <Stack.Screen name="design-system" options={{ title: 'Design System' }} />
+                <Stack.Screen name="club-detail" options={{ headerShown: false }} />
                 <Stack.Screen name="club-health" options={{ headerShown: false }} />
                 <Stack.Screen name="club-health-overview" options={{ headerShown: false }} />
                 <Stack.Screen name="club-health-detail" options={{ headerShown: false }} />

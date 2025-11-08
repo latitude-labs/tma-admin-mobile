@@ -24,6 +24,9 @@ export interface Club {
   sync_hours_to_google?: boolean;
   class_prioritisation_enabled?: boolean;
   class_times?: ClassTime[];
+  last_synced_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ClassTime {
@@ -35,6 +38,8 @@ export interface ClassTime {
   end_time?: string;
   coaches?: string;
   helpers?: string[];
+  priority?: number;
+  is_accepting_bookings?: boolean;
   todays_booking_count?: number;
   club?: Club;
 }
