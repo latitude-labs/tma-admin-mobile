@@ -1933,6 +1933,199 @@ paths:
                   error:
                     type: string
                     description: Detailed error message from Cadence service
+  /advertising/metrics/timeseries:
+    get:
+      tags:
+        - Mobile App
+        - Cadence Proxy
+      summary: Get advertising metrics time-series
+      description: |
+        Retrieve advertising metrics time-series data from Cadence API and local bookings for graphing.
+        Returns daily data points with spend, bookings, and cost per booking over a specified date range
+        with optional Facebook page filtering. Only accessible by admin users.
+
+        The endpoint:
+        1. Gets Facebook pages and their associated clubs from Cadence
+        2. Retrieves daily spend data from Cadence (grouped by day)
+        3. Queries local database for daily bookings filtered by clubs and channel type (facebook/instagram)
+        4. Combines the data to calculate cost per booking for each day
+
+        Cached for 5 minutes.
+      operationId: getAdvertisingMetricsTimeSeries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          description: Start date for metrics (YYYY-MM-DD format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2024-01-01'
+        - name: end_date
+          in: query
+          description: End date for metrics (YYYY-MM-DD format)
+          required: true
+          schema:
+            type: string
+            format: date
+          example: '2024-01-31'
+        - name: facebook_page_uuids
+          in: query
+          description: Array of Facebook page UUIDs to filter by
+          required: false
+          style: form
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+              format: uuid
+          example:
+            - 550e8400-e29b-41d4-a716-446655440000
+            - 550e8400-e29b-41d4-a716-446655440001
+      responses:
+        '200':
+          description: Successful response with time-series advertising metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    description: Time-series data points
+                    items:
+                      type: object
+                      properties:
+                        date:
+                          type: string
+                          format: date
+                          description: Date for this data point
+                        total_spend:
+                          type: number
+                          format: float
+                          description: Total advertising spend for this date
+                        bookings:
+                          type: integer
+                          description: Number of bookings for this date
+                        cost_per_booking:
+                          type: number
+                          format: float
+                          nullable: true
+                          description: Cost per booking for this date (null if no bookings)
+                  metadata:
+                    type: object
+                    description: Request metadata and filters applied
+                    properties:
+                      start_date:
+                        type: string
+                        format: date
+                        description: Start date of the time-series
+                      end_date:
+                        type: string
+                        format: date
+                        description: End date of the time-series
+                      facebook_page_uuids:
+                        type: array
+                        items:
+                          type: string
+                          format: uuid
+                        description: Facebook page UUIDs used for filtering
+                      club_ids:
+                        type: array
+                        items:
+                          type: integer
+                        description: Club IDs associated with the filtered Facebook pages
+                  summary:
+                    type: object
+                    description: Aggregate summary statistics
+                    properties:
+                      total_spend:
+                        type: number
+                        format: float
+                        description: Total spend across all dates
+                      total_bookings:
+                        type: integer
+                        description: Total bookings across all dates
+                      average_cost_per_booking:
+                        type: number
+                        format: float
+                        nullable: true
+                        description: Average cost per booking (null if no bookings)
+              example:
+                data:
+                  - date: '2024-01-01'
+                    total_spend: 50
+                    bookings: 10
+                    cost_per_booking: 5
+                  - date: '2024-01-02'
+                    total_spend: 75
+                    bookings: 12
+                    cost_per_booking: 6.25
+                  - date: '2024-01-03'
+                    total_spend: 60
+                    bookings: 8
+                    cost_per_booking: 7.5
+                metadata:
+                  start_date: '2024-01-01'
+                  end_date: '2024-01-31'
+                  facebook_page_uuids:
+                    - 550e8400-e29b-41d4-a716-446655440000
+                  club_ids:
+                    - 1
+                    - 2
+                    - 3
+                summary:
+                  total_spend: 4500
+                  total_bookings: 350
+                  average_cost_per_booking: 12.86
+        '403':
+          description: Forbidden - User is not an admin
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Unauthorized. Admin access required.
+        '422':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  errors:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items:
+                        type: string
+              example:
+                message: The given data was invalid.
+                errors:
+                  start_date:
+                    - The start date field is required.
+                  end_date:
+                    - The end date must be a date after or equal to start date.
+        '500':
+          description: Server error - Failed to fetch from Cadence API or database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Failed to fetch advertising metrics time-series
+                  error:
+                    type: string
+                    description: Detailed error message
   /advertising/metrics/batch:
     post:
       tags:
@@ -5530,6 +5723,262 @@ paths:
                   error:
                     type: string
                     description: The error message
+  /locations/search:
+    get:
+      tags:
+        - Locations
+      summary: Search UK locations (autocomplete)
+      description: |
+        Search for UK cities, towns, and postcodes for location autocomplete.
+        Returns locations matching the search query with coordinates.
+      operationId: searchLocations
+      parameters:
+        - name: q
+          in: query
+          required: true
+          description: Search query (minimum 2 characters)
+          schema:
+            type: string
+            minLength: 2
+          example: manch
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of results (default 5, max 10)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 10
+            default: 5
+          example: 5
+      responses:
+        '200':
+          description: Successful response with matching locations
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: city-manchester
+                        name:
+                          type: string
+                          example: Manchester
+                        type:
+                          type: string
+                          enum:
+                            - city
+                            - town
+                            - postcode
+                          example: city
+                        latitude:
+                          type: number
+                          format: float
+                          example: 53.4808
+                        longitude:
+                          type: number
+                          format: float
+                          example: -2.2426
+                        postcode:
+                          type: string
+                          nullable: true
+                          example: null
+                        displayName:
+                          type: string
+                          example: Manchester, Greater Manchester
+                        region:
+                          type: string
+                          nullable: true
+                          example: Greater Manchester
+                  query:
+                    type: string
+                    example: manch
+                  count:
+                    type: integer
+                    example: 1
+              examples:
+                city:
+                  summary: Search for a city
+                  value:
+                    results:
+                      - id: city-manchester
+                        name: Manchester
+                        type: city
+                        latitude: 53.4808
+                        longitude: -2.2426
+                        postcode: null
+                        displayName: Manchester, Greater Manchester
+                        region: Greater Manchester
+                    query: manch
+                    count: 1
+                postcode:
+                  summary: Search for a postcode
+                  value:
+                    results:
+                      - id: postcode-m1
+                        name: M1
+                        type: postcode
+                        latitude: 53.4791
+                        longitude: -2.2441
+                        postcode: M1
+                        displayName: M1 - Manchester
+                        region: Manchester
+                    query: M1
+                    count: 1
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Query parameter 'q' is required and must be at least 2 characters
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to search locations
+  /locations/geocode:
+    get:
+      tags:
+        - Locations
+      summary: Geocode UK postcode to coordinates
+      description: |
+        Convert a UK postcode to latitude/longitude coordinates for map display.
+
+        **Smart Fallback System:**
+        1. First checks local database (outward codes - fast!)
+        2. Falls back to postcodes.io API (100% UK postcode coverage)
+
+        This provides 100% UK postcode coverage without storing all 1.7M postcodes locally.
+      operationId: geocodePostcode
+      parameters:
+        - name: postcode
+          in: query
+          required: true
+          description: UK postcode (full postcode or outward code)
+          schema:
+            type: string
+            minLength: 2
+          examples:
+            full:
+              summary: Full postcode
+              value: AB10 1AB
+            outward:
+              summary: Outward code only
+              value: M1
+      responses:
+        '200':
+          description: Successful geocoding response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  postcode:
+                    type: string
+                    example: AB10 1AB
+                  outwardCode:
+                    type: string
+                    example: AB10
+                  latitude:
+                    type: number
+                    format: float
+                    example: 57.1449
+                  longitude:
+                    type: number
+                    format: float
+                    example: -2.0935
+                  region:
+                    type: string
+                    nullable: true
+                    example: Aberdeen
+                  displayName:
+                    type: string
+                    example: AB10 - Aberdeen
+                  source:
+                    type: string
+                    enum:
+                      - local
+                      - postcodes.io
+                    description: |
+                      Data source used for geocoding:
+                      - `local`: Found in local database (fast)
+                      - `postcodes.io`: Retrieved from postcodes.io API
+                    example: local
+              examples:
+                local:
+                  summary: Local database lookup
+                  value:
+                    postcode: AB10 1AB
+                    outwardCode: AB10
+                    latitude: 57.1449
+                    longitude: -2.0935
+                    region: Aberdeen
+                    displayName: AB10 - Aberdeen
+                    source: local
+                api:
+                  summary: postcodes.io API fallback
+                  value:
+                    postcode: SW1A 1AA
+                    outwardCode: SW1A
+                    latitude: 51.5014
+                    longitude: -0.1419
+                    region: Westminster
+                    displayName: SW1A 1AA - Westminster
+                    source: postcodes.io
+        '400':
+          description: Bad request - invalid parameters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Postcode parameter is required
+        '404':
+          description: Postcode not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Postcode not found
+                  postcode:
+                    type: string
+                    example: INVALID
+                  outwardCode:
+                    type: string
+                    example: INVA
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Failed to geocode postcode
+                  message:
+                    type: string
+                    example: Connection timeout
 components:
   schemas:
     User:

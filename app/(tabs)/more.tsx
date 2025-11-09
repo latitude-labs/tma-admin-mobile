@@ -37,6 +37,91 @@ type MenuItem = {
   requiresAdmin?: boolean;
 };
 
+/**
+ * Menu item component with animation
+ * Extracted outside parent to follow hooks rules (CLAUDE.md:267-300)
+ */
+const MenuItemComponent = React.memo(({
+  item,
+  index,
+  palette,
+  styles,
+}: {
+  item: MenuItem;
+  index: number;
+  palette: ThemeColors;
+  styles: any;
+}) => {
+  const router = useRouter();
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePress = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
+    setTimeout(() => {
+      scale.value = withSpring(1, { damping: 15, stiffness: 250 });
+    }, 100);
+
+    if (item.action) {
+      item.action();
+    } else if (item.route) {
+      router.push(item.route as any);
+    }
+  };
+
+  return (
+    <Animated.View
+      style={animatedStyle}
+      entering={FadeInRight.delay(index * 50).springify()}
+    >
+      <TouchableOpacity
+        style={styles.menuItem}
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.menuItemLeft}>
+          <View
+            style={[
+              styles.iconContainer,
+              {
+                backgroundColor: item.color
+                  ? `${item.color}15`
+                  : `${Theme.colors.primary}15`,
+              },
+            ]}
+          >
+            <Ionicons
+              name={item.icon}
+              size={22}
+              color={item.color || Theme.colors.primary}
+            />
+          </View>
+          <Text
+            style={[
+              styles.menuItemText,
+              {
+                color: item.color || palette.textPrimary,
+              },
+            ]}
+          >
+            {item.title}
+          </Text>
+        </View>
+        {!item.action ? (
+          <Ionicons
+            name="chevron-forward"
+            size={20}
+            color={palette.textSecondary}
+          />
+        ) : null}
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
 export default function MoreScreen() {
   const router = useRouter();
   const palette = useThemeColors();
@@ -131,76 +216,6 @@ export default function MoreScreen() {
     },
   ];
 
-  const MenuItemComponent = ({ item, index }: { item: MenuItem; index: number }) => {
-    const scale = useSharedValue(1);
-    const animatedStyle = useAnimatedStyle(() => ({
-      transform: [{ scale: scale.value }],
-    }));
-
-    const handlePress = () => {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      scale.value = withSpring(0.97, { damping: 20, stiffness: 300 });
-      setTimeout(() => {
-        scale.value = withSpring(1, { damping: 15, stiffness: 250 });
-      }, 100);
-
-      if (item.action) {
-        item.action();
-      } else if (item.route) {
-        router.push(item.route as any);
-      }
-    };
-
-    return (
-      <Animated.View
-        style={animatedStyle}
-        entering={FadeInRight.delay(index * 50).springify()}
-      >
-        <TouchableOpacity
-          style={styles.menuItem}
-          onPress={handlePress}
-          activeOpacity={0.7}
-        >
-          <View style={styles.menuItemLeft}>
-            <View
-              style={[
-                styles.iconContainer,
-                {
-                  backgroundColor: item.color
-                    ? `${item.color}15`
-                    : `${Theme.colors.primary}15`,
-                },
-              ]}
-            >
-              <Ionicons
-                name={item.icon}
-                size={22}
-                color={item.color || Theme.colors.primary}
-              />
-            </View>
-            <Text
-              style={[
-                styles.menuItemText,
-                {
-                  color: item.color || palette.textPrimary,
-                },
-              ]}
-            >
-              {item.title}
-            </Text>
-          </View>
-          {!item.action ? (
-            <Ionicons
-              name="chevron-forward"
-              size={20}
-              color={palette.textSecondary}
-            />
-          ) : null}
-        </TouchableOpacity>
-      </Animated.View>
-    );
-  };
-
   return (
     <ScrollView style={styles.container}>
       <Card variant="filled" style={styles.profileCard}>
@@ -253,6 +268,8 @@ export default function MoreScreen() {
                 key={item.title}
                 item={item}
                 index={sectionIndex * 3 + index}
+                palette={palette}
+                styles={styles}
               />
             ))}
           </Card>

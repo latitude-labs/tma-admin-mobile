@@ -1,7 +1,7 @@
-import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, useColorScheme } from 'react-native';
+import React, { useMemo } from 'react';
+import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type BadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -19,34 +19,33 @@ export const Badge: React.FC<BadgeProps> = ({
   size = 'md',
   style,
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
 
-  const variantStyles: Record<BadgeVariant, ViewStyle> = {
+  const variantStyles: Record<BadgeVariant, ViewStyle> = useMemo(() => ({
     default: {
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: palette.backgroundSecondary,
     },
     secondary: {
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: palette.backgroundSecondary,
     },
     success: {
-      backgroundColor: colors.statusSuccess,
+      backgroundColor: palette.statusSuccess,
     },
     warning: {
-      backgroundColor: colors.statusWarning,
+      backgroundColor: palette.statusWarning,
     },
     error: {
-      backgroundColor: colors.statusError,
+      backgroundColor: palette.statusError,
     },
     info: {
-      backgroundColor: colors.statusInfo,
+      backgroundColor: palette.statusInfo,
     },
-  };
+  }), [palette]);
 
   const textColor =
     variant === 'default' || variant === 'secondary'
-      ? colors.textPrimary
-      : colors.textInverse;
+      ? palette.textPrimary
+      : palette.textInverse;
 
   return (
     <View style={[styles.base, variantStyles[variant], styles[size], style]}>

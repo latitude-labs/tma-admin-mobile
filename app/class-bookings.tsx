@@ -727,7 +727,7 @@ export default function ClassBookingsScreen() {
                   {selectedBooking?.names?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
                 </Text>
               </View>
-              <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
+              <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
             </View>
 
             <View style={styles.statusOptionsContainer}>
@@ -865,7 +865,7 @@ export default function ClassBookingsScreen() {
                   <View style={[styles.modalAvatarSmall, { backgroundColor: `${palette.statusInfo}15` }]}>
                     <Ionicons name="shirt" size={20} color={palette.statusInfo} />
                   </View>
-                  <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
+                  <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
                 </View>
 
                 <View style={styles.packageSelectionContainer}>
@@ -924,7 +924,7 @@ export default function ClassBookingsScreen() {
                   <View style={[styles.modalAvatarSmall, { backgroundColor: `${palette.statusInfo}15` }]}>
                     <Ionicons name="shirt" size={20} color={palette.statusInfo} />
                   </View>
-                  <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
+                  <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
                   <View style={[styles.packageBadge]}>
                     <Text style={styles.packageBadgeText}>
                       {selectedPackage?.charAt(0).toUpperCase()}{selectedPackage?.slice(1)}
@@ -1015,7 +1015,7 @@ export default function ClassBookingsScreen() {
               <View style={[styles.modalAvatar, { backgroundColor: `${palette.tint}15` }]}>
                 <Ionicons name="call" size={28} color={palette.tint} />
               </View>
-              <Text style={styles.modalSubtitle}>{selectedBooking?.names}</Text>
+              <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
               <Text style={styles.modalDescription}>Set a reminder to follow up</Text>
             </View>
 

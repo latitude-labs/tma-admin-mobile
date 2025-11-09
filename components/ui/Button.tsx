@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -7,10 +7,9 @@ import {
   ViewStyle,
   TextStyle,
   TouchableOpacityProps,
-  useColorScheme,
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -33,40 +32,39 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   ...props
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
 
-  const variantStyles: Record<ButtonVariant, ViewStyle> = {
+  const variantStyles: Record<ButtonVariant, ViewStyle> = useMemo(() => ({
     primary: {
-      backgroundColor: colors.tint,
+      backgroundColor: palette.primary,
     },
     secondary: {
-      backgroundColor: colors.backgroundSecondary,
+      backgroundColor: palette.backgroundSecondary,
     },
     outline: {
       backgroundColor: 'transparent',
       borderWidth: 1,
-      borderColor: colors.tint,
+      borderColor: palette.primary,
     },
     text: {
       backgroundColor: 'transparent',
     },
-  };
+  }), [palette]);
 
-  const textVariantStyles: Record<ButtonVariant, TextStyle> = {
+  const textVariantStyles: Record<ButtonVariant, TextStyle> = useMemo(() => ({
     primary: {
-      color: colors.textInverse,
+      color: palette.textInverse,
     },
     secondary: {
-      color: colors.textPrimary,
+      color: palette.textPrimary,
     },
     outline: {
-      color: colors.tint,
+      color: palette.primary,
     },
     text: {
-      color: colors.tint,
+      color: palette.primary,
     },
-  };
+  }), [palette]);
 
   const buttonStyles = [
     styles.base,
@@ -85,9 +83,9 @@ export const Button: React.FC<ButtonProps> = ({
 
   const getActivityIndicatorColor = () => {
     if (variant === 'primary') {
-      return colors.textInverse;
+      return palette.textInverse;
     }
-    return colors.tint;
+    return palette.primary;
   };
 
   const renderContent = () => {

@@ -1,8 +1,8 @@
-import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ViewStyle, useColorScheme } from 'react-native';
+import React, { useMemo } from 'react';
+import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ChipProps {
   label: string;
@@ -19,10 +19,9 @@ export const Chip: React.FC<ChipProps> = ({
   onClose,
   style,
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
 
-  const dynamicStyles = StyleSheet.create({
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     base: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -31,27 +30,27 @@ export const Chip: React.FC<ChipProps> = ({
       paddingHorizontal: Theme.spacing.md,
       borderRadius: Theme.borderRadius.full,
       borderWidth: 1,
-      borderColor: colors.borderDefault,
-      backgroundColor: colors.background,
+      borderColor: palette.borderDefault,
+      backgroundColor: palette.background,
       marginRight: Theme.spacing.sm,
       marginBottom: Theme.spacing.sm,
     },
     selected: {
-      backgroundColor: colors.tint,
-      borderColor: colors.tint,
+      backgroundColor: palette.primary,
+      borderColor: palette.primary,
     },
     label: {
       fontSize: Theme.typography.sizes.sm,
       fontFamily: Theme.typography.fonts.regular,
-      color: colors.textPrimary,
+      color: palette.textPrimary,
     },
     selectedLabel: {
-      color: colors.textInverse,
+      color: palette.textInverse,
     },
     closeButton: {
       marginLeft: Theme.spacing.xs,
     },
-  });
+  }), [palette]);
 
   return (
     <TouchableOpacity
@@ -68,7 +67,7 @@ export const Chip: React.FC<ChipProps> = ({
           <Ionicons
             name="close-circle"
             size={16}
-            color={selected ? colors.textInverse : colors.textSecondary}
+            color={selected ? palette.textInverse : palette.textSecondary}
           />
         </TouchableOpacity>
       )}

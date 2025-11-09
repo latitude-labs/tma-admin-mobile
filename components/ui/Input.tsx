@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,10 +6,9 @@ import {
   StyleSheet,
   TextInputProps,
   TouchableOpacity,
-  useColorScheme,
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 
 interface InputProps extends TextInputProps {
@@ -32,52 +31,51 @@ export const Input: React.FC<InputProps> = ({
   ...props
 }) => {
   const [focused, setFocused] = useState(false);
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
 
-  const dynamicStyles = StyleSheet.create({
+  const dynamicStyles = useMemo(() => StyleSheet.create({
     label: {
       fontSize: Theme.typography.sizes.sm,
       fontFamily: Theme.typography.fonts.medium,
-      color: colors.textPrimary,
+      color: palette.textPrimary,
       marginBottom: Theme.spacing.xs,
     },
     inputContainer: {
       flexDirection: 'row',
       alignItems: 'center',
       borderWidth: 1,
-      borderColor: colors.borderDefault,
+      borderColor: palette.borderDefault,
       borderRadius: Theme.borderRadius.md,
-      backgroundColor: colors.background,
+      backgroundColor: palette.background,
       paddingHorizontal: Theme.spacing.md,
       minHeight: 48,
     },
     focused: {
-      borderColor: colors.tint,
+      borderColor: palette.primary,
     },
     error: {
-      borderColor: colors.statusError,
+      borderColor: palette.statusError,
     },
     input: {
       flex: 1,
       fontSize: Theme.typography.sizes.md,
       fontFamily: Theme.typography.fonts.regular,
-      color: colors.textPrimary,
+      color: palette.textPrimary,
       paddingVertical: Theme.spacing.sm,
     },
     errorText: {
       fontSize: Theme.typography.sizes.xs,
       fontFamily: Theme.typography.fonts.regular,
-      color: colors.statusError,
+      color: palette.statusError,
       marginTop: Theme.spacing.xs,
     },
     helperText: {
       fontSize: Theme.typography.sizes.xs,
       fontFamily: Theme.typography.fonts.regular,
-      color: colors.textSecondary,
+      color: palette.textSecondary,
       marginTop: Theme.spacing.xs,
     },
-  });
+  }), [palette]);
 
   return (
     <View style={styles.container}>
@@ -93,13 +91,13 @@ export const Input: React.FC<InputProps> = ({
           <Ionicons
             name={leftIcon}
             size={20}
-            color={colors.textSecondary}
+            color={palette.textSecondary}
             style={styles.leftIcon}
           />
         )}
         <TextInput
           style={[dynamicStyles.input, style]}
-          placeholderTextColor={colors.textTertiary}
+          placeholderTextColor={palette.textTertiary}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
           {...props}
@@ -112,7 +110,7 @@ export const Input: React.FC<InputProps> = ({
             <Ionicons
               name={rightIcon}
               size={20}
-              color={colors.textSecondary}
+              color={palette.textSecondary}
               style={styles.rightIcon}
             />
           </TouchableOpacity>

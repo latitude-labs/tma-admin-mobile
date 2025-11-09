@@ -1,4 +1,3 @@
-import { useColorScheme } from '@/components/useColorScheme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { biometricService } from '@/services/biometric.service';
 import * as Haptics from 'expo-haptics';
@@ -27,9 +26,8 @@ export default function LoginScreen() {
   const [biometricAvailable, setBiometricAvailable] = useState(false);
   const [biometricType, setBiometricType] = useState('Biometric');
   const { login } = useAuthStore();
-  const colors = useThemeColors();
-  const colorScheme = useColorScheme();
-  const styles = useMemo(() => createStyles(colors), [colors]);
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
 
   const {
     control,
@@ -225,7 +223,7 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.header}>
-            <Logo width={192} variant={colorScheme === 'dark' ? 'dark' : 'light'} />
+            <Logo width={192} variant={palette.isDark ? 'dark' : 'light'} />
           </View>
 
           <View style={styles.form}>
@@ -293,9 +291,9 @@ export default function LoginScreen() {
             {biometricAvailable && (
               <>
                 <View style={styles.divider}>
-                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
-                  <Text style={[styles.dividerText, { color: colors.textTertiary }]}>OR</Text>
-                  <View style={[styles.dividerLine, { backgroundColor: colors.border }]} />
+                  <View style={[styles.dividerLine, { backgroundColor: palette.borderDefault }]} />
+                  <Text style={[styles.dividerText, { color: palette.textTertiary }]}>OR</Text>
+                  <View style={[styles.dividerLine, { backgroundColor: palette.borderDefault }]} />
                 </View>
 
                 <Button
@@ -360,7 +358,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     footerLink: {
       fontSize: Theme.typography.sizes.sm,
-      color: palette.tint,
+      color: palette.primary,
       marginTop: Theme.spacing.xs,
       fontWeight: '600',
     },

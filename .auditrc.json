@@ -1,0 +1,24 @@
+{
+  "constitutionVersion": "1.0.0",
+  "exclude": [
+    "node_modules/**",
+    ".expo/**",
+    "**/*.test.tsx",
+    "**/*.test.ts",
+    "constants/Colors.ts",
+    "constants/Theme.ts",
+    "scripts/**",
+    "specs/**",
+    ".specify/**"
+  ],
+  "include": [
+    "app/**/*.{ts,tsx}",
+    "components/**/*.{ts,tsx}",
+    "services/**/*.ts",
+    "store/**/*.ts",
+    "hooks/**/*.ts",
+    "utils/**/*.ts"
+  ],
+  "severityOverrides": {},
+  "reportFormats": ["markdown", "json", "console"]
+}

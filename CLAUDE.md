@@ -513,3 +513,10 @@ const ProgressBar = ({ progress, total }) => {
 *Remember: Create a professional yet delightful experience that coaches and managers find intuitive and pleasant to use. Focus on clarity, efficiency, and visual appeal without gamification.*
 
 Don't start the dev server yourself, leave this to the user.
+
+## Active Technologies
+- TypeScript 5.9.2 / Node.js 20+ (audit tool implementation) + TypeScript Compiler API (ts-morph or @typescript-eslint/parser), Glob for file discovery, Markdown generation library (001-constitution-compliance-audit)
+- File system for audit reports (JSON + Markdown), historical data in specs/001-constitution-compliance-audit/audit-history/ (001-constitution-compliance-audit)
+
+## Recent Changes
+- 001-constitution-compliance-audit: Added TypeScript 5.9.2 / Node.js 20+ (audit tool implementation) + TypeScript Compiler API (ts-morph or @typescript-eslint/parser), Glob for file discovery, Markdown generation library

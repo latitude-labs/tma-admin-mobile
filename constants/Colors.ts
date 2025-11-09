@@ -81,6 +81,7 @@ export default {
     backgroundSecondary: Colors.background.secondary,
     backgroundTertiary: Colors.background.tertiary,
     tint: tmaPrimary,
+    primary: tmaPrimary, // Alias for brand color (CLAUDE.md compliance)
     tabIconDefault: '#999999',
     tabIconSelected: tmaPrimary,
     textPrimary: Colors.text.primary,
@@ -101,6 +102,7 @@ export default {
     statusError: Colors.status.error,
     statusInfo: Colors.status.info,
     notificationUnread: '#FFF9F5',
+    isDark: false, // Theme mode indicator
   },
   dark: {
     text: DarkColors.text.primary,
@@ -108,6 +110,7 @@ export default {
     backgroundSecondary: DarkColors.background.secondary,
     backgroundTertiary: DarkColors.background.tertiary,
     tint: tmaPrimary,
+    primary: tmaPrimary, // Alias for brand color (CLAUDE.md compliance)
     tabIconDefault: '#666666',
     tabIconSelected: tmaPrimary,
     textPrimary: DarkColors.text.primary,
@@ -128,5 +131,6 @@ export default {
     statusError: DarkColors.status.error,
     statusInfo: DarkColors.status.info,
     notificationUnread: DarkColors.notification.unread,
+    isDark: true, // Theme mode indicator
   },
 };

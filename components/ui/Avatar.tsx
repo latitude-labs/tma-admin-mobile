@@ -1,7 +1,7 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, ViewStyle, useColorScheme } from 'react-native';
+import { View, Text, Image, StyleSheet, ViewStyle } from 'react-native';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
 
@@ -18,8 +18,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   size = 'md',
   style,
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const initials = name
     .split(' ')
     .map(n => n[0])
@@ -33,7 +32,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     <View
       style={[
         styles.base,
-        { backgroundColor: colors.tint },
+        { backgroundColor: palette.primary },
         sizeStyle,
         style,
       ]}
@@ -45,7 +44,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           style={[
             styles.initials,
             styles[`${size}Text`],
-            { color: colors.textInverse },
+            { color: palette.textInverse },
           ]}
         >
           {initials}

@@ -27,7 +27,7 @@ import Animated, {
 
 export default function HolidayRequestsScreen() {
   const palette = useThemeColors();
-  const styles = createStyles(palette);
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const { user } = useAuthStore();
   const { holidayRequests, holidayRequestsLoading, setHolidayRequests } = useCalendarStore();
 
@@ -191,7 +191,7 @@ export default function HolidayRequestsScreen() {
                 </Text>
               </View>
               <View>
-                <Text style={styles.userName}>{request.user?.name}</Text>
+                <Text style={styles.userName}>{request.user?.name || ''}</Text>
                 <Text style={styles.requestDate}>
                   Requested {format(new Date(request.created_at || Date.now()), 'MMM d, yyyy')}
                 </Text>
