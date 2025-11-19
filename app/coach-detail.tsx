@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { ScreenHeader, Dropdown } from '@/components/ui';
@@ -168,6 +169,15 @@ export default function CoachDetailScreen() {
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
+      <LinearGradient
+        colors={[
+          palette.backgroundSecondary,
+          palette.background,
+          palette.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <ScreenHeader
         title={coach.name || ''}
         onBackPress={() => router.back()}
@@ -185,16 +195,32 @@ export default function CoachDetailScreen() {
       >
         {/* Coach Info Section */}
         <View style={styles.infoSection}>
-          <View style={styles.infoRow}>
-            <Ionicons name="mail" size={20} color={palette.textSecondary} />
-            <Text style={styles.infoText}>{coach.email || ''}</Text>
-          </View>
-          {coach.phone_number ? (
-            <View style={styles.infoRow}>
-              <Ionicons name="call" size={20} color={palette.textSecondary} />
-              <Text style={styles.infoText}>{coach.phone_number}</Text>
+          <LinearGradient
+            colors={[`${Theme.colors.primary}12`, `${Theme.colors.primary}06`]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.infoGradient}
+          >
+            <View style={styles.iconBadge}>
+              <Ionicons name="person" size={28} color="#FFFFFF" />
             </View>
-          ) : null}
+            <View style={styles.infoContent}>
+              <View style={styles.infoRow}>
+                <View style={styles.infoIconContainer}>
+                  <Ionicons name="mail" size={20} color={Theme.colors.primary} />
+                </View>
+                <Text style={styles.infoText} numberOfLines={1}>{coach.email || ''}</Text>
+              </View>
+              {coach.phone_number ? (
+                <View style={styles.infoRow}>
+                  <View style={styles.infoIconContainer}>
+                    <Ionicons name="call" size={20} color={Theme.colors.primary} />
+                  </View>
+                  <Text style={styles.infoText} numberOfLines={1}>{coach.phone_number}</Text>
+                </View>
+              ) : null}
+            </View>
+          </LinearGradient>
         </View>
 
         {/* Date Range Filter */}
@@ -321,69 +347,119 @@ const createStyles = (palette: ThemeColors) =>
       backgroundColor: palette.background,
       marginHorizontal: 16,
       marginTop: 16,
-      padding: 16,
-      borderRadius: Theme.borderRadius.lg,
-      gap: 12,
+      borderRadius: 20,
+      overflow: 'hidden',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 6 },
+      shadowOpacity: 0.1,
+      shadowRadius: 16,
+      elevation: 5,
+    },
+    infoGradient: {
+      padding: 20,
+    },
+    iconBadge: {
+      width: 60,
+      height: 60,
+      borderRadius: Theme.borderRadius.full,
+      backgroundColor: Theme.colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+      alignSelf: 'center',
+      marginBottom: Theme.spacing.md,
+      shadowColor: Theme.colors.primary,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 8,
+      elevation: 4,
+    },
+    infoContent: {
+      gap: 14,
     },
     infoRow: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 12,
     },
+    infoIconContainer: {
+      width: 36,
+      height: 36,
+      borderRadius: 10,
+      backgroundColor: `${Theme.colors.primary}15`,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     infoText: {
+      flex: 1,
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: Theme.typography.fonts.medium,
       color: palette.textPrimary,
     },
     filterSection: {
       marginHorizontal: 16,
       marginTop: 24,
+      backgroundColor: palette.background,
+      padding: 16,
+      borderRadius: 16,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.05,
+      shadowRadius: 8,
+      elevation: 2,
     },
     filterLabel: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: Theme.typography.fonts.bold,
       color: palette.textSecondary,
       marginBottom: 8,
       textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     statsSection: {
       marginTop: 24,
       marginHorizontal: 16,
     },
     sectionTitle: {
-      fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontSize: Theme.typography.sizes.xl,
+      fontFamily: Theme.typography.fonts.bold,
       color: palette.textPrimary,
       marginBottom: 16,
+      letterSpacing: -0.5,
     },
     statCard: {
       backgroundColor: palette.background,
-      borderRadius: Theme.borderRadius.lg,
-      padding: 20,
+      borderRadius: 20,
+      padding: 24,
       marginBottom: 16,
       borderLeftWidth: 4,
       shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.08,
+      shadowRadius: 12,
+      elevation: 4,
     },
     statHeader: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 12,
+      marginBottom: 16,
     },
     statIconContainer: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      width: 48,
+      height: 48,
+      borderRadius: 24,
       alignItems: 'center',
       justifyContent: 'center',
       marginRight: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 2,
     },
     statTitle: {
+      flex: 1,
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: Theme.typography.fonts.bold,
       color: palette.textPrimary,
     },
     statValue: {
@@ -405,19 +481,26 @@ const createStyles = (palette: ThemeColors) =>
     miniStatCard: {
       flex: 1,
       backgroundColor: palette.background,
-      borderRadius: Theme.borderRadius.lg,
-      padding: 16,
+      borderRadius: 16,
+      padding: 20,
       alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 3 },
+      shadowOpacity: 0.06,
+      shadowRadius: 8,
+      elevation: 3,
     },
     miniStatLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
-      color: palette.textTertiary,
-      marginBottom: 8,
+      fontFamily: Theme.typography.fonts.bold,
+      color: palette.textSecondary,
+      marginBottom: 12,
       textAlign: 'center',
+      textTransform: 'uppercase',
+      letterSpacing: 0.5,
     },
     miniStatValue: {
-      fontSize: Theme.typography.sizes.xl,
+      fontSize: Theme.typography.sizes['2xl'],
       fontFamily: Theme.typography.fonts.bold,
     },
     actionsSection: {
@@ -428,20 +511,28 @@ const createStyles = (palette: ThemeColors) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      paddingVertical: 14,
-      borderRadius: Theme.borderRadius.md,
-      gap: 8,
+      paddingVertical: 16,
+      borderRadius: 16,
+      gap: 10,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.2,
+      shadowRadius: 8,
+      elevation: 4,
     },
     editButton: {
       backgroundColor: Theme.colors.primary,
+      shadowColor: Theme.colors.primary,
     },
     deleteButton: {
       backgroundColor: Theme.colors.status.error,
+      shadowColor: Theme.colors.status.error,
     },
     actionButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: Theme.typography.fonts.bold,
       color: '#FFFFFF',
+      letterSpacing: 0.3,
     },
     bottomPadding: {
       height: 40,

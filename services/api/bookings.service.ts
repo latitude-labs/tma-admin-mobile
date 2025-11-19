@@ -47,7 +47,10 @@ export class BookingsService {
   async getBookings(params: BookingsParams = {}): Promise<PaginatedResponse<Booking>> {
     try {
       const response = await apiClient.get<PaginatedResponse<Booking>>('/bookings', {
-        params,
+        params: {
+          ...params,
+          include: 'club,class_time',
+        },
       });
       return response.data;
     } catch (error) {
@@ -244,7 +247,9 @@ export class BookingsService {
       }
 
       // Map frontend param names to backend expected names
-      const apiParams: any = {};
+      const apiParams: any = {
+        include: 'club,class_time',
+      };
       if (formattedSince) {
         apiParams.since = formattedSince;
       }
@@ -259,6 +264,40 @@ export class BookingsService {
       return response.data;
     } catch (error) {
       console.error('Failed to sync bookings:', error);
+      throw error;
+    }
+  }
+
+  async createBooking(data: {
+    class_id: number;
+    datetime: string;
+    phone: string;
+    email: string;
+    names: string[];
+    whatsapp_reminder?: boolean;
+    mailing_list_opt_in?: boolean;
+    contact_name?: string;
+  }): Promise<Booking> {
+    try {
+      const response = await apiClient.post<{ bookings: Booking[]; message: string }>('/admin/bookings', {
+        bookings: [
+          {
+            class_id: data.class_id,
+            datetime: data.datetime,
+            phone: data.phone,
+            email: data.email,
+            names: data.names,
+            whatsapp_reminder: data.whatsapp_reminder || false,
+          },
+        ],
+        mailing_list_opt_in: data.mailing_list_opt_in || false,
+        contact_name: data.contact_name || null,
+      });
+
+      // The API returns an array of created bookings, we return the first one
+      return response.data.bookings[0];
+    } catch (error) {
+      console.error('Failed to create booking:', error);
       throw error;
     }
   }

@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/Card';
 import { Ionicons } from '@expo/vector-icons';
 import { format, parseISO } from 'date-fns';
 import { TouchableOpacity } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 export default function EoDReportDetailScreen() {
@@ -84,6 +85,15 @@ export default function EoDReportDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[
+          palette.backgroundSecondary,
+          palette.background,
+          palette.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <Stack.Screen
         options={{
           headerShown: true,
@@ -98,17 +108,30 @@ export default function EoDReportDetailScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         <Card style={styles.headerCard}>
-          <Text style={styles.clubName}>
-            {currentReport.club?.name}
-          </Text>
-          <Text style={[styles.date, { color: palette.textSecondary }]}>
-            {currentReport.report_date ? format(parseISO(currentReport.report_date), 'EEEE, MMMM d, yyyy') : 'No date'}
-          </Text>
-          {(currentReport.coach || currentReport.user) && (
-            <Text style={[styles.reportedBy, { color: palette.textTertiary }]}>
-              Reported by: {currentReport.coach?.name || currentReport.user?.name}
+          <LinearGradient
+            colors={[`${Theme.colors.primary}15`, `${Theme.colors.primary}08`]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.headerCardGradient}
+          >
+            <View style={styles.iconBadge}>
+              <Ionicons name="document-text" size={24} color="#FFFFFF" />
+            </View>
+            <Text style={styles.clubName}>
+              {currentReport.club?.name}
             </Text>
-          )}
+            <Text style={[styles.date, { color: palette.textSecondary }]}>
+              {currentReport.report_date ? format(parseISO(currentReport.report_date), 'EEEE, MMMM d, yyyy') : 'No date'}
+            </Text>
+            {(currentReport.coach || currentReport.user) && (
+              <View style={styles.reportedByContainer}>
+                <Ionicons name="person-circle-outline" size={16} color={palette.textTertiary} />
+                <Text style={[styles.reportedBy, { color: palette.textTertiary }]}>
+                  {currentReport.coach?.name || currentReport.user?.name}
+                </Text>
+              </View>
+            )}
+          </LinearGradient>
         </Card>
 
         <Card style={styles.statsContainer}>
@@ -256,7 +279,7 @@ export default function EoDReportDetailScreen() {
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.backgroundSecondary,
+    backgroundColor: palette.background,
   },
   centerContent: {
     justifyContent: 'center',
@@ -270,22 +293,53 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing.sm,
   },
   headerCard: {
-    backgroundColor: Theme.colors.primary + '10',
-    borderColor: Theme.colors.primary,
-    borderWidth: 1,
     marginBottom: Theme.spacing.lg,
+    padding: 0,
+    overflow: 'hidden',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 5,
+    borderWidth: 0,
+  },
+  headerCardGradient: {
+    padding: Theme.spacing.xl,
     alignItems: 'center',
   },
+  iconBadge: {
+    width: 56,
+    height: 56,
+    borderRadius: Theme.borderRadius.full,
+    backgroundColor: Theme.colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Theme.spacing.md,
+    shadowColor: Theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
   clubName: {
-    fontSize: Theme.typography.sizes.xl,
+    fontSize: Theme.typography.sizes['2xl'],
     fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
+    textAlign: 'center',
   },
   date: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
-    marginBottom: Theme.spacing.xs,
+    fontFamily: Theme.typography.fonts.medium,
+    marginBottom: Theme.spacing.sm,
+    textAlign: 'center',
+  },
+  reportedByContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: Theme.spacing.xs,
   },
   reportedBy: {
     fontSize: Theme.typography.sizes.sm,
@@ -294,43 +348,63 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   statsContainer: {
     marginBottom: Theme.spacing.lg,
     padding: Theme.spacing.lg,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   statRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     backgroundColor: palette.backgroundSecondary,
-    padding: Theme.spacing.sm,
-    paddingHorizontal: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.sm,
+    padding: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.lg,
+    borderRadius: 14,
     marginBottom: Theme.spacing.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   statRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: Theme.spacing.sm,
+    gap: Theme.spacing.md,
   },
   statLabel: {
-    fontSize: Theme.typography.sizes.sm,
+    fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.medium,
     color: palette.textSecondary,
   },
   statValue: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontSize: Theme.typography.sizes.lg,
+    fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
   },
   section: {
     marginBottom: Theme.spacing.lg,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Theme.spacing.md,
+    paddingBottom: Theme.spacing.sm,
+    borderBottomWidth: 2,
+    borderBottomColor: `${Theme.colors.primary}20`,
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
     marginLeft: Theme.spacing.sm,
   },
@@ -338,48 +412,58 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: palette.borderLight,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: Theme.typography.fonts.medium,
   },
   metricValue: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontSize: Theme.typography.sizes.lg,
+    fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
   },
   cashAmount: {
-    fontSize: Theme.typography.sizes.xxxl,
+    fontSize: Theme.typography.sizes['3xl'],
     fontFamily: Theme.typography.fonts.bold,
     textAlign: 'center',
-    paddingVertical: Theme.spacing.md,
+    paddingVertical: Theme.spacing.xl,
+    letterSpacing: 1,
   },
   noteItem: {
-    marginBottom: Theme.spacing.md,
+    marginBottom: Theme.spacing.lg,
+    backgroundColor: palette.backgroundSecondary,
+    padding: Theme.spacing.md,
+    borderRadius: 12,
   },
   noteLabel: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
-    marginBottom: Theme.spacing.xs,
+    fontFamily: Theme.typography.fonts.bold,
+    marginBottom: Theme.spacing.sm,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   noteText: {
-    fontSize: Theme.typography.sizes.sm,
+    fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
     color: palette.textPrimary,
-    lineHeight: Theme.typography.sizes.sm * 1.5,
+    lineHeight: Theme.typography.sizes.md * 1.6,
   },
   timestampsContainer: {
-    marginTop: Theme.spacing.lg,
+    marginTop: Theme.spacing.xl,
     paddingTop: Theme.spacing.lg,
-    borderTopWidth: 1,
+    paddingHorizontal: Theme.spacing.md,
+    borderTopWidth: 2,
     borderTopColor: palette.borderLight,
+    borderRadius: 12,
   },
   timestamp: {
-    fontSize: Theme.typography.sizes.xs,
+    fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
-    marginBottom: Theme.spacing.xs,
+    marginBottom: Theme.spacing.sm,
+    opacity: 0.7,
   },
 });

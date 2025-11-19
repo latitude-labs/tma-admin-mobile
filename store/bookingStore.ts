@@ -33,10 +33,10 @@ interface BookingState {
   syncCursor: string | null; // For cursor-based pagination
   filters: BookingFilters;
   pagination: PaginationState;
-  viewMode: 'mine' | 'all';
+  viewMode: 'outstanding' | 'all';
   isInitialized: boolean; // Track if initial load is done
   setFilters: (filters: BookingFilters) => void;
-  setViewMode: (mode: 'mine' | 'all') => void;
+  setViewMode: (mode: 'outstanding' | 'all') => void;
   fetchBookings: (forceRefresh?: boolean) => Promise<void>;
   fetchBookingsPage: (page: number) => Promise<void>;
   refreshBookings: () => Promise<void>;
@@ -58,7 +58,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   lastSyncTimestamp: null,
   syncCursor: null,
   filters: {},
-  viewMode: 'mine',
+  viewMode: 'outstanding',
   isInitialized: false,
   pagination: {
     currentPage: 1,
@@ -73,7 +73,7 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     get().applyFiltersAndPagination();
   },
 
-  setViewMode: (mode: 'mine' | 'all') => {
+  setViewMode: (mode: 'outstanding' | 'all') => {
     set({ viewMode: mode });
     // Re-apply filters when view mode changes
     get().applyFiltersAndPagination();
@@ -211,17 +211,17 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
           return mergedBookings;
         } else {
-          // Full sync - limit initial fetch to last 30 days for performance
+          // Full sync - fetch last 90 days to catch all outstanding bookings
           console.log('[BookingStore] Performing full sync');
 
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          const tomorrow = new Date();
-          tomorrow.setDate(tomorrow.getDate() + 1);
+          const ninetyDaysAgo = new Date();
+          ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+          const twoWeeksAhead = new Date();
+          twoWeeksAhead.setDate(twoWeeksAhead.getDate() + 14);
 
           const allBookings = await bookingsService.getAllBookings({
-            start_date: get().filters.startDate || thirtyDaysAgo.toISOString().split('T')[0],
-            end_date: get().filters.endDate || tomorrow.toISOString().split('T')[0],
+            start_date: get().filters.startDate || ninetyDaysAgo.toISOString().split('T')[0],
+            end_date: get().filters.endDate || twoWeeksAhead.toISOString().split('T')[0],
           });
 
           // Save sync timestamp
@@ -297,17 +297,44 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
   getFilteredBookings: () => {
     const { allBookings, filters, viewMode } = get();
-    const user = useAuthStore.getState().user;
     let filtered = [...allBookings];
 
-    // Apply view mode filter
-    if (viewMode === 'mine' && user?.class_time_ids && user.class_time_ids.length > 0) {
-      // Filter to only show bookings for the user's assigned class times
-      filtered = filtered.filter(booking =>
-        booking.class_time?.id && user.class_time_ids?.includes(booking.class_time.id)
+    // Helper function to check if booking is outstanding
+    const isOutstandingBooking = (booking: Booking) => {
+      const now = new Date();
+      const startTime = new Date(booking.start_time);
+
+      // Only past bookings can be outstanding
+      if (startTime >= now) return false;
+
+      // Exclude bookings that are already marked as no-show or cancelled
+      if (booking.attendance_status === 'no-show' || booking.attendance_status === 'cancelled') {
+        return false;
+      }
+      if (booking.no_show || booking.cancelled_at) {
+        return false;
+      }
+
+      // Treat undefined/null status as 'pending' (default state)
+      const effectiveStatus = booking.status || 'pending';
+
+      // Outstanding if pending, unpaid_coach_call, paid_awaiting_dd, or unpaid_dd
+      return (
+        effectiveStatus === 'pending' ||
+        effectiveStatus === 'unpaid_coach_call' ||
+        effectiveStatus === 'paid_awaiting_dd' ||
+        effectiveStatus === 'unpaid_dd'
       );
+    };
+
+    // Apply view mode filter
+    if (viewMode === 'outstanding') {
+      // Filter to only show outstanding bookings
+      filtered = filtered.filter(isOutstandingBooking);
+    } else {
+      // 'all' mode shows everything EXCEPT outstanding bookings
+      filtered = filtered.filter(booking => !isOutstandingBooking(booking));
     }
-    // 'all' mode shows everything (no additional filtering needed)
 
     // Apply search filter
     if (filters.searchQuery && filters.searchQuery.trim()) {
@@ -347,10 +374,28 @@ export const useBookingStore = create<BookingState>((set, get) => ({
       filtered = filtered.filter(booking => booking.class_time?.id === filters.classTimeId);
     }
 
-    // Sort by start time descending
-    return filtered.sort((a, b) =>
-      new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
-    );
+    // Sort based on view mode
+    if (viewMode === 'outstanding') {
+      // Outstanding: Sort by oldest first (updated_at ascending), pending status first
+      return filtered.sort((a, b) => {
+        const aStatus = a.status || 'pending';
+        const bStatus = b.status || 'pending';
+
+        // Pending bookings always come first
+        if (aStatus === 'pending' && bStatus !== 'pending') return -1;
+        if (aStatus !== 'pending' && bStatus === 'pending') return 1;
+
+        // Sort by updated_at or start_time
+        const aTime = a.updated_at ? new Date(a.updated_at).getTime() : new Date(a.start_time).getTime();
+        const bTime = b.updated_at ? new Date(b.updated_at).getTime() : new Date(b.start_time).getTime();
+        return aTime - bTime;
+      });
+    } else {
+      // All: Sort by latest first (start_time descending)
+      return filtered.sort((a, b) =>
+        new Date(b.start_time).getTime() - new Date(a.start_time).getTime()
+      );
+    }
   },
 
   setSearchQuery: (query: string) => {
@@ -362,21 +407,11 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   getUpcomingBookings: (days = 7) => {
-    const { allBookings, viewMode } = get();
-    const user = useAuthStore.getState().user;
+    const { allBookings } = get();
     const cutoff = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
     const now = new Date();
 
-    let bookingsToFilter = allBookings;
-
-    // Apply view mode filter
-    if (viewMode === 'mine' && user?.class_time_ids && user.class_time_ids.length > 0) {
-      bookingsToFilter = bookingsToFilter.filter(booking =>
-        booking.class_time?.id && user.class_time_ids?.includes(booking.class_time.id)
-      );
-    }
-
-    return bookingsToFilter
+    return allBookings
       .filter(booking => {
         const startTime = new Date(booking.start_time);
         return startTime >= now &&
@@ -390,23 +425,13 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   },
 
   getTodaysBookings: () => {
-    const { allBookings, viewMode } = get();
-    const user = useAuthStore.getState().user;
+    const { allBookings } = get();
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    let bookingsToFilter = allBookings;
-
-    // Apply view mode filter
-    if (viewMode === 'mine' && user?.class_time_ids && user.class_time_ids.length > 0) {
-      bookingsToFilter = bookingsToFilter.filter(booking =>
-        booking.class_time?.id && user.class_time_ids?.includes(booking.class_time.id)
-      );
-    }
-
-    return bookingsToFilter
+    return allBookings
       .filter(booking => {
         const startTime = new Date(booking.start_time);
         return startTime >= today &&

@@ -1,35 +1,34 @@
 import { Badge, Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
-import { useClubStore } from '@/store/clubStore';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
+import { useClubStore } from '@/store/clubStore';
 import { Ionicons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import {
   ActivityIndicator,
+  Platform,
+  Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
-  View,
-  Pressable,
-  Platform
+  View
 } from 'react-native';
 import Animated, {
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withTiming,
-  withSequence,
-  withDelay,
+  Easing,
   FadeIn,
   FadeInDown,
   Layout,
-  Easing,
-  runOnJS
+  useAnimatedStyle,
+  useSharedValue,
+  withSequence,
+  withSpring,
+  withTiming
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
-import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -306,57 +305,73 @@ export default function ClubsScreen() {
   }));
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={isLoading}
-          onRefresh={refreshClubs}
-          colors={[palette.tint]}
-          tintColor={palette.tint}
-        />
-      }>
-      <View style={styles.content}>
-        <Animated.View
-          entering={FadeInDown.duration(400).springify()}
-          style={styles.headerSection}
-        >
-          <View style={styles.titleContainer}>
-            <View style={styles.titleRow}>
-              <Text style={styles.title}>My Clubs</Text>
-              {clubs.length > 0 && (
-                <View style={styles.countBadge}>
-                  <Text style={styles.countText}>{clubs.length}</Text>
-                </View>
-              )}
-            </View>
-            {isOffline && (
-              <Animated.View
-                entering={FadeIn.duration(300)}
-                style={styles.offlineBadge}
-              >
-                <Ionicons name="cloud-offline" size={16} color={palette.textInverse} />
-                <Text style={styles.offlineText}>Offline Mode</Text>
-              </Animated.View>
-            )}
-          </View>
-
-          {lastSync && (
-            <Animated.Text
-              entering={FadeIn.delay(200).duration(300)}
-              style={styles.syncText}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[
+          palette.backgroundSecondary,
+          palette.background,
+          palette.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <ScrollView
+        style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={isLoading}
+            onRefresh={refreshClubs}
+            colors={[palette.tint]}
+            tintColor={palette.tint}
+          />
+        }>
+        <View style={styles.content}>
+        <View style={styles.header}>
+          <LinearGradient
+            colors={[palette.background, palette.background + 'F0']}
+            style={styles.headerGradient}
+          >
+            <Animated.View
+              entering={FadeInDown.duration(400).springify()}
             >
-              Last updated {new Date(lastSync).toLocaleString('en-GB', {
-                day: 'numeric',
-                month: 'short',
-                hour: '2-digit',
-                minute: '2-digit',
-              })}
-            </Animated.Text>
-          )}
-        </Animated.View>
+              <View style={styles.titleContainer}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.title}>Clubs</Text>
+                  {clubs.length > 0 && (
+                    <View style={styles.countBadge}>
+                      <Text style={styles.countText}>{clubs.length}</Text>
+                    </View>
+                  )}
+                </View>
+                {isOffline && (
+                  <Animated.View
+                    entering={FadeIn.duration(300)}
+                    style={styles.offlineBadge}
+                  >
+                    <Ionicons name="cloud-offline" size={16} color={palette.textInverse} />
+                    <Text style={styles.offlineText}>Offline Mode</Text>
+                  </Animated.View>
+                )}
+              </View>
+
+              {lastSync && (
+                <Animated.Text
+                  entering={FadeIn.delay(200).duration(300)}
+                  style={styles.syncText}
+                >
+                  Last updated {new Date(lastSync).toLocaleString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Animated.Text>
+              )}
+            </Animated.View>
+          </LinearGradient>
+        </View>
 
         <View style={styles.clubsGrid}>
           {clubs.map((club, index) => (
@@ -411,14 +426,17 @@ export default function ClubsScreen() {
           </Pressable>
         </Animated.View>
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.backgroundSecondary,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
@@ -483,10 +501,23 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontFamily: Theme.typography.fonts.semibold,
   },
   content: {
-    padding: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.xs,
   },
-  headerSection: {
-    marginBottom: Theme.spacing.xl,
+  header: {
+    marginBottom: Theme.spacing.lg,
+    overflow: 'hidden',
+  },
+  headerGradient: {
+    paddingHorizontal: Theme.spacing.xl,
+    paddingTop: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.xl,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   titleContainer: {
     marginBottom: Theme.spacing.xs,
@@ -497,7 +528,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.md,
   },
   title: {
-    fontSize: Theme.typography.sizes['2xl'],
+    fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
   },
@@ -533,10 +564,10 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontSize: Theme.typography.sizes.xs,
     color: palette.textTertiary,
     fontFamily: Theme.typography.fonts.regular,
-    marginTop: Theme.spacing.xs,
   },
   clubsGrid: {
     gap: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.md,
   },
   clubCard: {
     marginBottom: 0,

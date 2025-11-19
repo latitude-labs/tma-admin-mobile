@@ -436,49 +436,6 @@ export default function ClubDetailScreen() {
           )}
         </AnimatedCard>
 
-        {/* Admin Settings */}
-        {isAdmin && (
-          <AnimatedCard
-            variant="elevated"
-            style={styles.settingsCard}
-            entering={FadeInDown.delay(300).duration(400).springify()}
-          >
-            <View style={styles.settingsHeader}>
-              <View style={styles.settingsHeaderIcon}>
-                <Ionicons name="settings" size={24} color={palette.tint} />
-              </View>
-              <Text style={styles.settingsHeaderText}>Admin Settings</Text>
-            </View>
-
-            <View style={styles.settingsList}>
-              <View style={styles.settingItem}>
-                <Text style={styles.settingLabel}>Google Sync</Text>
-                <Badge variant={selectedClub.sync_hours_to_google ? 'success' : 'default'}>
-                  {selectedClub.sync_hours_to_google ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </View>
-              <View style={styles.settingItem}>
-                <Text style={styles.settingLabel}>Class Prioritisation</Text>
-                <Badge variant={selectedClub.class_prioritisation_enabled ? 'success' : 'default'}>
-                  {selectedClub.class_prioritisation_enabled ? 'Enabled' : 'Disabled'}
-                </Badge>
-              </View>
-              {selectedClub.google_place_id && (
-                <View style={styles.settingItem}>
-                  <Text style={styles.settingLabel}>Google Place ID</Text>
-                  <Text style={styles.settingValue}>{selectedClub.google_place_id}</Text>
-                </View>
-              )}
-              {selectedClub.acuity_calendar_id && (
-                <View style={styles.settingItem}>
-                  <Text style={styles.settingLabel}>Acuity Calendar ID</Text>
-                  <Text style={styles.settingValue}>{selectedClub.acuity_calendar_id}</Text>
-                </View>
-              )}
-            </View>
-          </AnimatedCard>
-        )}
-
         {/* Admin Action Buttons */}
         {isAdmin && (
           <View style={styles.actionButtons}>

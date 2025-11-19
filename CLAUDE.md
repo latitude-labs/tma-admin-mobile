@@ -517,6 +517,8 @@ Don't start the dev server yourself, leave this to the user.
 ## Active Technologies
 - TypeScript 5.9.2 / Node.js 20+ (audit tool implementation) + TypeScript Compiler API (ts-morph or @typescript-eslint/parser), Glob for file discovery, Markdown generation library (001-constitution-compliance-audit)
 - File system for audit reports (JSON + Markdown), historical data in specs/001-constitution-compliance-audit/audit-history/ (001-constitution-compliance-audit)
+- TypeScript 5.9.2 (strict mode enabled) / React Native 0.81.4 + Expo SDK 54.0.7, Expo Router 6.0.4, React 19.1.0, Zustand 5.0.8, React Hook Form 7.62.0, Axios 1.12.2, React Native Reanimated 4.1.0 (002-trial-bookings-management)
+- AsyncStorage (via Zustand persist middleware for offline bookings cache) (002-trial-bookings-management)
 
 ## Recent Changes
 - 001-constitution-compliance-audit: Added TypeScript 5.9.2 / Node.js 20+ (audit tool implementation) + TypeScript Compiler API (ts-morph or @typescript-eslint/parser), Glob for file discovery, Markdown generation library

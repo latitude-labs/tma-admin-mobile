@@ -131,6 +131,9 @@ function RootLayoutNav() {
                 <Stack.Screen name="class-bookings" options={{ headerShown: false }} />
                 <Stack.Screen name="eod-report-detail" options={{ headerShown: false }} />
                 <Stack.Screen name="booking-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="facebook" options={{ headerShown: false }} />
+                <Stack.Screen name="facebook-ad-detail" options={{ headerShown: false }} />
+                <Stack.Screen name="calendar" options={{ headerShown: false }} />
               </Stack>
             </AuthStatusProvider>
           </ApiHealthProvider>

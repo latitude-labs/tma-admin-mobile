@@ -62,6 +62,8 @@ export interface Booking {
   source?: string;
   class_time?: ClassTime;
   club?: Club;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PaginationMeta {

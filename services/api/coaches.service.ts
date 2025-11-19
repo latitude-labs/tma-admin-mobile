@@ -38,8 +38,8 @@ class CoachesService {
 
   async getCoachById(id: number): Promise<Coach> {
     try {
-      const response = await apiClient.get<Coach>(`/coaches/${id}`);
-      return response.data;
+      const response = await apiClient.get<{ data: Coach }>(`/coaches/${id}`);
+      return response.data.data;
     } catch (error) {
       console.error('Failed to fetch coach:', error);
       throw error;

@@ -11,8 +11,9 @@ import {
   Pressable,
   ActivityIndicator,
 } from 'react-native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { Card } from '@/components/ui';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
@@ -91,6 +92,7 @@ const timeRangeOptions: TimeRangeOption[] = [
 export default function FacebookScreen() {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
+  const router = useRouter();
   const { user } = useAuthStore();
   const {
     isLoading,
@@ -253,27 +255,23 @@ export default function FacebookScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl
-            refreshing={isLoading}
-            onRefresh={refreshPages}
-            colors={[palette.tint]}
-            tintColor={palette.tint}
-          />
-        }>
-        <View style={styles.content}>
-          {/* Header */}
-          <Animated.View
-            entering={FadeInDown.duration(400).springify()}
-            style={styles.header}
-          >
-            <View style={styles.titleContainer}>
-              <View>
-                <Text style={styles.title}>Ad Performance</Text>
-                <Text style={styles.subtitle}>Facebook Advertising Dashboard</Text>
-              </View>
+        <ScreenHeader title="Ad Performance" />
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          refreshControl={
+            <RefreshControl
+              refreshing={isLoading}
+              onRefresh={refreshPages}
+              colors={[palette.tint]}
+              tintColor={palette.tint}
+            />
+          }>
+          <View style={styles.content}>
+            {/* Meta info */}
+            <Animated.View
+              entering={FadeInDown.duration(400).springify()}
+              style={styles.metaInfoContainer}
+            >
               {isOffline && (
                 <Animated.View
                   entering={FadeIn.duration(300)}
@@ -283,86 +281,85 @@ export default function FacebookScreen() {
                   <Text style={styles.offlineText}>Offline</Text>
                 </Animated.View>
               )}
-            </View>
-            {lastSync && (
-              <Animated.Text
-                entering={FadeIn.delay(200).duration(300)}
-                style={styles.syncText}
-              >
-                Last synced {new Date(lastSync).toLocaleString('en-GB', {
-                  day: 'numeric',
-                  month: 'short',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </Animated.Text>
-            )}
-          </Animated.View>
-
-          {/* Search Bar */}
-          <Animated.View
-            entering={FadeInDown.delay(100).duration(400).springify()}
-            style={[styles.searchContainer, searchAnimatedStyle]}
-          >
-            <Ionicons name="search" size={20} color={palette.textSecondary} />
-            <AnimatedTextInput
-              style={styles.searchInput}
-              placeholder="Search Facebook pages..."
-              placeholderTextColor={palette.textTertiary}
-              value={localSearchQuery}
-              onChangeText={setLocalSearchQuery}
-              onFocus={() => {
-                searchFocused.value = 1;
-              }}
-              onBlur={() => {
-                searchFocused.value = 0;
-              }}
-            />
-            {localSearchQuery !== '' && (
-              <Animated.View entering={FadeIn.duration(200)}>
-                <TouchableOpacity
-                  onPress={() => {
-                    setLocalSearchQuery('');
-                    if (Platform.OS === 'ios') {
-                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    }
-                  }}
+              {lastSync && (
+                <Animated.Text
+                  entering={FadeIn.delay(200).duration(300)}
+                  style={styles.syncText}
                 >
-                  <Ionicons name="close-circle" size={20} color={palette.textSecondary} />
-                </TouchableOpacity>
-              </Animated.View>
-            )}
-          </Animated.View>
+                  Last synced {new Date(lastSync).toLocaleString('en-GB', {
+                    day: 'numeric',
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </Animated.Text>
+              )}
+            </Animated.View>
 
-          {/* Time Range Selector */}
-          <Animated.View
-            entering={FadeInDown.delay(200).duration(400).springify()}
-            style={styles.timeRangeContainer}
-          >
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              {timeRangeOptions.map((option, index) => (
-                <Animated.View
-                  key={option.value}
-                  entering={SlideInRight.delay(index * 50).duration(300).springify()}
-                >
-                  <Chip
-                    label={option.label}
-                    selected={selectedTimeRange === option.value}
+            {/* Search Bar */}
+            <Animated.View
+              entering={FadeInDown.delay(100).duration(400).springify()}
+              style={[styles.searchContainer, searchAnimatedStyle]}
+            >
+              <Ionicons name="search" size={20} color={palette.textSecondary} />
+              <AnimatedTextInput
+                style={styles.searchInput}
+                placeholder="Search Facebook pages..."
+                placeholderTextColor={palette.textTertiary}
+                value={localSearchQuery}
+                onChangeText={setLocalSearchQuery}
+                onFocus={() => {
+                  searchFocused.value = 1;
+                }}
+                onBlur={() => {
+                  searchFocused.value = 0;
+                }}
+              />
+              {localSearchQuery !== '' && (
+                <Animated.View entering={FadeIn.duration(200)}>
+                  <TouchableOpacity
                     onPress={() => {
-                      setTimeRange(option.value);
+                      setLocalSearchQuery('');
                       if (Platform.OS === 'ios') {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }
                     }}
-                    style={styles.timeRangeChip}
-                  />
+                  >
+                    <Ionicons name="close-circle" size={20} color={palette.textSecondary} />
+                  </TouchableOpacity>
                 </Animated.View>
-              ))}
-            </ScrollView>
-          </Animated.View>
+              )}
+            </Animated.View>
 
-          {/* Facebook Pages List */}
-          {sortedPages.length === 0 && !isLoading ? (
+            {/* Time Range Selector */}
+            <Animated.View
+              entering={FadeInDown.delay(200).duration(400).springify()}
+              style={styles.timeRangeContainer}
+            >
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {timeRangeOptions.map((option, index) => (
+                  <Animated.View
+                    key={option.value}
+                    entering={SlideInRight.delay(index * 50).duration(300).springify()}
+                  >
+                    <Chip
+                      label={option.label}
+                      selected={selectedTimeRange === option.value}
+                      onPress={() => {
+                        setTimeRange(option.value);
+                        if (Platform.OS === 'ios') {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
+                      }}
+                      style={styles.timeRangeChip}
+                    />
+                  </Animated.View>
+                ))}
+              </ScrollView>
+            </Animated.View>
+
+            {/* Facebook Pages List */}
+            {sortedPages.length === 0 && !isLoading ? (
             <Animated.View
               entering={FadeIn.duration(400)}
               style={styles.emptyState}
@@ -388,6 +385,13 @@ export default function FacebookScreen() {
                       if (Platform.OS === 'ios') {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       }
+                      router.push({
+                        pathname: '/facebook-ad-detail',
+                        params: {
+                          pageUuid: page.uuid,
+                          pageName: page.name,
+                        },
+                      });
                     }}
                   >
                     <AnimatedCard
@@ -591,25 +595,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   content: {
     padding: Theme.spacing.lg,
   },
-  header: {
-    marginBottom: Theme.spacing.sm,
-  },
-  titleContainer: {
+  metaInfoContainer: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: Theme.spacing.xs,
-  },
-  title: {
-    fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
-    color: palette.textPrimary,
-  },
-  subtitle: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
-    color: palette.textSecondary,
-    marginTop: 2,
+    marginBottom: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.xs,
   },
   offlineBadge: {
     flexDirection: 'row',
@@ -630,7 +621,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontSize: Theme.typography.sizes.xs,
     color: palette.textTertiary,
     fontFamily: Theme.typography.fonts.regular,
-    marginBottom: Theme.spacing.lg,
   },
   searchContainer: {
     flexDirection: 'row',

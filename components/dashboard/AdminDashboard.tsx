@@ -10,7 +10,7 @@ import { useFacebookStore } from '@/store/facebookStore';
 import { useSyncStore } from '@/store/syncStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
@@ -52,7 +52,32 @@ export default function AdminDashboardScreen() {
     upcomingBookings: 0,
     totalClubs: 0
   });
+
+  // Trend data - TODO: Connect to backend API for real historical data
+  // For now using mock data to demonstrate UI
+  const [trends, setTrends] = useState({
+    todaysBookings: { direction: 'up' as 'up' | 'down' | 'neutral', percentage: 12 },
+    todaysTrials: { direction: 'up' as 'up' | 'down' | 'neutral', percentage: 8 },
+    upcomingBookings: { direction: 'up' as 'up' | 'down' | 'neutral', percentage: 15 },
+    monthlyBookings: { direction: 'up' as 'up' | 'down' | 'neutral', percentage: 23 },
+  });
+
   const rotateAnim = useRef(new Animated.Value(0)).current;
+
+  // Animation refs for each card
+  const cardAnims = useRef([
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+    new Animated.Value(0),
+  ]).current;
+
+  const cardScales = useRef([
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+    new Animated.Value(1),
+  ]).current;
   const {
     fetchBookings,
     refreshBookings,
@@ -112,6 +137,18 @@ export default function AdminDashboardScreen() {
         duration: 500,
         useNativeDriver: true,
       }).start();
+
+      // Staggered card entrance animations
+      const cardAnimations = cardAnims.map((anim, index) =>
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 400,
+          delay: 600 + (index * 100), // Start after main fade, stagger by 100ms
+          useNativeDriver: true,
+        })
+      );
+
+      Animated.parallel(cardAnimations).start();
 
       setLoading(false);
     };
@@ -222,6 +259,39 @@ export default function AdminDashboardScreen() {
     outputRange: ['0deg', '360deg']
   });
 
+  // Card press animation handlers
+  const handleCardPressIn = (index: number) => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    Animated.spring(cardScales[index], {
+      toValue: 0.97,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  const handleCardPressOut = (index: number) => {
+    Animated.spring(cardScales[index], {
+      toValue: 1,
+      useNativeDriver: true,
+      tension: 300,
+      friction: 10,
+    }).start();
+  };
+
+  // Helper to get trend icon and color
+  const getTrendIcon = (direction: 'up' | 'down' | 'neutral') => {
+    if (direction === 'up') return 'trending-up';
+    if (direction === 'down') return 'trending-down';
+    return 'remove';
+  };
+
+  const getTrendColor = (direction: 'up' | 'down' | 'neutral') => {
+    if (direction === 'up') return colors.statusSuccess;
+    if (direction === 'down') return colors.statusError;
+    return colors.textTertiary;
+  };
+
   const formatTrialDate = (dateString: string) => {
     const date = new Date(dateString);
     const today = new Date();
@@ -257,12 +327,26 @@ export default function AdminDashboardScreen() {
   }
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <ScrollView
-        style={styles.scrollContainer}
-        showsVerticalScrollIndicator={false}
-      >
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[
+          colors.backgroundSecondary,
+          colors.background,
+          colors.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+        <ScrollView
+          style={styles.scrollContainer}
+          showsVerticalScrollIndicator={false}
+        >
         <View style={styles.header}>
+          <LinearGradient
+            colors={[colors.background, colors.background + 'F0']}
+            style={styles.headerGradient}
+          >
           <View style={styles.headerTop}>
             <View style={styles.greetingContainer}>
               <Text style={styles.greetingEmoji}>
@@ -298,6 +382,7 @@ export default function AdminDashboardScreen() {
               </View>
             </TouchableOpacity>
           </View>
+          </LinearGradient>
         </View>
 
         <View style={styles.overviewContainer}>
@@ -308,145 +393,254 @@ export default function AdminDashboardScreen() {
 
           <View style={styles.statsGrid}>
             {/* Bookings Today Card */}
-            <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.statusSuccess + '08' }]}
-              activeOpacity={0.95}
+            <Animated.View
+              style={[
+                {
+                  opacity: cardAnims[0],
+                  transform: [
+                    { scale: cardScales[0] },
+                    {
+                      translateY: cardAnims[0].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <View style={styles.statCardContent}>
-                <View style={styles.statCardLeft}>
-                  <View style={[styles.statIconContainer, { backgroundColor: colors.statusSuccess + '15' }]}>
-                    <Ionicons name="calendar-outline" size={20} color={colors.statusSuccess} />
+              <TouchableOpacity
+                style={styles.statCard}
+                activeOpacity={1}
+                onPressIn={() => handleCardPressIn(0)}
+                onPressOut={() => handleCardPressOut(0)}
+              >
+                <LinearGradient
+                  colors={[colors.statusSuccess + '12', colors.statusSuccess + '05']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCardGradient}
+                >
+                  <View style={styles.statCardContent}>
+                    <View style={styles.statCardLeft}>
+                      <View style={[styles.statIconContainer, { backgroundColor: colors.statusSuccess + '20' }]}>
+                        <View style={[styles.iconGlow, { backgroundColor: colors.statusSuccess + '30' }]} />
+                        <Ionicons name="calendar-outline" size={22} color={colors.statusSuccess} />
+                      </View>
+                      <View style={styles.statCardInfo}>
+                        <Text style={styles.statCardLabel}>Bookings Today</Text>
+                        <Text style={styles.statCardDescription}>New bookings made today</Text>
+                      </View>
+                    </View>
+                    <View style={styles.statCardRight}>
+                      <Text style={[styles.statCardValue, { color: colors.statusSuccess }]}>
+                        {statsLoading ? '—' : stats.todaysBookings}
+                      </Text>
+                      {!statsLoading && (
+                        <View style={styles.trendContainer}>
+                          <Ionicons
+                            name={getTrendIcon(trends.todaysBookings.direction)}
+                            size={12}
+                            color={getTrendColor(trends.todaysBookings.direction)}
+                          />
+                          <Text style={[styles.trendText, { color: getTrendColor(trends.todaysBookings.direction) }]}>
+                            {trends.todaysBookings.percentage}%
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.statCardInfo}>
-                    <Text style={styles.statCardLabel}>Bookings Today</Text>
-                    <Text style={styles.statCardDescription}>New bookings made today</Text>
-                  </View>
-                </View>
-                <View style={styles.statCardRight}>
-                  <Text style={[styles.statCardValue, { color: colors.statusSuccess }]}>
-                    {statsLoading ? '—' : stats.todaysBookings}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* Trials Today Card */}
-            <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.statusInfo + '08' }]}
-              activeOpacity={0.95}
+            <Animated.View
+              style={[
+                {
+                  opacity: cardAnims[1],
+                  transform: [
+                    { scale: cardScales[1] },
+                    {
+                      translateY: cardAnims[1].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <View style={styles.statCardContent}>
-                <View style={styles.statCardLeft}>
-                  <View style={[styles.statIconContainer, { backgroundColor: colors.statusInfo + '15' }]}>
-                    <Ionicons name="people-outline" size={20} color={colors.statusInfo} />
+              <TouchableOpacity
+                style={styles.statCard}
+                activeOpacity={1}
+                onPressIn={() => handleCardPressIn(1)}
+                onPressOut={() => handleCardPressOut(1)}
+              >
+                <LinearGradient
+                  colors={[colors.statusInfo + '12', colors.statusInfo + '05']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCardGradient}
+                >
+                  <View style={styles.statCardContent}>
+                    <View style={styles.statCardLeft}>
+                      <View style={[styles.statIconContainer, { backgroundColor: colors.statusInfo + '20' }]}>
+                        <View style={[styles.iconGlow, { backgroundColor: colors.statusInfo + '30' }]} />
+                        <Ionicons name="people-outline" size={22} color={colors.statusInfo} />
+                      </View>
+                      <View style={styles.statCardInfo}>
+                        <Text style={styles.statCardLabel}>Trials Today</Text>
+                        <Text style={styles.statCardDescription}>Scheduled trial sessions</Text>
+                      </View>
+                    </View>
+                    <View style={styles.statCardRight}>
+                      <Text style={[styles.statCardValue, { color: colors.statusInfo }]}>
+                        {statsLoading ? '—' : stats.todaysTrials}
+                      </Text>
+                      {!statsLoading && (
+                        <View style={styles.trendContainer}>
+                          <Ionicons
+                            name={getTrendIcon(trends.todaysTrials.direction)}
+                            size={12}
+                            color={getTrendColor(trends.todaysTrials.direction)}
+                          />
+                          <Text style={[styles.trendText, { color: getTrendColor(trends.todaysTrials.direction) }]}>
+                            {trends.todaysTrials.percentage}%
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.statCardInfo}>
-                    <Text style={styles.statCardLabel}>Trials Today</Text>
-                    <Text style={styles.statCardDescription}>Scheduled trial sessions</Text>
-                  </View>
-                </View>
-                <View style={styles.statCardRight}>
-                  <Text style={[styles.statCardValue, { color: colors.statusInfo }]}>
-                    {statsLoading ? '—' : stats.todaysTrials}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* Upcoming Week Card */}
-            <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.statusWarning + '08' }]}
-              activeOpacity={0.95}
+            <Animated.View
+              style={[
+                {
+                  opacity: cardAnims[2],
+                  transform: [
+                    { scale: cardScales[2] },
+                    {
+                      translateY: cardAnims[2].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <View style={styles.statCardContent}>
-                <View style={styles.statCardLeft}>
-                  <View style={[styles.statIconContainer, { backgroundColor: colors.statusWarning + '15' }]}>
-                    <Ionicons name="time-outline" size={20} color={colors.statusWarning} />
+              <TouchableOpacity
+                style={styles.statCard}
+                activeOpacity={1}
+                onPressIn={() => handleCardPressIn(2)}
+                onPressOut={() => handleCardPressOut(2)}
+              >
+                <LinearGradient
+                  colors={[colors.statusWarning + '12', colors.statusWarning + '05']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCardGradient}
+                >
+                  <View style={styles.statCardContent}>
+                    <View style={styles.statCardLeft}>
+                      <View style={[styles.statIconContainer, { backgroundColor: colors.statusWarning + '20' }]}>
+                        <View style={[styles.iconGlow, { backgroundColor: colors.statusWarning + '30' }]} />
+                        <Ionicons name="time-outline" size={22} color={colors.statusWarning} />
+                      </View>
+                      <View style={styles.statCardInfo}>
+                        <Text style={styles.statCardLabel}>Upcoming Week</Text>
+                        <Text style={styles.statCardDescription}>Next 7 days bookings</Text>
+                      </View>
+                    </View>
+                    <View style={styles.statCardRight}>
+                      <Text style={[styles.statCardValue, { color: colors.statusWarning }]}>
+                        {statsLoading ? '—' : stats.upcomingBookings}
+                      </Text>
+                      {!statsLoading && (
+                        <View style={styles.trendContainer}>
+                          <Ionicons
+                            name={getTrendIcon(trends.upcomingBookings.direction)}
+                            size={12}
+                            color={getTrendColor(trends.upcomingBookings.direction)}
+                          />
+                          <Text style={[styles.trendText, { color: getTrendColor(trends.upcomingBookings.direction) }]}>
+                            {trends.upcomingBookings.percentage}%
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.statCardInfo}>
-                    <Text style={styles.statCardLabel}>Upcoming Week</Text>
-                    <Text style={styles.statCardDescription}>Next 7 days bookings</Text>
-                  </View>
-                </View>
-                <View style={styles.statCardRight}>
-                  <Text style={[styles.statCardValue, { color: colors.statusWarning }]}>
-                    {statsLoading ? '—' : stats.upcomingBookings}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
 
             {/* This Month Card */}
-            <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.tint + '08' }]}
-              activeOpacity={0.95}
+            <Animated.View
+              style={[
+                {
+                  opacity: cardAnims[3],
+                  transform: [
+                    { scale: cardScales[3] },
+                    {
+                      translateY: cardAnims[3].interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              <View style={styles.statCardContent}>
-                <View style={styles.statCardLeft}>
-                  <View style={[styles.statIconContainer, { backgroundColor: colors.tint + '15' }]}>
-                    <Ionicons name="trending-up" size={20} color={colors.tint} />
+              <TouchableOpacity
+                style={styles.statCard}
+                activeOpacity={1}
+                onPressIn={() => handleCardPressIn(3)}
+                onPressOut={() => handleCardPressOut(3)}
+              >
+                <LinearGradient
+                  colors={[colors.tint + '12', colors.tint + '05']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.statCardGradient}
+                >
+                  <View style={styles.statCardContent}>
+                    <View style={styles.statCardLeft}>
+                      <View style={[styles.statIconContainer, { backgroundColor: colors.tint + '20' }]}>
+                        <View style={[styles.iconGlow, { backgroundColor: colors.tint + '30' }]} />
+                        <Ionicons name="trending-up" size={22} color={colors.tint} />
+                      </View>
+                      <View style={styles.statCardInfo}>
+                        <Text style={styles.statCardLabel}>This Month</Text>
+                        <Text style={styles.statCardDescription}>Total bookings this month</Text>
+                      </View>
+                    </View>
+                    <View style={styles.statCardRight}>
+                      <Text style={[styles.statCardValue, { color: colors.tint }]}>
+                        {statsLoading ? '—' : stats.monthlyBookings}
+                      </Text>
+                      {!statsLoading && (
+                        <View style={styles.trendContainer}>
+                          <Ionicons
+                            name={getTrendIcon(trends.monthlyBookings.direction)}
+                            size={12}
+                            color={getTrendColor(trends.monthlyBookings.direction)}
+                          />
+                          <Text style={[styles.trendText, { color: getTrendColor(trends.monthlyBookings.direction) }]}>
+                            {trends.monthlyBookings.percentage}%
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                  <View style={styles.statCardInfo}>
-                    <Text style={styles.statCardLabel}>This Month</Text>
-                    <Text style={styles.statCardDescription}>Total bookings this month</Text>
-                  </View>
-                </View>
-                <View style={styles.statCardRight}>
-                  <Text style={[styles.statCardValue, { color: colors.tint }]}>
-                    {statsLoading ? '—' : stats.monthlyBookings}
-                  </Text>
-                </View>
-              </View>
-            </TouchableOpacity>
+                </LinearGradient>
+              </TouchableOpacity>
+            </Animated.View>
           </View>
         </View>
-
-        <View style={styles.quickActionsSection}>
-          <Text style={styles.sectionTitle}>Quick Actions</Text>
-          <View style={styles.quickActionsGrid}>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              activeOpacity={0.7}
-              onPress={() => router.push('/reports')}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.tint + '15' }]}>
-                <Ionicons name="bar-chart" size={24} color={colors.tint} />
-              </View>
-              <Text style={styles.quickActionLabel}>Reports</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              activeOpacity={0.7}
-              onPress={() => router.push('/calendar')}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.statusSuccess + '15' }]}>
-                <Ionicons name="calendar" size={24} color={colors.statusSuccess} />
-              </View>
-              <Text style={styles.quickActionLabel}>Schedule</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              activeOpacity={0.7}
-              onPress={() => router.push('/club-health')}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.statusWarning + '15' }]}>
-                <Ionicons name="fitness" size={24} color={colors.statusWarning} />
-              </View>
-              <Text style={styles.quickActionLabel}>Club Health</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.quickActionCard}
-              activeOpacity={0.7}
-              onPress={() => router.push('/notification-settings')}
-            >
-              <View style={[styles.quickActionIcon, { backgroundColor: colors.statusInfo + '15' }]}>
-                <Ionicons name="settings" size={24} color={colors.statusInfo} />
-              </View>
-              <Text style={styles.quickActionLabel}>Settings</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
         {/* <View style={styles.bookingsSection}>
           <View style={styles.sectionHeaderWithAction}>
             <Text style={styles.sectionTitle}>Today's Bookings</Text>
@@ -561,13 +755,16 @@ export default function AdminDashboardScreen() {
         <View style={{ height: 150 }} />
       </ScrollView>
     </Animated.View>
+    </View>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.backgroundSecondary,
+  },
+  contentContainer: {
+    flex: 1,
   },
   scrollContainer: {
     flex: 1,
@@ -587,18 +784,20 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
 
   // Header Styles
   header: {
+    marginBottom: Theme.spacing.lg,
+    overflow: 'hidden',
+  },
+  headerGradient: {
     paddingHorizontal: Theme.spacing.lg,
     paddingTop: Theme.spacing.xl,
-    paddingBottom: Theme.spacing.lg,
-    backgroundColor: palette.background,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    paddingBottom: Theme.spacing.xl,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 2,
-    marginBottom: Theme.spacing.md,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerTop: {
     flexDirection: 'row',
@@ -625,16 +824,22 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginTop: 2,
   },
   syncBadge: {
-    backgroundColor: palette.tint + '10',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: palette.tint + '20',
+    backgroundColor: palette.tint + '15',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 24,
+    borderWidth: 1.5,
+    borderColor: palette.tint + '30',
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 2,
   },
   syncBadgeOffline: {
-    backgroundColor: palette.statusError + '10',
-    borderColor: palette.statusError + '20',
+    backgroundColor: palette.statusError + '15',
+    borderColor: palette.statusError + '30',
+    shadowColor: palette.statusError,
   },
   syncBadgeContent: {
     flexDirection: 'row',
@@ -672,20 +877,23 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
 
   // Modern Banking App Style Stats
   statsGrid: {
-    gap: Theme.spacing.sm,
+    gap: Theme.spacing.xs,
   },
   statCard: {
-    backgroundColor: palette.background,
-    borderRadius: 16,
-    padding: Theme.spacing.lg,
-    marginBottom: Theme.spacing.sm,
+    borderRadius: 20,
+    marginBottom: Theme.spacing.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.02,
-    shadowRadius: 4,
-    elevation: 1,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  statCardGradient: {
+    padding: Theme.spacing.lg,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: palette.borderLight,
+    borderColor: palette.borderLight + '40',
   },
   statCardContent: {
     flexDirection: 'row',
@@ -699,11 +907,19 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.md,
   },
   statIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    opacity: 0.4,
   },
   statCardInfo: {
     flex: 1,
@@ -721,11 +937,21 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statCardRight: {
     alignItems: 'flex-end',
+    gap: 4,
   },
   statCardValue: {
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: Theme.typography.fonts.bold,
-    lineHeight: 32,
+    lineHeight: 36,
+  },
+  trendContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  trendText: {
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: Theme.typography.fonts.semibold,
   },
 
   // Quick Actions Styles

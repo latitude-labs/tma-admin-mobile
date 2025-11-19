@@ -1,19 +1,22 @@
-import { Badge, Card, Chip, Dropdown } from '@/components/ui';
+import { BookingCreationModal } from '@/components/features/BookingCreationModal';
+import { Card, Dropdown } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { bookingsService } from '@/services/api/bookings.service';
 import { useBookingStore } from '@/store/bookingStore';
-import { useClubStore } from '@/store/clubStore';
 import { Booking } from '@/types/api';
 import { Ionicons } from '@expo/vector-icons';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   Dimensions,
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -23,15 +26,13 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import Animated, {
   Easing,
   FadeIn,
   FadeInDown,
-  FadeInUp,
-  Layout,
-  SlideInRight,
   interpolate,
   useAnimatedStyle,
   useSharedValue,
@@ -58,9 +59,8 @@ export default function TrialsScreen() {
   const styles = useMemo(() => createStyles(palette), [palette]);
   const router = useRouter();
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [filterStatus, setFilterStatus] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [viewMode, setViewMode] = useState<'mine' | 'all'>('mine');
+  const [viewMode, setViewMode] = useState<'outstanding' | 'all'>('outstanding');
   const searchFocused = useSharedValue(0);
   const pulseOpacity = useSharedValue(0.3);
   const tabIndicatorPosition = useSharedValue(0);
@@ -75,15 +75,17 @@ export default function TrialsScreen() {
   const [reminderDate, setReminderDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
+  const [alternativePhoneNumber, setAlternativePhoneNumber] = useState('');
+  const [showCreateBookingModal, setShowCreateBookingModal] = useState(false);
 
   const {
     bookings,  // Already filtered and paginated
+    allBookings: allBookingsFromStore,  // Complete unfiltered dataset for Outstanding calculation
     isLoading,
     error,
     isOffline,
     lastSync,
     pagination,
-    viewMode: storeViewMode,
     setViewMode: storeSetViewMode,
     fetchBookings,
     fetchBookingsPage,
@@ -93,21 +95,21 @@ export default function TrialsScreen() {
     setSearchQuery: updateSearchQuery,
     applyFiltersAndPagination,
   } = useBookingStore();
-  const { clubs } = useClubStore();
 
   useEffect(() => {
     // Defer initial data load to prevent blocking UI
     if (isInitialLoad) {
-      setIsInitialLoad(false);
-
       // Use setTimeout to defer heavy operation
       const timer = setTimeout(() => {
         const bookingState = useBookingStore.getState();
         if (!bookingState.isInitialized || bookingState.allBookings.length === 0) {
-          fetchBookings();
+          fetchBookings().finally(() => {
+            setIsInitialLoad(false);
+          });
         } else {
           // Just reapply filters for initial render
           applyFiltersAndPagination();
+          setIsInitialLoad(false);
         }
       }, 10); // Small delay to allow UI to render
 
@@ -123,14 +125,102 @@ export default function TrialsScreen() {
   }, [viewMode, isInitialLoad]);
 
   useEffect(() => {
-    setFilters({ status: filterStatus as any, searchQuery });
+    setFilters({ searchQuery });
     updateSearchQuery(searchQuery);
-  }, [filterStatus, searchQuery]);
+  }, [searchQuery]);
 
-  const switchViewMode = (mode: 'mine' | 'all') => {
+  // Animation hooks for loading state - MUST be called unconditionally
+  useEffect(() => {
+    if (isLoading && bookings.length === 0) {
+      pulseOpacity.value = withSequence(
+        withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) })
+      );
+    }
+  }, [isLoading, bookings.length]);
+
+  // CRITICAL: All hooks MUST be called before early returns
+  // The bookings array is already filtered and sorted by the store based on the selected view mode
+
+  const loadingAnimatedStyle = useAnimatedStyle(() => ({
+    opacity: pulseOpacity.value,
+  }));
+
+  const searchAnimatedStyle = useAnimatedStyle(() => ({
+    borderColor: withSpring(
+      searchFocused.value ? palette.tint : palette.borderDefault,
+      { damping: 15, stiffness: 150 }
+    ),
+    borderWidth: withSpring(searchFocused.value ? 2 : 1),
+  }));
+
+  const tabIndicatorAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(
+          tabIndicatorPosition.value,
+          [0, 1],
+          [4, screenWidth / 2 - 12]
+        ),
+      },
+    ],
+  }));
+
+  // CRITICAL: Early returns must happen AFTER all hooks (useState, useEffect, useMemo, useAnimatedStyle)
+  // IMPORTANT: Only use early return for initial load, NOT during refresh to avoid "Rendered fewer hooks" error
+
+  // Loading state - Show during:
+  // 1. Initial load before data fetch starts (isInitialLoad = true)
+  // 2. When actively loading and no cached data exists
+  const hasNoData = bookings.length === 0 && allBookingsFromStore.length === 0;
+  const shouldShowLoading = (isInitialLoad && hasNoData) || (isLoading && hasNoData);
+
+  if (shouldShowLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Animated.View style={loadingAnimatedStyle}>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={palette.tint} />
+            <Text style={styles.loadingText}>Loading trial bookings...</Text>
+          </View>
+        </Animated.View>
+      </View>
+    );
+  }
+
+  // Error state - ONLY when no data at all and not loading
+  if (error && hasNoData && !isLoading) {
+    return (
+      <View style={[styles.container, styles.centerContent]}>
+        <Animated.View
+          entering={FadeIn.duration(400)}
+          style={styles.errorContainer}
+        >
+          <View style={styles.errorIconContainer}>
+            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
+          </View>
+          <Text style={styles.errorTitle}>Something went wrong</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <Pressable
+            style={styles.retryButton}
+            onPress={() => {
+              if (Platform.OS === 'ios') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+              fetchBookings();
+            }}
+          >
+            <Text style={styles.retryButtonText}>Try Again</Text>
+          </Pressable>
+        </Animated.View>
+      </View>
+    );
+  }
+
+  const switchViewMode = (mode: 'outstanding' | 'all') => {
     setViewMode(mode);
     storeSetViewMode(mode);
-    tabIndicatorPosition.value = withSpring(mode === 'mine' ? 0 : 1);
+    tabIndicatorPosition.value = withSpring(mode === 'outstanding' ? 0 : 1);
     if (Platform.OS === 'ios') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
@@ -139,16 +229,12 @@ export default function TrialsScreen() {
   };
 
   const statusConfig: Record<string, { color: string; icon: string }> = {
-    
+
     scheduled: { color: palette.statusInfo, icon: 'calendar' },
     completed: { color: palette.statusSuccess, icon: 'checkmark-circle' },
     'no-show': { color: palette.statusError, icon: 'close-circle' },
     cancelled: { color: palette.statusWarning, icon: 'alert-circle' },
   };
-
-  // Use the already filtered and paginated bookings from the store
-  // The store handles all filtering and pagination
-  const sortedBookings = bookings;
 
   const getBookingStatus = (booking: any) => {
     // First check if we have an attendance_status field (new way)
@@ -174,18 +260,208 @@ export default function TrialsScreen() {
     const isTomorrow = date.toDateString() === tomorrow.toDateString();
 
     if (isToday) {
-      return `Today at ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      return `Today at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
     } else if (isTomorrow) {
-      return `Tomorrow at ${date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}`;
+      return `Tomorrow at ${date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
     } else {
-      return date.toLocaleDateString('en-GB', {
+      return date.toLocaleDateString('en-US', {
         weekday: 'short',
         day: 'numeric',
         month: 'short',
-        hour: '2-digit',
+        hour: 'numeric',
         minute: '2-digit',
       });
     }
+  };
+
+  const renderBookingCard = (booking: Booking, index: number) => {
+    const status = getBookingStatus(booking);
+    const statusInfo = statusConfig[status];
+
+    // Get club - either directly from booking or from class_time
+    const club = booking.club || booking.class_time?.club;
+
+    // Debug logging (can remove after confirming it works)
+    if (index === 0) {
+      console.log('[TrialsScreen] First booking data:', {
+        id: booking.id,
+        hasClub: !!booking.club,
+        hasClassTime: !!booking.class_time,
+        hasClassTimeClub: !!booking.class_time?.club,
+        clubName: club?.name,
+      });
+    }
+
+    return (
+      <AnimatedPressable
+        key={booking.id}
+        onPress={() => {
+          if (Platform.OS === 'ios') {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          }
+          router.push({
+            pathname: '/booking-detail',
+            params: { id: booking.id.toString() }
+          });
+        }}
+      >
+        <AnimatedCard
+          variant="elevated"
+          style={styles.trialCard}
+          entering={FadeInDown.delay(index * 80).duration(400).springify()}
+        >
+          <View style={styles.trialHeader}>
+            <View style={styles.trialHeaderLeft}>
+              <View style={styles.avatarContainer}>
+                <Text style={styles.avatarText}>
+                  {booking.names?.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase() || ''}
+                </Text>
+              </View>
+              <View style={styles.nameSection}>
+                <Text style={styles.trialName}>{booking.names || ''}</Text>
+                <View style={styles.statusContainer}>
+                  <View style={[styles.statusDot, { backgroundColor: statusInfo?.color }]} />
+                  <Text style={[styles.statusText, { color: statusInfo?.color }]}>
+                    {status === 'completed' ? 'Attended' : status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                  </Text>
+                </View>
+              </View>
+            </View>
+            <View style={styles.statusBadgeContainer}>
+              {booking.status ? (
+                <View style={[
+                  styles.statusBadge,
+                  {
+                    backgroundColor: `${getStatusColor(booking.status, palette)}15`,
+                    borderColor: getStatusColor(booking.status, palette),
+                  }
+                ]}>
+                  <Ionicons
+                    name={getStatusIcon(booking.status)}
+                    size={16}
+                    color={getStatusColor(booking.status, palette)}
+                  />
+                  <Text style={[styles.statusBadgeText, { color: getStatusColor(booking.status, palette) }]}>
+                    {getStatusLabel(booking.status)}
+                  </Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          <View style={styles.trialDetails}>
+            <View style={styles.detailGrid}>
+              {club && (
+                <View style={styles.detailItem}>
+                  <View style={styles.detailIconContainer}>
+                    <Ionicons name="business" size={14} color={palette.statusInfo} />
+                  </View>
+                  <Text style={styles.detailText}>{club.name || ''}</Text>
+                </View>
+              )}
+
+              <View style={styles.detailItem}>
+                <View style={styles.detailIconContainer}>
+                  <Ionicons name="calendar" size={14} color={palette.tint} />
+                </View>
+                <Text style={styles.detailText}>{formatDate(booking.start_time)}</Text>
+              </View>
+
+              {booking.class_time?.name ? (
+                <View style={styles.detailItem}>
+                  <View style={styles.detailIconContainer}>
+                    <Ionicons
+                      name={'people'}
+                      size={14}
+                      color={palette.statusWarning}
+                    />
+                  </View>
+                  <Text style={styles.detailText}>{booking.class_time.name}</Text>
+                </View>
+              ) : null}
+            </View>
+          </View>
+
+          {/* Show action buttons based on booking state */}
+          {(() => {
+            const isPastBooking = new Date(booking.start_time) < new Date();
+
+            // For pending status bookings that are completed (checked in), show only Kit Status button
+            if (booking.status === 'pending' && (booking.checked_in_at || status === 'completed')) {
+              return (
+                <Animated.View
+                  entering={FadeIn.delay(200).duration(300)}
+                  style={styles.actionButtons}
+                >
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      { flex: 1 },
+                      pressed && styles.actionButtonPressed
+                    ]}
+                    onPress={() => handleBookingPress(booking)}
+                    accessibilityLabel="Update kit status"
+                    accessibilityRole="button"
+                    accessibilityHint="Opens payment status selection to record kit items and conversion status"
+                  >
+                    <Ionicons name="shirt" size={16} color={palette.tint} />
+                    <Text style={[styles.actionButtonText, { color: palette.tint }]}>
+                      Update Kit Status
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              );
+            }
+
+            // For pending status bookings that are in the past and scheduled (not checked in), show No Show and Check In buttons
+            if (booking.status === 'pending' && status === 'scheduled' && isPastBooking) {
+              return (
+                <Animated.View
+                  entering={FadeIn.delay(200).duration(300)}
+                  style={styles.actionButtons}
+                >
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      styles.actionButtonOutline,
+                      pressed && styles.actionButtonPressed
+                    ]}
+                    onPress={() => handleAttendanceStatusUpdate(booking.id, 'no-show')}
+                    accessibilityLabel="Mark as no show"
+                    accessibilityRole="button"
+                    accessibilityHint="Records that participant did not attend their trial session"
+                  >
+                    <Ionicons name="close" size={16} color={palette.statusError} />
+                    <Text style={[styles.actionButtonText, { color: palette.statusError }]}>
+                      No Show
+                    </Text>
+                  </Pressable>
+                  <Pressable
+                    style={({ pressed }) => [
+                      styles.actionButton,
+                      styles.actionButtonPrimary,
+                      pressed && styles.actionButtonPressed
+                    ]}
+                    onPress={() => handleBookingPress(booking)}
+                    accessibilityLabel="Check in participant"
+                    accessibilityRole="button"
+                    accessibilityHint="Marks participant as attended and enables payment status update"
+                  >
+                    <Ionicons name="checkmark" size={16} color={palette.statusSuccess} />
+                    <Text style={[styles.actionButtonText, { color: palette.statusSuccess }]}>
+                      Check In
+                    </Text>
+                  </Pressable>
+                </Animated.View>
+              );
+            }
+
+            // No action buttons for other states (when status is not pending or for future bookings)
+            return null;
+          })()}
+        </AnimatedCard>
+      </AnimatedPressable>
+    );
   };
 
   const tshirtSizes = ['Small Youth', 'Medium Youth', 'Large Youth', 'XL Youth', 'Small', 'Medium', 'Large', 'XL', '2XL', '3XL'];
@@ -205,6 +481,16 @@ export default function TrialsScreen() {
     setShowStatusModal(true);
   };
 
+  /**
+   * Handles payment status selection and routes to appropriate sub-flow.
+   *
+   * Flow routing:
+   * - Paid statuses (paid_dd, paid_awaiting_dd) → Kit selection modal (2-step flow)
+   * - Unpaid follow-up (unpaid_coach_call) → Reminder scheduling modal
+   * - Other statuses (unpaid_dd, not_joining) → Direct submission (no additional data needed)
+   *
+   * @param status - The selected payment status
+   */
   const handleStatusSelect = (status: BookingStatus) => {
     setSelectedStatus(status);
     setShowStatusModal(false);
@@ -229,12 +515,32 @@ export default function TrialsScreen() {
     }
   };
 
+  /**
+   * Submits booking conversion status update to the API with optional kit items or reminder.
+   *
+   * This function constructs the API request based on provided parameters:
+   * - Always includes the payment status
+   * - Optionally includes kit items and package name (for paid statuses)
+   * - Optionally includes reminder time (for unpaid_coach_call status)
+   * - Optionally includes alternative phone number (for unpaid_coach_call status)
+   *
+   * On success: Shows success alert, resets modal state, and refreshes booking list
+   * On error: Shows error alert with failure message
+   *
+   * @param bookingId - The ID of the booking to update
+   * @param status - The new payment status
+   * @param kitItemsData - Optional array of kit items (for paid statuses)
+   * @param packageName - Optional package name: 'basic', 'silver', or 'gold'
+   * @param reminderTime - Optional reminder timestamp in ISO 8601 format
+   * @param alternativePhone - Optional alternative phone number to use instead of booking phone
+   */
   const submitStatusUpdate = async (
     bookingId: number,
     status: BookingStatus,
     kitItemsData?: KitItem[],
     packageName?: 'basic' | 'silver' | 'gold',
-    reminderTime?: string
+    reminderTime?: string,
+    alternativePhone?: string
   ) => {
     const updateParams: any = { status };
 
@@ -250,8 +556,12 @@ export default function TrialsScreen() {
       updateParams.reminder_time = reminderTime;
     }
 
+    if (alternativePhone) {
+      updateParams.alternative_phone_number = alternativePhone;
+    }
+
     try {
-      const response = await bookingsService.updateBookingConversionStatus(bookingId, updateParams);
+      await bookingsService.updateBookingConversionStatus(bookingId, updateParams);
 
       Alert.alert('Success', `Booking ${status === 'not_joining' ? 'marked as not joining' : 'updated successfully'}`);
 
@@ -261,6 +571,7 @@ export default function TrialsScreen() {
       setKitItems([]);
       setSelectedPackage(null);
       setKitSelectionStep(1);
+      setAlternativePhoneNumber('');
 
       // Reload bookings
       refreshBookings();
@@ -293,16 +604,8 @@ export default function TrialsScreen() {
     setShowReminderModal(false);
     if (selectedBooking && selectedStatus) {
       // The reminder will be created automatically by the API when updating status with reminder_time
-      submitStatusUpdate(selectedBooking.id, selectedStatus, undefined, undefined, reminderDate.toISOString());
+      submitStatusUpdate(selectedBooking.id, selectedStatus, undefined, undefined, reminderDate.toISOString(), alternativePhoneNumber || undefined);
     }
-  };
-
-  const addKitItem = () => {
-    setKitItems([...kitItems, { type: 'tshirt', size: '' }]);
-  };
-
-  const removeKitItem = (index: number) => {
-    setKitItems(kitItems.filter((_, i) => i !== index));
   };
 
   const updateKitItem = (index: number, field: 'type' | 'size', value: string) => {
@@ -354,88 +657,56 @@ export default function TrialsScreen() {
     }
   };
 
-  const getStatusBadgeVariant = (status?: string) => {
-    if (!status || status === 'pending') return 'secondary';
+  const getStatusColor = (status: string, palette: ThemeColors) => {
     switch (status) {
-      case 'paid_dd': return 'success';
-      case 'paid_awaiting_dd': return 'info';
+      case 'paid_dd': return palette.statusSuccess;
+      case 'paid_awaiting_dd': return palette.statusInfo;
       case 'unpaid_dd':
-      case 'unpaid_coach_call': return 'warning';
-      case 'not_joining': return 'error';
-      default: return 'secondary';
+      case 'unpaid_coach_call': return palette.statusWarning;
+      case 'not_joining': return palette.statusError;
+      default: return palette.textSecondary;
     }
   };
 
-  useEffect(() => {
-    if (isLoading && bookings.length === 0) {
-      pulseOpacity.value = withSequence(
-        withTiming(1, { duration: 800, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.3, { duration: 800, easing: Easing.inOut(Easing.ease) })
-      );
+  const getStatusIcon = (status: string): any => {
+    switch (status) {
+      case 'paid_dd': return 'checkmark-circle';
+      case 'paid_awaiting_dd': return 'time';
+      case 'unpaid_dd': return 'card-outline';
+      case 'unpaid_coach_call': return 'call';
+      case 'not_joining': return 'close-circle';
+      default: return 'ellipse';
     }
-  }, [isLoading, bookings.length]);
+  };
 
-  const loadingAnimatedStyle = useAnimatedStyle(() => ({
-    opacity: pulseOpacity.value,
-  }));
-
-  // Loading state
-  if (isLoading && bookings.length === 0) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Animated.View style={loadingAnimatedStyle}>
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={palette.tint} />
-            <Text style={styles.loadingText}>Loading trial bookings...</Text>
-          </View>
-        </Animated.View>
-      </View>
-    );
-  }
-
-  // Error state
-  if (error && bookings.length === 0) {
-    return (
-      <View style={[styles.container, styles.centerContent]}>
-        <Animated.View
-          entering={FadeIn.duration(400)}
-          style={styles.errorContainer}
-        >
-          <View style={styles.errorIconContainer}>
-            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
-          </View>
-          <Text style={styles.errorTitle}>Something went wrong</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <Pressable
-            style={styles.retryButton}
-            onPress={() => {
-              if (Platform.OS === 'ios') {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }
-              fetchBookings();
-            }}
-          >
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </Pressable>
-        </Animated.View>
-      </View>
-    );
-  }
-
-  const searchAnimatedStyle = useAnimatedStyle(() => ({
-    borderColor: withSpring(
-      searchFocused.value ? palette.tint : palette.borderDefault,
-      { damping: 15, stiffness: 150 }
-    ),
-    borderWidth: withSpring(searchFocused.value ? 2 : 1),
-  }));
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'paid_dd': return 'Paid';
+      case 'paid_awaiting_dd': return 'Paid (DD Pending)';
+      case 'unpaid_dd': return 'Unpaid (DD)';
+      case 'unpaid_coach_call': return 'Follow Up';
+      case 'not_joining': return 'Not Joining';
+      default: return 'Pending';
+    }
+  };
 
   return (
     <>
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[
+          palette.backgroundSecondary,
+          palette.background,
+          palette.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
     <ScrollView
-      style={styles.container}
+      style={styles.scrollContainer}
       contentContainerStyle={styles.scrollContent}
       showsVerticalScrollIndicator={false}
+      keyboardShouldPersistTaps="handled"
       refreshControl={
         <RefreshControl
           refreshing={isLoading}
@@ -449,6 +720,10 @@ export default function TrialsScreen() {
           entering={FadeInDown.duration(400).springify()}
           style={styles.header}
         >
+          <LinearGradient
+            colors={[palette.background, palette.background + 'F0']}
+            style={styles.headerGradient}
+          >
           <View style={styles.headerInfo}>
             <View style={styles.titleRow}>
               <Text style={styles.title}>Trial Bookings</Text>
@@ -471,15 +746,16 @@ export default function TrialsScreen() {
               if (Platform.OS === 'ios') {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
               }
+              setShowCreateBookingModal(true);
             }}
             style={({ pressed }) => [
               styles.addButton,
               pressed && styles.addButtonPressed
             ]}
           >
-            <Ionicons name="add" size={20} color={palette.textInverse} />
-            <Text style={styles.addButtonText}>Add Trial</Text>
+            <Ionicons name="add" size={24} color={palette.tint} />
           </AnimatedPressable>
+          </LinearGradient>
         </Animated.View>
 
         {lastSync && (
@@ -487,10 +763,10 @@ export default function TrialsScreen() {
             entering={FadeIn.delay(200).duration(300)}
             style={styles.syncText}
           >
-            Last synced {new Date(lastSync).toLocaleString('en-GB', {
+            Last synced {new Date(lastSync).toLocaleString('en-US', {
               day: 'numeric',
               month: 'short',
-              hour: '2-digit',
+              hour: 'numeric',
               minute: '2-digit',
             })}
           </Animated.Text>
@@ -537,51 +813,21 @@ export default function TrialsScreen() {
         </Animated.View>
 
         <Animated.View
-          entering={FadeInDown.delay(200).duration(400).springify()}
-        >
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterContainer}>
-            {['All', 'Scheduled', 'Completed', 'Cancelled', 'No Show'].map((status, index) => {
-              const value = status === 'All' ? null : status.toLowerCase().replace(' ', '-');
-              const isSelected = filterStatus === value || (status === 'All' && !filterStatus);
-
-              return (
-                <Animated.View
-                  key={status}
-                  entering={SlideInRight.delay(index * 50).duration(300).springify()}
-                >
-                  <Chip
-                    label={status}
-                    selected={isSelected}
-                    onPress={() => {
-                      setFilterStatus(value);
-                      if (Platform.OS === 'ios') {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }
-                    }}
-                    style={styles.filterChip}
-                  />
-                </Animated.View>
-              );
-            })}
-          </ScrollView>
-        </Animated.View>
-
-        <Animated.View
           entering={FadeInDown.delay(250).duration(400).springify()}
           style={styles.viewModeContainer}
         >
           <View style={styles.viewModeTabs}>
             <Pressable
               style={styles.viewModeTab}
-              onPress={() => switchViewMode('mine')}
+              onPress={() => switchViewMode('outstanding')}
             >
               <Text
                 style={[
                   styles.viewModeTabText,
-                  viewMode === 'mine' && { color: palette.tint }
+                  viewMode === 'outstanding' && { color: palette.tint }
                 ]}
               >
-                Mine
+                Outstanding
               </Text>
             </Pressable>
             <Pressable
@@ -601,206 +847,20 @@ export default function TrialsScreen() {
           <Animated.View
             style={[
               styles.viewModeIndicator,
-              useAnimatedStyle(() => ({
-                transform: [
-                  {
-                    translateX: interpolate(
-                      tabIndicatorPosition.value,
-                      [0, 1],
-                      [4, screenWidth / 2 - 12]
-                    ),
-                  },
-                ],
-              }))
+              tabIndicatorAnimatedStyle
             ]}
           />
         </Animated.View>
 
-        {sortedBookings.length > 0 ? (
+        {/* Bookings List */}
+        {bookings.length > 0 ? (
           <>
             <View style={styles.bookingsList}>
-              {sortedBookings.map((booking, index) => {
-                const status = getBookingStatus(booking);
-                const statusInfo = statusConfig[status];
-
-                return (
-                  <AnimatedPressable
-                    key={booking.id}
-                    onPress={() => {
-                      if (Platform.OS === 'ios') {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                      }
-                      router.push({
-                        pathname: '/booking-detail',
-                        params: { id: booking.id.toString() }
-                      });
-                    }}
-                  >
-                    <AnimatedCard
-                      variant="elevated"
-                      style={styles.trialCard}
-                      entering={FadeInDown.delay(index * 80).duration(400).springify()}
-                      layout={Layout.springify()}
-                    >
-                      <View style={styles.trialHeader}>
-                        <View style={styles.trialHeaderLeft}>
-                          <View style={styles.avatarContainer}>
-                            <Text style={styles.avatarText}>
-                              {booking.names?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                            </Text>
-                          </View>
-                          <View style={styles.nameSection}>
-                            <Text style={styles.trialName}>{booking.names}</Text>
-                            <View style={styles.statusContainer}>
-                              <View style={[styles.statusDot, { backgroundColor: statusInfo?.color }]} />
-                              <Text style={[styles.statusText, { color: statusInfo?.color }]}>
-                                {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
-                              </Text>
-                            </View>
-                          </View>
-                        </View>
-                        <View style={styles.badgeContainer}>
-                          {booking.status ? (
-                            <Badge
-                              variant={getStatusBadgeVariant(booking.status)}
-                              size="sm"
-                              style={styles.classBadge}
-                            >
-                              {booking.status === 'pending' && 'Pending'}
-                              {booking.status === 'paid_dd' && 'Paid DD'}
-                              {booking.status === 'paid_awaiting_dd' && 'Paid (Awaiting DD)'}
-                              {booking.status === 'unpaid_dd' && 'Unpaid DD'}
-                              {booking.status === 'unpaid_coach_call' && 'Follow Up'}
-                              {booking.status === 'not_joining' && 'Not Joining'}
-                            </Badge>
-                          ) : null}
-                          {booking.class_time?.name ? (
-                            <Badge
-                              variant={booking.class_time.name.toLowerCase().includes('kid') ? 'warning' : 'info'}
-                              size="sm"
-                              style={styles.classBadge}
-                            >
-                              {booking.class_time.name}
-                            </Badge>
-                          ) : null}
-                        </View>
-                      </View>
-
-                      <View style={styles.trialDetails}>
-                        <View style={styles.detailGrid}>
-                          <View style={styles.detailItem}>
-                            <View style={styles.detailIconContainer}>
-                              <Ionicons name="calendar" size={14} color={palette.tint} />
-                            </View>
-                            <Text style={styles.detailText}>{formatDate(booking.start_time)}</Text>
-                          </View>
-
-                          {booking.club && (
-                            <View style={styles.detailItem}>
-                              <View style={styles.detailIconContainer}>
-                                <Ionicons name="business" size={14} color={palette.statusInfo} />
-                              </View>
-                              <Text style={styles.detailText}>{booking.club.name}</Text>
-                            </View>
-                          )}
-
-                          {booking.email && (
-                            <View style={styles.detailItem}>
-                              <View style={styles.detailIconContainer}>
-                                <Ionicons name="mail" size={14} color={palette.statusSuccess} />
-                              </View>
-                              <Text style={styles.detailText}>{booking.email}</Text>
-                            </View>
-                          )}
-
-                          {booking.phone && (
-                            <View style={styles.detailItem}>
-                              <View style={styles.detailIconContainer}>
-                                <Ionicons name="call" size={14} color={palette.statusWarning} />
-                              </View>
-                              <Text style={styles.detailText}>{booking.phone}</Text>
-                            </View>
-                          )}
-                        </View>
-                      </View>
-
-                      {/* Show action buttons based on booking state */}
-                      {(() => {
-                        // For pending status bookings that are completed (checked in), show only Kit Status button
-                        if (booking.status === 'pending' && (booking.checked_in_at || status === 'completed')) {
-                          return (
-                            <Animated.View
-                              entering={FadeIn.delay(200).duration(300)}
-                              style={styles.actionButtons}
-                            >
-                              <Pressable
-                                style={({ pressed }) => [
-                                  styles.actionButton,
-                                  { flex: 1 },
-                                  pressed && styles.actionButtonPressed
-                                ]}
-                                onPress={() => handleBookingPress(booking)}
-                              >
-                                <Ionicons name="shirt" size={16} color={palette.tint} />
-                                <Text style={[styles.actionButtonText, { color: palette.tint }]}>
-                                  Update Kit Status
-                                </Text>
-                              </Pressable>
-                            </Animated.View>
-                          );
-                        }
-
-                        // For pending status bookings that are scheduled (not checked in), show No Show and Check In buttons
-                        if (booking.status === 'pending' && status === 'scheduled') {
-                          return (
-                            <Animated.View
-                              entering={FadeIn.delay(200).duration(300)}
-                              style={styles.actionButtons}
-                            >
-                              <Pressable
-                                style={({ pressed }) => [
-                                  styles.actionButton,
-                                  styles.actionButtonOutline,
-                                  pressed && styles.actionButtonPressed
-                                ]}
-                                onPress={() => handleAttendanceStatusUpdate(booking.id, 'no-show')}
-                              >
-                                <Ionicons name="close" size={16} color={palette.statusError} />
-                                <Text style={[styles.actionButtonText, { color: palette.statusError }]}>
-                                  No Show
-                                </Text>
-                              </Pressable>
-                              <Pressable
-                                style={({ pressed }) => [
-                                  styles.actionButton,
-                                  styles.actionButtonPrimary,
-                                  pressed && styles.actionButtonPressed
-                                ]}
-                                onPress={() => handleBookingPress(booking)}
-                              >
-                                <Ionicons name="checkmark" size={16} color={palette.statusSuccess} />
-                                <Text style={[styles.actionButtonText, { color: palette.statusSuccess }]}>
-                                  Check In
-                                </Text>
-                              </Pressable>
-                            </Animated.View>
-                          );
-                        }
-
-                        // No action buttons for other states (when status is not pending)
-                        return null;
-                      })()}
-                    </AnimatedCard>
-                  </AnimatedPressable>
-                );
-              })}
+              {bookings.map((booking, index) => renderBookingCard(booking, index))}
             </View>
 
             {!isOffline && pagination.totalPages > 1 && (
-              <Animated.View
-                entering={FadeInUp.delay(300).duration(400).springify()}
-                style={styles.paginationContainer}
-              >
+              <View style={styles.paginationContainer}>
                 <Pressable
                   disabled={pagination.currentPage === 1}
                   onPress={() => {
@@ -852,7 +912,7 @@ export default function TrialsScreen() {
                     color={pagination.currentPage === pagination.totalPages ? palette.textTertiary : palette.tint}
                   />
                 </Pressable>
-              </Animated.View>
+              </View>
             )}
           </>
         ) : (
@@ -888,6 +948,7 @@ export default function TrialsScreen() {
         )}
       </View>
     </ScrollView>
+    </View>
 
       <Modal
         visible={showStatusModal}
@@ -899,7 +960,7 @@ export default function TrialsScreen() {
           style={styles.modalContainer}
           onPress={() => setShowStatusModal(false)}
         >
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+          <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 Update Booking Status
@@ -911,16 +972,20 @@ export default function TrialsScreen() {
                 <Ionicons name="close" size={24} color={palette.textSecondary} />
               </Pressable>
             </View>
-            <View style={styles.modalSubtitleContainer}>
-              <View style={styles.modalAvatar}>
-                <Text style={styles.modalAvatarText}>
-                  {selectedBooking?.names?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
-                </Text>
+            <ScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={styles.modalScrollContent}
+            >
+              <View style={styles.modalSubtitleContainer}>
+                <View style={styles.modalAvatar}>
+                  <Text style={styles.modalAvatarText}>
+                    {selectedBooking?.names?.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase()}
+                  </Text>
+                </View>
+                <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
               </View>
-              <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
-            </View>
 
-            <View style={styles.statusOptionsContainer}>
+              <View style={styles.statusOptionsContainer}>
               <Pressable
                 style={({ pressed }) => [
                   styles.statusOption,
@@ -1005,8 +1070,9 @@ export default function TrialsScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
               </Pressable>
-            </View>
-          </Pressable>
+              </View>
+            </ScrollView>
+          </View>
         </Pressable>
       </Modal>
 
@@ -1016,11 +1082,10 @@ export default function TrialsScreen() {
         transparent={true}
         onRequestClose={() => setShowKitModal(false)}
       >
-        <Pressable
-          style={styles.modalContainer}
-          onPress={() => setShowKitModal(false)}
-        >
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
+        <TouchableWithoutFeedback onPress={() => setShowKitModal(false)}>
+          <View style={styles.modalContainer}>
+            <TouchableWithoutFeedback onPress={() => {}}>
+              <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
               {kitSelectionStep === 2 && (
                 <Pressable
@@ -1173,8 +1238,10 @@ export default function TrialsScreen() {
                 </Pressable>
               </View>
             )}
-          </Pressable>
-        </Pressable>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
       </Modal>
 
       <Modal
@@ -1183,45 +1250,57 @@ export default function TrialsScreen() {
         transparent={true}
         onRequestClose={() => setShowReminderModal(false)}
       >
-        <Pressable
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.modalContainer}
-          onPress={() => setShowReminderModal(false)}
         >
-          <Pressable style={styles.modalContent} onPress={(e) => e.stopPropagation()}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>
-                Set Call Reminder
-              </Text>
-              <Pressable
-                onPress={() => setShowReminderModal(false)}
-                style={styles.modalCloseButton}
-              >
-                <Ionicons name="close" size={24} color={palette.textSecondary} />
-              </Pressable>
-            </View>
-            <View style={styles.modalSubtitleContainer}>
-              <View style={[styles.modalAvatar, { backgroundColor: `${palette.tint}15` }]}>
-                <Ionicons name="call" size={28} color={palette.tint} />
-              </View>
-              <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
-              <Text style={styles.modalDescription}>Set a reminder to follow up</Text>
-            </View>
+          <TouchableWithoutFeedback onPress={() => {
+            Keyboard.dismiss();
+            setShowReminderModal(false);
+          }}>
+            <View style={styles.modalContainer}>
+              <TouchableWithoutFeedback onPress={() => {}}>
+                <View style={styles.modalContent}>
+                  <View style={styles.modalHeader}>
+                    <Text style={styles.modalTitle}>
+                      Set Call Reminder
+                    </Text>
+                    <Pressable
+                      onPress={() => {
+                        Keyboard.dismiss();
+                        setShowReminderModal(false);
+                      }}
+                      style={styles.modalCloseButton}
+                    >
+                      <Ionicons name="close" size={24} color={palette.textSecondary} />
+                    </Pressable>
+                  </View>
+                  <ScrollView
+                    showsVerticalScrollIndicator={false}
+                    keyboardShouldPersistTaps="handled"
+                    contentContainerStyle={styles.modalScrollContent}
+                  >
+                    <View style={styles.modalSubtitleContainer}>
+                      <View style={[styles.modalAvatar, { backgroundColor: `${palette.tint}15` }]}>
+                        <Ionicons name="call" size={28} color={palette.tint} />
+                      </View>
+                      <Text style={styles.modalSubtitle}>{selectedBooking?.names || ''}</Text>
+                      <Text style={styles.modalDescription}>Set a reminder to follow up</Text>
+                    </View>
 
-            <View style={styles.reminderContent}>
+                    <View style={styles.reminderContent}>
               <Text style={styles.reminderLabel}>Remind me on:</Text>
 
               <View style={styles.dateTimeContainer}>
                 <TouchableOpacity
                   style={styles.dateTimeButton}
                   onPress={() => {
-                    if (Platform.OS === 'ios') {
-                      setShowDatePicker(true);
-                    } else {
-                      setShowDatePicker(true);
-                    }
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowTimePicker(false); // Close time picker if open
+                    setShowDatePicker(true);
                   }}
                 >
-                  <Ionicons name="calendar-outline" size={20} color={palette.textSecondary} />
+                  <Ionicons name="calendar-outline" size={20} color={palette.tint} />
                   <Text style={styles.dateTimeButtonText}>
                     {reminderDate.toLocaleDateString('en-GB', {
                       weekday: 'short',
@@ -1235,84 +1314,209 @@ export default function TrialsScreen() {
                 <TouchableOpacity
                   style={styles.dateTimeButton}
                   onPress={() => {
-                    if (Platform.OS === 'ios') {
-                      setShowTimePicker(true);
-                    } else {
-                      setShowTimePicker(true);
-                    }
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    setShowDatePicker(false); // Close date picker if open
+                    setShowTimePicker(true);
                   }}
                 >
-                  <Ionicons name="time-outline" size={20} color={palette.textSecondary} />
+                  <Ionicons name="time-outline" size={20} color={palette.tint} />
                   <Text style={styles.dateTimeButtonText}>
-                    {reminderDate.toLocaleTimeString('en-GB', {
-                      hour: '2-digit',
+                    {reminderDate.toLocaleTimeString('en-US', {
+                      hour: 'numeric',
                       minute: '2-digit'
                     })}
                   </Text>
                 </TouchableOpacity>
               </View>
 
-              {showDatePicker && (
-                <DateTimePicker
-                  value={reminderDate}
-                  mode="date"
-                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                  onChange={(_event, date) => {
-                    setShowDatePicker(false);
-                    if (date) {
-                      const newDate = new Date(reminderDate);
-                      newDate.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                      setReminderDate(newDate);
-                    }
-                  }}
-                  minimumDate={new Date()}
-                />
-              )}
+              <Text style={styles.reminderLabel}>Alternative phone number (optional):</Text>
+              <TextInput
+                style={styles.alternativePhoneInput}
+                value={alternativePhoneNumber}
+                onChangeText={setAlternativePhoneNumber}
+                placeholder={selectedBooking?.phone ? `Default: ${selectedBooking.phone}` : 'Enter phone number...'}
+                placeholderTextColor={palette.textTertiary}
+                keyboardType="phone-pad"
+              />
+              <Text style={styles.phoneHelpText}>
+                Leave blank to use the booking's phone number
+              </Text>
+                    </View>
 
-              {showTimePicker && (
-                <DateTimePicker
-                  value={reminderDate}
-                  mode="time"
-                  display={Platform.OS === 'ios' ? 'compact' : 'default'}
-                  onChange={(_event, date) => {
-                    setShowTimePicker(false);
-                    if (date) {
-                      const newDate = new Date(reminderDate);
-                      newDate.setHours(date.getHours(), date.getMinutes());
-                      setReminderDate(newDate);
-                    }
-                  }}
-                />
-              )}
+                    <View style={styles.modalFooter}>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.modalCancelButton,
+                          pressed && styles.modalButtonPressed
+                        ]}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          setShowReminderModal(false);
+                          setShowDatePicker(false);
+                          setShowTimePicker(false);
+                        }}
+                      >
+                        <Text style={styles.modalCancelButtonText}>Cancel</Text>
+                      </Pressable>
+                      <Pressable
+                        style={({ pressed }) => [
+                          styles.modalPrimaryButton,
+                          pressed && styles.modalButtonPressed
+                        ]}
+                        onPress={() => {
+                          Keyboard.dismiss();
+                          handleReminderSubmit();
+                        }}
+                      >
+                        <Ionicons name="notifications" size={18} color={palette.textInverse} />
+                        <Text style={styles.modalPrimaryButtonText}>Set Reminder</Text>
+                      </Pressable>
+                    </View>
+                  </ScrollView>
+                </View>
+              </TouchableWithoutFeedback>
             </View>
-            <View style={styles.modalFooter}>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalCancelButton,
-                  pressed && styles.modalButtonPressed
-                ]}
-                onPress={() => {
-                  setShowReminderModal(false);
-                  setShowDatePicker(false);
-                  setShowTimePicker(false);
-                }}
-              >
-                <Text style={styles.modalCancelButtonText}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [
-                  styles.modalPrimaryButton,
-                  pressed && styles.modalButtonPressed
-                ]}
-                onPress={handleReminderSubmit}
-              >
-                <Ionicons name="notifications" size={18} color={palette.textInverse} />
-                <Text style={styles.modalPrimaryButtonText}>Set Reminder</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
+          </TouchableWithoutFeedback>
+        </KeyboardAvoidingView>
       </Modal>
+
+      {/* iOS Date Picker in Modal */}
+      {Platform.OS === 'ios' && showDatePicker && (
+        <Modal
+          transparent
+          visible={showDatePicker}
+          animationType="slide"
+          onRequestClose={() => setShowDatePicker(false)}
+        >
+          <View style={styles.datePickerOverlay}>
+            <View style={styles.datePickerContainer}>
+              <View style={styles.datePickerHeader}>
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(false)}
+                  style={styles.datePickerButton}
+                >
+                  <Text style={styles.datePickerButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.datePickerTitle}>Select Date</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowDatePicker(false);
+                  }}
+                  style={styles.datePickerButton}
+                >
+                  <Text style={[styles.datePickerButtonText, { color: palette.tint }]}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={reminderDate}
+                mode="date"
+                display="spinner"
+                minimumDate={new Date()}
+                onChange={(_event, selectedDate) => {
+                  if (selectedDate) {
+                    const newDate = new Date(reminderDate);
+                    newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+                    setReminderDate(newDate);
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* iOS Time Picker in Modal */}
+      {Platform.OS === 'ios' && showTimePicker && (
+        <Modal
+          transparent
+          visible={showTimePicker}
+          animationType="slide"
+          onRequestClose={() => setShowTimePicker(false)}
+        >
+          <View style={styles.datePickerOverlay}>
+            <View style={styles.datePickerContainer}>
+              <View style={styles.datePickerHeader}>
+                <TouchableOpacity
+                  onPress={() => setShowTimePicker(false)}
+                  style={styles.datePickerButton}
+                >
+                  <Text style={styles.datePickerButtonText}>Cancel</Text>
+                </TouchableOpacity>
+                <Text style={styles.datePickerTitle}>Select Time</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setShowTimePicker(false);
+                  }}
+                  style={styles.datePickerButton}
+                >
+                  <Text style={[styles.datePickerButtonText, { color: palette.tint }]}>
+                    Done
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              <DateTimePicker
+                value={reminderDate}
+                mode="time"
+                display="spinner"
+                onChange={(_event, selectedDate) => {
+                  if (selectedDate) {
+                    const newDate = new Date(reminderDate);
+                    newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+                    setReminderDate(newDate);
+                  }
+                }}
+              />
+            </View>
+          </View>
+        </Modal>
+      )}
+
+      {/* Android Date Picker */}
+      {Platform.OS === 'android' && showDatePicker && (
+        <DateTimePicker
+          value={reminderDate}
+          mode="date"
+          display="default"
+          minimumDate={new Date()}
+          onChange={(event, selectedDate) => {
+            setShowDatePicker(false);
+            if (event.type === 'set' && selectedDate) {
+              const newDate = new Date(reminderDate);
+              newDate.setFullYear(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate());
+              setReminderDate(newDate);
+            }
+          }}
+        />
+      )}
+
+      {/* Android Time Picker */}
+      {Platform.OS === 'android' && showTimePicker && (
+        <DateTimePicker
+          value={reminderDate}
+          mode="time"
+          display="default"
+          onChange={(event, selectedDate) => {
+            setShowTimePicker(false);
+            if (event.type === 'set' && selectedDate) {
+              const newDate = new Date(reminderDate);
+              newDate.setHours(selectedDate.getHours(), selectedDate.getMinutes());
+              setReminderDate(newDate);
+            }
+          }}
+        />
+      )}
+
+      {/* Booking Creation Modal */}
+      <BookingCreationModal
+        visible={showCreateBookingModal}
+        onClose={() => setShowCreateBookingModal(false)}
+        onSuccess={() => {
+          setShowCreateBookingModal(false);
+          refreshBookings();
+        }}
+      />
     </>
   );
 }
@@ -1320,10 +1524,13 @@ export default function TrialsScreen() {
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.backgroundSecondary,
+  },
+  scrollContainer: {
+    flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 80, // Extra padding to ensure pagination is accessible
   },
   centerContent: {
     justifyContent: 'center',
@@ -1384,13 +1591,26 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontFamily: Theme.typography.fonts.semibold,
   },
   content: {
-    padding: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.xs,
   },
   header: {
+    marginBottom: Theme.spacing.lg,
+    overflow: 'hidden',
+  },
+  headerGradient: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: Theme.spacing.sm,
+    paddingHorizontal: Theme.spacing.xl,
+    paddingTop: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.xl,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
   },
   headerInfo: {
     flex: 1,
@@ -1401,19 +1621,24 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.md,
   },
   title: {
-    fontSize: Theme.typography.sizes['2xl'],
+    fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
   },
   countBadge: {
     backgroundColor: palette.tint,
-    paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.xs,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   countText: {
     color: palette.textInverse,
-    fontSize: Theme.typography.sizes.sm,
+    fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.bold,
   },
   offlineBadge: {
@@ -1429,49 +1654,54 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     ...Theme.shadows.sm,
   },
   offlineText: {
-    color: '#FFF',
+    color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.semibold,
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Theme.spacing.xs,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: palette.tint,
-    paddingHorizontal: Theme.spacing.lg,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
   addButtonPressed: {
-    opacity: 0.8,
-  },
-  addButtonText: {
-    color: palette.textInverse,
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    opacity: 0.9,
+    transform: [{ scale: 0.95 }],
   },
   syncText: {
     fontSize: Theme.typography.sizes.xs,
     color: palette.textTertiary,
     fontFamily: Theme.typography.fonts.regular,
     marginBottom: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.xl,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: palette.background,
-    borderRadius: Theme.borderRadius.lg,
-    paddingHorizontal: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.xl,
+    paddingHorizontal: Theme.spacing.lg ,
     marginBottom: Theme.spacing.lg,
-    ...Theme.shadows.sm,
+    marginHorizontal: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 3,
   },
   searchIcon: {
     marginRight: Theme.spacing.sm,
   },
   searchInput: {
     flex: 1,
-    height: 48,
+    height: 52,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
     color: palette.textPrimary,
@@ -1487,12 +1717,20 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginRight: Theme.spacing.sm,
   },
   bookingsList: {
-    gap: Theme.spacing.md,
+    gap: Theme.spacing.lg,
+    paddingHorizontal: Theme.spacing.md,
+    paddingBottom: Theme.spacing.xxl,
   },
   trialCard: {
     marginBottom: 0,
-    borderRadius: Theme.borderRadius.xl,
+    borderRadius: 20,
     overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
+    backgroundColor: palette.isDark ? '#2A2A2A' : palette.card,
   },
   trialHeader: {
     flexDirection: 'row',
@@ -1507,15 +1745,20 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   avatarContainer: {
-    width: 44,
-    height: 44,
+    width: 48,
+    height: 48,
     borderRadius: Theme.borderRadius.full,
-    backgroundColor: `${palette.tint}15`,
+    backgroundColor: `${palette.tint}20`,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   avatarText: {
-    fontSize: Theme.typography.sizes.md,
+    fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
     color: palette.tint,
   },
@@ -1545,10 +1788,27 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   classBadge: {
     alignSelf: 'flex-start',
   },
-  badgeContainer: {
-    flexDirection: 'column',
-    gap: Theme.spacing.xs,
+  statusBadgeContainer: {
     alignItems: 'flex-end',
+    justifyContent: 'center',
+  },
+  statusBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.xs,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.full,
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  statusBadgeText: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.semibold,
   },
   trialDetails: {
     marginBottom: Theme.spacing.md,
@@ -1562,12 +1822,17 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.sm,
   },
   detailIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: Theme.borderRadius.md,
+    width: 32,
+    height: 32,
+    borderRadius: Theme.borderRadius.lg,
     backgroundColor: palette.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
   },
   detailText: {
     fontSize: Theme.typography.sizes.sm,
@@ -1587,25 +1852,31 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Theme.spacing.xs,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.lg,
+    gap: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   actionButtonOutline: {
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: palette.statusError,
-    backgroundColor: 'transparent',
+    backgroundColor: `${palette.statusError}08`,
   },
   actionButtonPrimary: {
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: palette.statusSuccess,
-    backgroundColor: 'transparent',
+    backgroundColor: `${palette.statusSuccess}08`,
   },
   actionButtonPressed: {
-    opacity: 0.8,
+    opacity: 0.9,
+    transform: [{ scale: 0.97 }],
   },
   actionButtonText: {
-    fontSize: Theme.typography.sizes.sm,
+    fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
   },
   paginationContainer: {
@@ -1613,7 +1884,10 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginTop: Theme.spacing.xl,
+    marginBottom: Theme.spacing['3xl'],
     paddingTop: Theme.spacing.lg,
+    paddingBottom: Theme.spacing.xl,
+    paddingHorizontal: Theme.spacing.md,
     borderTopWidth: 1,
     borderTopColor: palette.borderLight,
   },
@@ -1673,9 +1947,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   viewModeContainer: {
     marginBottom: Theme.spacing.lg,
+    marginHorizontal: Theme.spacing.md,
     backgroundColor: palette.background,
-    borderRadius: Theme.borderRadius.lg,
-    ...Theme.shadows.sm,
+    borderRadius: Theme.borderRadius.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 2,
   },
   viewModeTabs: {
     flexDirection: 'row',
@@ -1684,7 +1963,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   viewModeTab: {
     flex: 1,
-    paddingVertical: Theme.spacing.sm,
+    paddingVertical: Theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1698,9 +1977,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     bottom: 0,
     left: Theme.spacing.xs,
     width: '48%',
-    height: 3,
+    height: 4,
     backgroundColor: palette.tint,
-    borderRadius: 1.5,
+    borderRadius: 2,
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 2,
   },
   clearSearchButton: {
     marginTop: Theme.spacing.lg,
@@ -1725,7 +2009,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderRadius: Theme.borderRadius.xl,
     width: '90%',
     maxWidth: 400,
-    maxHeight: '85%',
+    maxHeight: '80%',
     ...Theme.shadows.lg,
   },
   modalHeader: {
@@ -1970,10 +2254,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   modalScrollView: {
-    maxHeight: '75%',
+    flexGrow: 0,
+    flexShrink: 1,
   },
   modalScrollContent: {
-    paddingBottom: Theme.spacing.md,
+    paddingBottom: Theme.spacing.lg,
+    flexGrow: 1,
   },
   modalCompactHeader: {
     flexDirection: 'row',
@@ -2089,5 +2375,92 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
     color: palette.textPrimary,
+  },
+  sectionHeader: {
+    marginTop: Theme.spacing.xl,
+    marginBottom: Theme.spacing.lg,
+    marginHorizontal: Theme.spacing.xl,
+  },
+  sectionTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.md,
+    marginBottom: Theme.spacing.sm,
+  },
+  sectionTitle: {
+    fontSize: Theme.typography.sizes.xl,
+    fontFamily: Theme.typography.fonts.bold,
+    color: palette.textPrimary,
+  },
+  sectionBadge: {
+    backgroundColor: `${palette.statusWarning}15`,
+    paddingHorizontal: Theme.spacing.lg,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.full,
+    shadowColor: palette.statusWarning,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  sectionBadgeText: {
+    color: palette.statusWarning,
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.bold,
+  },
+  sectionSubtitle: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textSecondary,
+    marginLeft: 32,
+  },
+  alternativePhoneInput: {
+    padding: Theme.spacing.md,
+    backgroundColor: palette.backgroundSecondary,
+    borderRadius: Theme.borderRadius.md,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textPrimary,
+    marginBottom: Theme.spacing.xs,
+  },
+  phoneHelpText: {
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: Theme.typography.fonts.regular,
+    color: palette.textTertiary,
+    marginBottom: Theme.spacing.md,
+  },
+  datePickerOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  datePickerContainer: {
+    backgroundColor: palette.background,
+    borderTopLeftRadius: Theme.borderRadius.xl,
+    borderTopRightRadius: Theme.borderRadius.xl,
+    paddingBottom: 40,
+  },
+  datePickerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: Theme.spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.borderLight,
+  },
+  datePickerTitle: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+    color: palette.textPrimary,
+  },
+  datePickerButton: {
+    padding: Theme.spacing.sm,
+  },
+  datePickerButtonText: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.medium,
+    color: palette.textSecondary,
   },
 });

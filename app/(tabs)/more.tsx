@@ -5,6 +5,7 @@ import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useMemo } from 'react';
 import {
@@ -217,71 +218,93 @@ export default function MoreScreen() {
   ];
 
   return (
-    <ScrollView style={styles.container}>
-      <Card variant="filled" style={styles.profileCard}>
-        <View style={styles.profileContent}>
-          <Avatar
-            name={user?.name || 'User'}
-            size={'md'}
-            style={styles.avatar}
-          />
-          <View style={styles.profileInfo}>
-            <Text style={styles.profileName}>
-              {user?.name || ''}
-            </Text>
-            <Text style={styles.profileEmail}>
-              {user?.email || ''}
-            </Text>
-            {user?.is_admin ? (
-              <View style={styles.adminBadge}>
-                <Text style={styles.adminBadgeText}>Admin</Text>
-              </View>
-            ) : null}
-          </View>
-        </View>
-      </Card>
-
-      {menuSections.map((section, sectionIndex) => (
-        <View key={section.title} style={styles.section}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>
-              {section.title}
-            </Text>
-            {section.title === 'Admin' ? (
-              <View style={styles.adminBadgeSmall}>
-                <Ionicons name="shield" size={12} color="#FFFFFF" />
-              </View>
-            ) : null}
-          </View>
-          <Card
-            variant="outlined"
-            style={[
-              styles.sectionCard,
-              section.title === 'Admin' && {
-                borderColor: Theme.colors.primary,
-                borderWidth: 1,
-              }
-            ]}
+    <View style={styles.container}>
+      <LinearGradient
+        colors={[
+          palette.backgroundSecondary,
+          palette.background,
+          palette.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
+      <ScrollView style={styles.scrollContainer}>
+        <Card variant="filled" style={styles.profileCard}>
+          <LinearGradient
+            colors={[`${Theme.colors.primary}08`, `${Theme.colors.primary}03`]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.profileCardGradient}
           >
-            {section.items.map((item, index) => (
-              <MenuItemComponent
-                key={item.title}
-                item={item}
-                index={sectionIndex * 3 + index}
-                palette={palette}
-                styles={styles}
-              />
-            ))}
-          </Card>
-        </View>
-      ))}
+            <View style={styles.profileContent}>
+              <View style={styles.avatarWrapper}>
+                <View style={[styles.avatarGlow, { backgroundColor: Theme.colors.primary }]} />
+                <Avatar
+                  name={user?.name || 'User'}
+                  size={'md'}
+                  style={styles.avatar}
+                />
+              </View>
+              <View style={styles.profileInfo}>
+                <Text style={styles.profileName}>
+                  {user?.name || ''}
+                </Text>
+                <Text style={styles.profileEmail}>
+                  {user?.email || ''}
+                </Text>
+                {user?.is_admin ? (
+                  <View style={styles.adminBadge}>
+                    <Ionicons name="shield" size={12} color="#FFFFFF" style={{ marginRight: 4 }} />
+                    <Text style={styles.adminBadgeText}>Admin</Text>
+                  </View>
+                ) : null}
+              </View>
+            </View>
+          </LinearGradient>
+        </Card>
 
-      <View style={styles.footer}>
-        <Text style={styles.versionText}>
-          TMA Admin v1.0.0
-        </Text>
-      </View>
-    </ScrollView>
+        {menuSections.map((section, sectionIndex) => (
+          <View key={section.title} style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>
+                {section.title}
+              </Text>
+              {section.title === 'Admin' ? (
+                <View style={styles.adminBadgeSmall}>
+                  <Ionicons name="shield" size={12} color="#FFFFFF" />
+                </View>
+              ) : null}
+            </View>
+            <Card
+              variant="outlined"
+              style={[
+                styles.sectionCard,
+                section.title === 'Admin' && {
+                  borderColor: Theme.colors.primary,
+                  borderWidth: 1,
+                }
+              ]}
+            >
+              {section.items.map((item, index) => (
+                <MenuItemComponent
+                  key={item.title}
+                  item={item}
+                  index={sectionIndex * 3 + index}
+                  palette={palette}
+                  styles={styles}
+                />
+              ))}
+            </Card>
+          </View>
+        ))}
+
+        <View style={styles.footer}>
+          <Text style={styles.versionText}>
+            TMA Admin v1.0.0
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
@@ -290,16 +313,47 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flex: 1,
     backgroundColor: palette.background,
   },
+  scrollContainer: {
+    flex: 1,
+  },
   profileCard: {
-    margin: 16,
-    padding: 20,
+    margin: Theme.spacing.lg,
+    marginBottom: Theme.spacing.md,
+    padding: 0,
+    overflow: 'hidden',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  profileCardGradient: {
+    padding: Theme.spacing.xl,
   },
   profileContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },
+  avatarWrapper: {
+    position: 'relative',
+    marginRight: Theme.spacing.lg,
+  },
+  avatarGlow: {
+    position: 'absolute',
+    width: 56,
+    height: 56,
+    borderRadius: Theme.borderRadius.full,
+    opacity: 0.2,
+    top: -4,
+    left: -4,
+  },
   avatar: {
-    marginRight: 16,
+    shadowColor: Theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 2,
   },
   profileInfo: {
     flex: 1,
@@ -314,54 +368,73 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
     color: palette.textSecondary,
-    marginBottom: 8,
+    marginBottom: Theme.spacing.sm,
   },
   adminBadge: {
     backgroundColor: Theme.colors.primary,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Theme.borderRadius.sm,
+    paddingHorizontal: Theme.spacing.sm,
+    paddingVertical: 6,
+    borderRadius: Theme.borderRadius.full,
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: Theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   adminBadgeText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: Theme.typography.fonts.semibold,
   },
   section: {
-    marginBottom: 24,
-    paddingHorizontal: 16,
+    marginBottom: Theme.spacing.xl,
+    paddingHorizontal: Theme.spacing.lg,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: Theme.spacing.md,
     marginLeft: 4,
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: Theme.typography.fonts.semibold,
     color: palette.textSecondary,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   adminBadgeSmall: {
     backgroundColor: Theme.colors.primary,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: Theme.borderRadius.sm,
-    marginLeft: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Theme.borderRadius.full,
+    marginLeft: Theme.spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
+    shadowColor: Theme.colors.primary,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 2,
   },
   sectionCard: {
     paddingVertical: 4,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 14,
+    paddingHorizontal: Theme.spacing.lg,
     borderBottomWidth: 1,
     borderBottomColor: palette.borderLight,
   },
@@ -371,22 +444,28 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flex: 1,
   },
   iconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: Theme.borderRadius.md,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
     backgroundColor: palette.backgroundSecondary,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   menuItemText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: Theme.typography.fonts.medium,
     color: palette.textPrimary,
   },
   footer: {
     alignItems: 'center',
-    paddingVertical: 32,
+    paddingVertical: Theme.spacing['2xl'],
+    paddingBottom: Theme.spacing['3xl'],
   },
   versionText: {
     fontSize: Theme.typography.sizes.xs,

@@ -1,0 +1,602 @@
+openapi: 3.0.3
+info:
+  title: Trial Bookings Management API
+  description: API endpoints for managing trial booking status updates, kit orders, and reminders
+  version: 1.0.0
+  contact:
+    name: TMA Admin Mobile Team
+
+servers:
+  - url: https://api.tmaadmin.com/v1
+    description: Production API
+  - url: https://staging-api.tmaadmin.com/v1
+    description: Staging API
+
+tags:
+  - name: Bookings
+    description: Trial booking management
+  - name: Attendance
+    description: Attendance tracking
+  - name: Reminders
+    description: Follow-up reminder management
+
+paths:
+  /bookings/{bookingId}/conversion-status:
+    put:
+      tags:
+        - Bookings
+      summary: Update booking payment/conversion status
+      description: |
+        Updates the payment and conversion status of a trial booking. Optionally records
+        kit items provided and schedules follow-up reminders.
+
+        **Business Rules:**
+        - Booking must have attendance marked (completed or no-show) before status update
+        - Status 'paid_dd' and 'paid_awaiting_dd' require kit_items and package_name
+        - Status 'unpaid_coach_call' requires reminder_time
+        - Cannot transition from end states (paid_dd, not_joining) to other statuses
+      operationId: updateBookingConversionStatus
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique booking identifier
+          schema:
+            type: integer
+            example: 12345
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateConversionStatusRequest'
+            examples:
+              paidWithKit:
+                summary: Paid with Direct Debit (with kit items)
+                value:
+                  status: paid_dd
+                  package_name: silver
+                  kit_items:
+                    - type: tshirt
+                      size: Large
+                    - type: trousers
+                      size: Medium
+                    - type: gloves
+                      size: 12oz
+                    - type: shinpads
+                      size: Medium
+              unpaidFollowUp:
+                summary: Unpaid - Needs coach follow-up
+                value:
+                  status: unpaid_coach_call
+                  reminder_time: "2025-11-17T14:00:00Z"
+              unpaidScheduled:
+                summary: Unpaid - DD Scheduled
+                value:
+                  status: unpaid_dd
+              notJoining:
+                summary: Not Joining
+                value:
+                  status: not_joining
+      responses:
+        '200':
+          description: Booking status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateConversionStatusResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                missingKitItems:
+                  summary: Kit items required for paid status
+                  value:
+                    success: false
+                    error: validation_error
+                    message: "Kit items and package name are required for paid statuses"
+                    errors:
+                      kit_items: ["Kit items are required when status is paid_dd or paid_awaiting_dd"]
+                      package_name: ["Package name is required"]
+                invalidTransition:
+                  summary: Invalid status transition
+                  value:
+                    success: false
+                    error: invalid_transition
+                    message: "Cannot transition from paid_dd to pending"
+                attendanceNotMarked:
+                  summary: Attendance must be marked first
+                  value:
+                    success: false
+                    error: attendance_required
+                    message: "Attendance status must be marked (completed or no-show) before updating payment status"
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: not_found
+                message: "Booking with ID 12345 not found"
+        '409':
+          description: Conflict - booking was modified by another user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                success: false
+                error: conflict
+                message: "Booking was modified by another user. Please refresh and try again."
+                details:
+                  current_status: paid_dd
+                  updated_at: "2025-11-16T15:30:00Z"
+        '422':
+          description: Unprocessable entity - business rule violation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                pastReminder:
+                  summary: Reminder time in the past
+                  value:
+                    success: false
+                    error: validation_error
+                    message: "Reminder time must be in the future"
+                    errors:
+                      reminder_time: ["Must be a future date/time"]
+                invalidKitSize:
+                  summary: Invalid kit item size
+                  value:
+                    success: false
+                    error: validation_error
+                    message: "Invalid kit item sizes"
+                    errors:
+                      kit_items:
+                        - "Size 'XXL' is not valid for type 'gloves'. Valid sizes: 8oz, 10oz, 12oz, 14oz, 16oz"
+      security:
+        - bearerAuth: []
+
+  /bookings/{bookingId}/status:
+    put:
+      tags:
+        - Attendance
+      summary: Update booking attendance status
+      description: |
+        Marks a booking's attendance status (completed, no-show, cancelled, or scheduled).
+        This is typically the first action taken after a trial session.
+      operationId: updateBookingAttendanceStatus
+      parameters:
+        - name: bookingId
+          in: path
+          required: true
+          description: Unique booking identifier
+          schema:
+            type: integer
+            example: 12345
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateAttendanceStatusRequest'
+            examples:
+              checkIn:
+                summary: Mark as checked in (completed)
+                value:
+                  status: completed
+              noShow:
+                summary: Mark as no-show
+                value:
+                  status: no-show
+      responses:
+        '200':
+          description: Attendance status updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UpdateAttendanceStatusResponse'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /reminders:
+    post:
+      tags:
+        - Reminders
+      summary: Create a follow-up reminder
+      description: |
+        Creates a reminder for a coach to follow up with a trial participant.
+        Typically created when booking status is set to 'unpaid_coach_call'.
+
+        **Note:** This endpoint is usually called automatically when updating booking
+        conversion status with reminder_time parameter. Direct calls are for advanced use cases.
+      operationId: createReminder
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReminderRequest'
+      responses:
+        '201':
+          description: Reminder created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reminder'
+        '400':
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Booking not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+  /reminders/my:
+    get:
+      tags:
+        - Reminders
+      summary: Get my reminders
+      description: Retrieves all active reminders assigned to the authenticated coach
+      operationId: getMyReminders
+      responses:
+        '200':
+          description: List of reminders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reminder'
+      security:
+        - bearerAuth: []
+
+  /reminders/{reminderId}/complete:
+    put:
+      tags:
+        - Reminders
+      summary: Mark reminder as completed
+      description: Marks a reminder as completed after coach has followed up with participant
+      operationId: completeReminder
+      parameters:
+        - name: reminderId
+          in: path
+          required: true
+          description: Unique reminder identifier
+          schema:
+            type: integer
+            example: 789
+      responses:
+        '200':
+          description: Reminder marked as completed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompleteReminderResponse'
+        '404':
+          description: Reminder not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+      security:
+        - bearerAuth: []
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from authentication endpoint
+
+  schemas:
+    UpdateConversionStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - pending
+            - paid_dd
+            - paid_awaiting_dd
+            - unpaid_dd
+            - unpaid_coach_call
+            - not_joining
+          description: Payment/conversion status
+        kit_items:
+          type: array
+          description: Required when status is paid_dd or paid_awaiting_dd
+          items:
+            $ref: '#/components/schemas/KitItem'
+          minItems: 3
+          maxItems: 5
+        package_name:
+          type: string
+          enum:
+            - basic
+            - silver
+            - gold
+          description: Required when status is paid_dd or paid_awaiting_dd
+        reminder_time:
+          type: string
+          format: date-time
+          description: Required when status is unpaid_coach_call. Must be in the future.
+          example: "2025-11-17T14:00:00Z"
+
+    KitItem:
+      type: object
+      required:
+        - type
+        - size
+      properties:
+        type:
+          type: string
+          enum:
+            - tshirt
+            - trousers
+            - gloves
+            - shinpads
+            - kitbag
+          description: Item category
+        size:
+          type: string
+          description: |
+            Size must be valid for the item type:
+            - tshirt/trousers: Small Youth, Medium Youth, Large Youth, XL Youth, Small, Medium, Large, XL, 2XL, 3XL
+            - gloves: 8oz, 10oz, 12oz, 14oz, 16oz
+            - shinpads: Small, Medium, Large, XL
+            - kitbag: One Size
+          example: "Large"
+
+    UpdateConversionStatusResponse:
+      type: object
+      required:
+        - success
+        - message
+        - booking
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Booking status updated successfully"
+        booking:
+          type: object
+          required:
+            - id
+            - status
+          properties:
+            id:
+              type: integer
+              example: 12345
+            status:
+              type: string
+              example: "paid_dd"
+            kit_order_id:
+              type: integer
+              nullable: true
+              description: ID of created kit order (if kit items provided)
+              example: 456
+            reminder_id:
+              type: integer
+              nullable: true
+              description: ID of created reminder (if reminder_time provided)
+              example: 789
+
+    UpdateAttendanceStatusRequest:
+      type: object
+      required:
+        - status
+      properties:
+        status:
+          type: string
+          enum:
+            - scheduled
+            - completed
+            - no-show
+            - cancelled
+          description: Attendance status
+
+    UpdateAttendanceStatusResponse:
+      type: object
+      required:
+        - success
+        - message
+        - booking
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Attendance status updated"
+        booking:
+          $ref: '#/components/schemas/Booking'
+
+    CreateReminderRequest:
+      type: object
+      required:
+        - booking_id
+        - reminder_time
+      properties:
+        booking_id:
+          type: integer
+          description: Booking to create reminder for
+          example: 12345
+        reminder_time:
+          type: string
+          format: date-time
+          description: When reminder should trigger (must be in future)
+          example: "2025-11-17T14:00:00Z"
+
+    Reminder:
+      type: object
+      required:
+        - id
+        - booking_id
+        - reminder_time
+        - created_at
+      properties:
+        id:
+          type: integer
+          example: 789
+        booking_id:
+          type: integer
+          example: 12345
+        reminder_time:
+          type: string
+          format: date-time
+          example: "2025-11-17T14:00:00Z"
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-11-16T10:30:00Z"
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+
+    CompleteReminderResponse:
+      type: object
+      required:
+        - success
+        - message
+        - reminder
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Reminder marked as completed"
+        reminder:
+          $ref: '#/components/schemas/Reminder'
+
+    Booking:
+      type: object
+      description: Full booking object (abbreviated for brevity - see types/api.ts for complete definition)
+      required:
+        - id
+        - uuid
+        - names
+        - start_time
+        - status
+        - attendance_status
+      properties:
+        id:
+          type: integer
+          example: 12345
+        uuid:
+          type: string
+          format: uuid
+          example: "550e8400-e29b-41d4-a716-446655440000"
+        names:
+          type: string
+          example: "John Smith"
+        email:
+          type: string
+          format: email
+          nullable: true
+          example: "john.smith@example.com"
+        phone:
+          type: string
+          nullable: true
+          example: "+44 7700 900123"
+        start_time:
+          type: string
+          format: date-time
+          example: "2025-11-16T18:00:00Z"
+        status:
+          type: string
+          enum:
+            - pending
+            - paid_dd
+            - paid_awaiting_dd
+            - unpaid_dd
+            - unpaid_coach_call
+            - not_joining
+          example: "pending"
+        attendance_status:
+          type: string
+          enum:
+            - scheduled
+            - completed
+            - no-show
+            - cancelled
+          example: "scheduled"
+        checked_in_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+          example: null
+
+    ErrorResponse:
+      type: object
+      required:
+        - success
+        - error
+        - message
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          description: Error code for programmatic handling
+          example: "validation_error"
+        message:
+          type: string
+          description: Human-readable error message
+          example: "Kit items are required for paid statuses"
+        errors:
+          type: object
+          description: Field-specific validation errors (optional)
+          additionalProperties:
+            type: array
+            items:
+              type: string
+          example:
+            kit_items:
+              - "Kit items are required when status is paid_dd or paid_awaiting_dd"
+        details:
+          type: object
+          description: Additional error context (optional)
+          additionalProperties: true
+
+security:
+  - bearerAuth: []

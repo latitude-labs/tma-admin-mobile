@@ -6,13 +6,13 @@ import {
   StyleSheet,
   Pressable,
   Linking,
-  ActivityIndicator,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeIn } from 'react-native-reanimated';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { ScreenHeader, Badge, Card } from '@/components/ui';
 import { Theme } from '@/constants/Theme';
@@ -143,6 +143,15 @@ export default function BookingDetailScreen() {
 
   return (
     <View style={styles.container}>
+      <LinearGradient
+        colors={[
+          palette.backgroundSecondary,
+          palette.background,
+          palette.backgroundSecondary,
+        ]}
+        locations={[0, 0.5, 1]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <ScreenHeader title="Booking Details" />
 
       <ScrollView
@@ -193,12 +202,12 @@ export default function BookingDetailScreen() {
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(100).duration(400).springify()}>
-          <AnimatedCard variant="filled" style={styles.infoCard}>
+          <AnimatedCard variant="elevated" style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Booking Information</Text>
 
             <View style={styles.infoRow}>
               <View style={styles.infoIconContainer}>
-                <Ionicons name="calendar-outline" size={20} color={palette.tint} />
+                <Ionicons name="calendar-outline" size={22} color={palette.tint} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Date</Text>
@@ -208,7 +217,7 @@ export default function BookingDetailScreen() {
 
             <View style={styles.infoRow}>
               <View style={styles.infoIconContainer}>
-                <Ionicons name="time-outline" size={20} color={palette.statusInfo} />
+                <Ionicons name="time-outline" size={22} color={palette.statusInfo} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Time</Text>
@@ -216,49 +225,49 @@ export default function BookingDetailScreen() {
               </View>
             </View>
 
-            {booking.club && (
+            {booking.club ? (
               <View style={styles.infoRow}>
                 <View style={styles.infoIconContainer}>
-                  <Ionicons name="business-outline" size={20} color={palette.statusWarning} />
+                  <Ionicons name="business-outline" size={22} color={palette.statusWarning} />
                 </View>
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Location</Text>
                   <Text style={styles.infoValue}>{booking.club.name}</Text>
-                  {booking.club.address && (
+                  {booking.club.address ? (
                     <Text style={styles.infoSubvalue}>{booking.club.address}</Text>
-                  )}
+                  ) : null}
                 </View>
               </View>
-            )}
+            ) : null}
 
             <View style={styles.infoRow}>
               <View style={styles.infoIconContainer}>
-                <Ionicons name="globe-outline" size={20} color={palette.statusSuccess} />
+                <Ionicons name="globe-outline" size={22} color={palette.statusSuccess} />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Channel</Text>
                 <Text style={styles.infoValue}>
-                  {booking.channel_display_name || booking.channel}
+                  {booking.channel_display_name || booking.channel || ''}
                 </Text>
               </View>
             </View>
 
-            {booking.source && (
+            {booking.source ? (
               <View style={styles.infoRow}>
                 <View style={styles.infoIconContainer}>
-                  <Ionicons name="link-outline" size={20} color={palette.textSecondary} />
+                  <Ionicons name="link-outline" size={22} color={palette.textSecondary} />
                 </View>
                 <View style={styles.infoContent}>
                   <Text style={styles.infoLabel}>Source</Text>
                   <Text style={styles.infoValue}>{booking.source}</Text>
                 </View>
               </View>
-            )}
+            ) : null}
           </AnimatedCard>
         </Animated.View>
 
         <Animated.View entering={FadeInDown.delay(200).duration(400).springify()}>
-          <AnimatedCard variant="filled" style={styles.infoCard}>
+          <AnimatedCard variant="elevated" style={styles.infoCard}>
             <Text style={styles.sectionTitle}>Contact Information</Text>
 
             {booking.email ? (
@@ -267,13 +276,13 @@ export default function BookingDetailScreen() {
                 pressed && styles.contactRowPressed
               ]}>
                 <View style={styles.infoIconContainer}>
-                  <Ionicons name="mail-outline" size={20} color={palette.statusInfo} />
+                  <Ionicons name="mail-outline" size={22} color={palette.statusInfo} />
                 </View>
                 <View style={styles.contactContent}>
                   <Text style={styles.infoLabel}>Email</Text>
                   <Text style={styles.contactValue}>{booking.email}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
+                <Ionicons name="chevron-forward" size={22} color={palette.textTertiary} />
               </Pressable>
             ) : (
               <View style={styles.emptyContact}>
@@ -287,13 +296,13 @@ export default function BookingDetailScreen() {
                 pressed && styles.contactRowPressed
               ]}>
                 <View style={styles.infoIconContainer}>
-                  <Ionicons name="call-outline" size={20} color={palette.statusSuccess} />
+                  <Ionicons name="call-outline" size={22} color={palette.statusSuccess} />
                 </View>
                 <View style={styles.contactContent}>
                   <Text style={styles.infoLabel}>Phone</Text>
                   <Text style={styles.contactValue}>{booking.phone}</Text>
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
+                <Ionicons name="chevron-forward" size={22} color={palette.textTertiary} />
               </Pressable>
             ) : (
               <View style={styles.emptyContact}>
@@ -303,12 +312,12 @@ export default function BookingDetailScreen() {
           </AnimatedCard>
         </Animated.View>
 
-        {(booking.checked_in_at || booking.cancelled_at || booking.no_show_at) && (
+        {(booking.checked_in_at || booking.cancelled_at || booking.no_show_at) ? (
           <Animated.View entering={FadeInDown.delay(300).duration(400).springify()}>
-            <AnimatedCard variant="filled" style={styles.infoCard}>
+            <AnimatedCard variant="elevated" style={styles.infoCard}>
               <Text style={styles.sectionTitle}>Activity Log</Text>
 
-              {booking.checked_in_at && (
+              {booking.checked_in_at ? (
                 <View style={styles.activityRow}>
                   <View style={[styles.activityDot, { backgroundColor: palette.statusSuccess }]} />
                   <View style={styles.activityContent}>
@@ -318,9 +327,9 @@ export default function BookingDetailScreen() {
                     </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
 
-              {booking.cancelled_at && (
+              {booking.cancelled_at ? (
                 <View style={styles.activityRow}>
                   <View style={[styles.activityDot, { backgroundColor: palette.statusWarning }]} />
                   <View style={styles.activityContent}>
@@ -330,9 +339,9 @@ export default function BookingDetailScreen() {
                     </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
 
-              {booking.no_show_at && (
+              {booking.no_show_at ? (
                 <View style={styles.activityRow}>
                   <View style={[styles.activityDot, { backgroundColor: palette.statusError }]} />
                   <View style={styles.activityContent}>
@@ -342,10 +351,10 @@ export default function BookingDetailScreen() {
                     </Text>
                   </View>
                 </View>
-              )}
+              ) : null}
             </AnimatedCard>
           </Animated.View>
-        )}
+        ) : null}
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -391,6 +400,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   headerCard: {
     marginBottom: Theme.spacing.md,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 5,
   },
   avatarSection: {
     flexDirection: 'row',
@@ -401,10 +416,15 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: Theme.borderRadius.full,
-    backgroundColor: `${palette.tint}15`,
+    backgroundColor: `${palette.tint}20`,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Theme.spacing.md,
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.4,
+    shadowRadius: 6,
+    elevation: 3,
   },
   avatarText: {
     fontSize: Theme.typography.sizes.xl,
@@ -429,6 +449,11 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: Theme.borderRadius.full,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.3,
+    shadowRadius: 2,
+    elevation: 2,
   },
   statusText: {
     fontSize: Theme.typography.sizes.sm,
@@ -441,9 +466,20 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   badge: {
     alignSelf: 'flex-start',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoCard: {
     marginBottom: Theme.spacing.md,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+    elevation: 4,
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
@@ -457,13 +493,18 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginBottom: Theme.spacing.lg,
   },
   infoIconContainer: {
-    width: 36,
-    height: 36,
+    width: 40,
+    height: 40,
     borderRadius: Theme.borderRadius.lg,
     backgroundColor: palette.backgroundSecondary,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 4,
+    elevation: 2,
   },
   infoContent: {
     flex: 1,
@@ -489,13 +530,15 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: Theme.spacing.lg,
-    paddingVertical: Theme.spacing.sm,
-    paddingHorizontal: Theme.spacing.sm,
-    marginHorizontal: -Theme.spacing.sm,
+    paddingVertical: Theme.spacing.md,
+    paddingHorizontal: Theme.spacing.md,
+    marginHorizontal: -Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
+    backgroundColor: palette.background,
   },
   contactRowPressed: {
     backgroundColor: palette.backgroundSecondary,
+    transform: [{ scale: 0.98 }],
   },
   contactContent: {
     flex: 1,
@@ -528,6 +571,11 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderRadius: Theme.borderRadius.full,
     marginTop: Theme.spacing.xs,
     marginRight: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 2,
   },
   activityContent: {
     flex: 1,

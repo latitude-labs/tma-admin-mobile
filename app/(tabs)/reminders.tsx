@@ -17,11 +17,10 @@ import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isPast, isToday, isTomorrow, formatDistanceToNow } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { LinearGradient } from 'expo-linear-gradient';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { Chip } from '@/components/ui/Chip';
-import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { remindersService } from '@/services/api/reminders.service';
@@ -40,9 +39,6 @@ interface Reminder {
   updated_at?: string;
 }
 
-type FilterStatus = 'all' | 'pending' | 'completed' | 'snoozed' | 'cancelled';
-type FilterPriority = 'all' | 'low' | 'medium' | 'high' | 'urgent';
-
 export default function RemindersScreen() {
   const { user } = useAuthStore();
   const palette = useThemeColors();
@@ -50,8 +46,6 @@ export default function RemindersScreen() {
   const [reminders, setReminders] = useState<Reminder[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<FilterStatus>('pending');
-  const [priorityFilter, setPriorityFilter] = useState<FilterPriority>('all');
   const [showAddModal, setShowAddModal] = useState(false);
 
   // Add reminder form state
@@ -262,15 +256,6 @@ export default function RemindersScreen() {
     }
   };
 
-  const filteredReminders = reminders.filter(reminder => {
-    if (statusFilter !== 'all' && reminder.status !== statusFilter) {
-      return false;
-    }
-    if (priorityFilter !== 'all' && reminder.priority !== priorityFilter) {
-      return false;
-    }
-    return true;
-  });
 
   const renderReminderItem = ({ item }: { item: Reminder }) => {
     const timeDisplay = getTimeDisplay(item.reminder_time);
@@ -279,70 +264,106 @@ export default function RemindersScreen() {
 
     return (
       <Card style={styles.reminderCard} variant="elevated">
-        <View style={[styles.priorityBar, { backgroundColor: priorityColor }]} />
-
-        <View style={styles.reminderContent}>
-          <View style={styles.reminderHeader}>
-            <View style={styles.reminderTitleRow}>
-              <Ionicons
-                name={getStatusIcon(item.status)}
-                size={18}
-                color={isOverdue ? Theme.colors.status.error : priorityColor}
-              />
-              <Text style={styles.reminderTitle} numberOfLines={1}>
-                {item.title}
-              </Text>
-            </View>
-
-            <View style={styles.statusBadge}>
-              <Text style={[styles.statusText, { color: priorityColor }]}>
-                {item.priority}
-              </Text>
-            </View>
+        <LinearGradient
+          colors={[
+            `${priorityColor}08`,
+            `${priorityColor}03`,
+            palette.card,
+          ]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0 }}
+          style={styles.reminderCardGradient}
+        >
+          <View style={[styles.priorityBar, { backgroundColor: priorityColor }]}>
+            <View style={[styles.priorityBarGlow, { backgroundColor: priorityColor, opacity: 0.4 }]} />
           </View>
 
-          {item.description && (
-            <Text style={styles.reminderDescription} numberOfLines={2}>
-              {item.description}
-            </Text>
-          )}
-
-          <View style={styles.reminderFooter}>
-            <View style={styles.timeInfo}>
-              <Text style={[styles.timeText, { color: timeDisplay.color }]}>
-                {timeDisplay.text}
-              </Text>
-              <Text style={styles.timeSubtext}>
-                {timeDisplay.subtext}
-              </Text>
-            </View>
-
-            {item.status === 'pending' && (
-              <View style={styles.reminderActions}>
-                <TouchableOpacity
-                  onPress={() => handleCompleteReminder(item.id)}
-                  style={[styles.actionButton, styles.completeButton]}
-                >
-                  <Ionicons name="checkmark" size={18} color={Theme.colors.status.success} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => handleSnoozeReminder(item)}
-                  style={styles.actionButton}
-                >
-                  <Ionicons name="time-outline" size={18} color={palette.textSecondary} />
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  onPress={() => handleDeleteReminder(item)}
-                  style={styles.actionButton}
-                >
-                  <Ionicons name="trash-outline" size={18} color={Theme.colors.status.error} />
-                </TouchableOpacity>
+          <View style={styles.reminderContent}>
+            <View style={styles.reminderHeader}>
+              <View style={styles.reminderTitleRow}>
+                <View style={[styles.iconContainer, { backgroundColor: `${priorityColor}15` }]}>
+                  <View style={[styles.iconGlow, { backgroundColor: priorityColor }]} />
+                  <Ionicons
+                    name={getStatusIcon(item.status)}
+                    size={18}
+                    color={isOverdue ? Theme.colors.status.error : priorityColor}
+                  />
+                </View>
+                <Text style={styles.reminderTitle} numberOfLines={1}>
+                  {item.title}
+                </Text>
               </View>
-            )}
+
+              <View style={[
+                styles.statusBadge,
+                {
+                  backgroundColor: `${priorityColor}12`,
+                  borderColor: priorityColor,
+                  shadowColor: priorityColor,
+                }
+              ]}>
+                <Text style={[styles.statusText, { color: priorityColor }]}>
+                  {item.priority}
+                </Text>
+              </View>
+            </View>
+
+            {item.description ? (
+              <Text style={styles.reminderDescription} numberOfLines={2}>
+                {item.description}
+              </Text>
+            ) : null}
+
+            <View style={styles.reminderFooter}>
+              <View style={styles.timeInfo}>
+                <View style={[styles.timeBadge, { backgroundColor: `${timeDisplay.color}12`, borderColor: timeDisplay.color }]}>
+                  <Ionicons name="time-outline" size={14} color={timeDisplay.color} />
+                  <Text style={[styles.timeText, { color: timeDisplay.color }]}>
+                    {timeDisplay.text}
+                  </Text>
+                </View>
+                <Text style={styles.timeSubtext}>
+                  {timeDisplay.subtext}
+                </Text>
+              </View>
+
+              {item.status === 'pending' ? (
+                <View style={styles.reminderActions}>
+                  <TouchableOpacity
+                    onPress={() => handleCompleteReminder(item.id)}
+                    style={[
+                      styles.actionButton,
+                      styles.completeButton,
+                      { backgroundColor: `${Theme.colors.status.success}12`, borderColor: Theme.colors.status.success }
+                    ]}
+                  >
+                    <Ionicons name="checkmark" size={20} color={Theme.colors.status.success} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleSnoozeReminder(item)}
+                    style={[
+                      styles.actionButton,
+                      { backgroundColor: `${palette.textSecondary}10`, borderColor: palette.borderDefault }
+                    ]}
+                  >
+                    <Ionicons name="time-outline" size={20} color={palette.textSecondary} />
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={() => handleDeleteReminder(item)}
+                    style={[
+                      styles.actionButton,
+                      { backgroundColor: `${Theme.colors.status.error}12`, borderColor: Theme.colors.status.error }
+                    ]}
+                  >
+                    <Ionicons name="trash-outline" size={20} color={Theme.colors.status.error} />
+                  </TouchableOpacity>
+                </View>
+              ) : null}
+            </View>
           </View>
-        </View>
+        </LinearGradient>
       </Card>
     );
   };
@@ -359,12 +380,24 @@ export default function RemindersScreen() {
         style={styles.modalContainer}
       >
         <View style={styles.modalContent}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>New Reminder</Text>
-            <TouchableOpacity onPress={() => setShowAddModal(false)}>
-              <Ionicons name="close" size={24} color={palette.textPrimary} />
-            </TouchableOpacity>
-          </View>
+          <LinearGradient
+            colors={[palette.background, palette.backgroundSecondary]}
+            style={styles.modalGradient}
+          >
+            <View style={styles.modalHeader}>
+              <View style={styles.modalTitleContainer}>
+                <View style={[styles.modalIconContainer, { backgroundColor: `${Theme.colors.primary}15` }]}>
+                  <Ionicons name="add-circle" size={24} color={Theme.colors.primary} />
+                </View>
+                <Text style={styles.modalTitle}>New Reminder</Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowAddModal(false)}
+                style={styles.modalCloseButton}
+              >
+                <Ionicons name="close" size={24} color={palette.textPrimary} />
+              </TouchableOpacity>
+            </View>
 
           <ScrollView showsVerticalScrollIndicator={false}>
             <View style={styles.formGroup}>
@@ -492,6 +525,7 @@ export default function RemindersScreen() {
               }}
             />
           )}
+          </LinearGradient>
         </View>
       </KeyboardAvoidingView>
     </Modal>
@@ -499,53 +533,51 @@ export default function RemindersScreen() {
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
-
-      <View style={[styles.container, { backgroundColor: palette.backgroundSecondary }]}>
-        <ScreenHeader
-          title="Reminders"
-          rightAction={
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          headerRight: () => (
             <TouchableOpacity
               onPress={() => setShowAddModal(true)}
               style={styles.headerButton}
             >
-              <Ionicons name="add-circle" size={32} color={Theme.colors.primary} />
+              <Ionicons name="add-circle" size={28} color={Theme.colors.primary} />
             </TouchableOpacity>
-          }
+          ),
+        }}
+      />
+
+      <View style={styles.container}>
+        <LinearGradient
+          colors={[
+            palette.backgroundSecondary,
+            palette.background,
+            palette.backgroundSecondary,
+          ]}
+          locations={[0, 0.5, 1]}
+          style={StyleSheet.absoluteFillObject}
         />
 
-        <View style={[styles.filterSection, { backgroundColor: palette.background, borderBottomColor: palette.borderLight }]}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            <View style={styles.filterGroup}>
-              <Text style={styles.filterLabel}>Status:</Text>
-              {(['all', 'pending', 'completed', 'snoozed'] as FilterStatus[]).map(status => (
-                <Chip
-                  key={status}
-                  label={status}
-                  selected={statusFilter === status}
-                  onPress={() => setStatusFilter(status)}
-                  style={styles.filterChip}
-                />
-              ))}
+        <View style={styles.header}>
+          <LinearGradient
+            colors={[palette.background, palette.background + 'F0']}
+            style={styles.headerGradient}
+          >
+            <View style={styles.headerContent}>
+              <View style={styles.titleRow}>
+                <Text style={styles.headerTitle}>Reminders</Text>
+                {reminders.length > 0 && (
+                  <View style={styles.countBadge}>
+                    <Text style={styles.countText}>{reminders.length}</Text>
+                  </View>
+                )}
+              </View>
             </View>
-
-            <View style={styles.filterGroup}>
-              <Text style={styles.filterLabel}>Priority:</Text>
-              {(['all', 'urgent', 'high', 'medium', 'low'] as FilterPriority[]).map(priority => (
-                <Chip
-                  key={priority}
-                  label={priority}
-                  selected={priorityFilter === priority}
-                  onPress={() => setPriorityFilter(priority)}
-                  style={styles.filterChip}
-                />
-              ))}
-            </View>
-          </ScrollView>
+          </LinearGradient>
         </View>
 
         <FlatList
-          data={filteredReminders}
+          data={reminders}
           renderItem={renderReminderItem}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={styles.listContent}
@@ -558,12 +590,12 @@ export default function RemindersScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
-              <Text style={styles.emptyText}>No reminders found</Text>
+              <View style={[styles.emptyIconContainer, { backgroundColor: `${palette.textTertiary}10` }]}>
+                <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
+              </View>
+              <Text style={styles.emptyText}>No reminders yet</Text>
               <Text style={styles.emptySubtext}>
-                {statusFilter !== 'all' || priorityFilter !== 'all'
-                  ? 'Try adjusting your filters'
-                  : 'Tap + to create your first reminder'}
+                Tap + to create your first reminder
               </Text>
             </View>
           }
@@ -578,45 +610,56 @@ export default function RemindersScreen() {
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.backgroundSecondary,
+  },
+  headerButton: {
+    marginRight: 8,
   },
   header: {
+    marginBottom: Theme.spacing.md,
+    overflow: 'hidden',
+  },
+  headerGradient: {
+    paddingHorizontal: Theme.spacing.xl,
+    paddingTop: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.xl,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  headerContent: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: Theme.spacing.lg,
-    paddingTop: 60,
-    paddingBottom: Theme.spacing.md,
-    backgroundColor: palette.background,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.md,
   },
   headerTitle: {
-    fontSize: Theme.typography.sizes['2xl'],
+    fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
   },
-  headerButton: {
-    padding: 4,
-  },
-  filterSection: {
-    backgroundColor: palette.background,
-    paddingVertical: Theme.spacing.sm,
+  countBadge: {
+    backgroundColor: palette.tint,
     paddingHorizontal: Theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.borderLight,
+    paddingVertical: Theme.spacing.sm,
+    borderRadius: Theme.borderRadius.full,
+    shadowColor: palette.tint,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  filterGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginRight: Theme.spacing.lg,
-  },
-  filterLabel: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    color: palette.textSecondary,
-    marginRight: Theme.spacing.sm,
-  },
-  filterChip: {
-    marginHorizontal: Theme.spacing.xs / 2,
+  countText: {
+    color: palette.textInverse,
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.bold,
   },
   listContent: {
     paddingVertical: Theme.spacing.md,
@@ -626,16 +669,38 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginVertical: Theme.spacing.sm,
     position: 'relative',
     overflow: 'hidden',
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  reminderCardGradient: {
+    flex: 1,
+    position: 'relative',
   },
   priorityBar: {
     position: 'absolute',
     left: 0,
     top: 0,
     bottom: 0,
-    width: 3,
+    width: 4,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+    overflow: 'hidden',
+  },
+  priorityBarGlow: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 8,
   },
   reminderContent: {
-    paddingLeft: Theme.spacing.md,
+    paddingLeft: Theme.spacing.lg,
+    paddingRight: Theme.spacing.md,
+    paddingVertical: Theme.spacing.md,
   },
   reminderHeader: {
     flexDirection: 'row',
@@ -648,23 +713,44 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  iconContainer: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  iconGlow: {
+    position: 'absolute',
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    opacity: 0.3,
+  },
   reminderTitle: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
     color: palette.textPrimary,
-    marginLeft: Theme.spacing.sm,
+    marginLeft: Theme.spacing.md,
     flex: 1,
   },
   statusBadge: {
-    paddingHorizontal: Theme.spacing.sm,
-    paddingVertical: 2,
-    borderRadius: Theme.borderRadius.sm,
-    backgroundColor: palette.backgroundSecondary,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.full,
+    borderWidth: 1.5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 2,
   },
   statusText: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: Theme.typography.fonts.semibold,
     textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   reminderDescription: {
     fontSize: Theme.typography.sizes.sm,
@@ -677,15 +763,28 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: Theme.spacing.sm,
   },
   timeInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Theme.spacing.sm,
+    flex: 1,
+  },
+  timeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.xs,
+    paddingHorizontal: Theme.spacing.md,
+    paddingVertical: Theme.spacing.xs,
+    borderRadius: Theme.borderRadius.full,
+    borderWidth: 1.5,
   },
   timeText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: Theme.typography.fonts.semibold,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   timeSubtext: {
     fontSize: Theme.typography.sizes.xs,
@@ -694,29 +793,41 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   reminderActions: {
     flexDirection: 'row',
-    gap: Theme.spacing.xs,
+    gap: Theme.spacing.sm,
   },
   actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: palette.backgroundSecondary,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
   },
   completeButton: {
-    backgroundColor: Theme.colors.status.success + '15',
+    shadowColor: Theme.colors.status.success,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Theme.spacing.xxl * 2,
   },
+  emptyIconContainer: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   emptyText: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
     color: palette.textPrimary,
-    marginTop: Theme.spacing.md,
+    marginTop: Theme.spacing.lg,
   },
   emptySubtext: {
     fontSize: Theme.typography.sizes.sm,
@@ -729,16 +840,23 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   // Modal Styles
   modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: palette.background,
-    borderTopLeftRadius: Theme.borderRadius.xl,
-    borderTopRightRadius: Theme.borderRadius.xl,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '85%',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  modalGradient: {
     paddingHorizontal: Theme.spacing.lg,
     paddingBottom: Theme.spacing.xl,
-    maxHeight: '80%',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -749,10 +867,25 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderBottomColor: palette.borderLight,
     marginBottom: Theme.spacing.lg,
   },
+  modalTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.md,
+  },
+  modalIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalTitle: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
     color: palette.textPrimary,
+  },
+  modalCloseButton: {
+    padding: Theme.spacing.xs,
   },
   formGroup: {
     marginBottom: Theme.spacing.lg,
@@ -765,17 +898,22 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   textInput: {
     backgroundColor: palette.backgroundSecondary,
-    borderRadius: Theme.borderRadius.md,
-    paddingHorizontal: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.md,
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
     color: palette.textPrimary,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.borderLight,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   textArea: {
-    minHeight: 80,
+    minHeight: 100,
     textAlignVertical: 'top',
   },
   priorityButtons: {
@@ -784,18 +922,26 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   priorityButton: {
     flex: 1,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.md,
-    borderWidth: 1,
+    paddingVertical: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    borderWidth: 2,
     alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
   },
   priorityButtonActive: {
     backgroundColor: Theme.colors.primary,
+    shadowColor: Theme.colors.primary,
+    shadowOpacity: 0.3,
   },
   priorityButtonText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: Theme.typography.fonts.semibold,
     textTransform: 'capitalize',
+    letterSpacing: 0.5,
   },
   dateTimeRow: {
     flexDirection: 'row',
@@ -805,16 +951,21 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: palette.backgroundSecondary,
-    borderRadius: Theme.borderRadius.md,
-    paddingHorizontal: Theme.spacing.md,
+    borderRadius: Theme.borderRadius.lg,
+    paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.md,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: palette.borderLight,
-    gap: Theme.spacing.sm,
+    gap: Theme.spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 4,
+    elevation: 1,
   },
   dateTimeText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: Theme.typography.fonts.semibold,
     color: palette.textPrimary,
   },
   modalFooter: {

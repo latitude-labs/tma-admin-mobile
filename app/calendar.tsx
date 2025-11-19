@@ -2,6 +2,7 @@ import { CalendarView } from '@/components/calendar/CalendarView';
 import { HolidayRequestModal } from '@/components/calendar/HolidayRequestModal';
 import { OvertimeRequestModal } from '@/components/calendar/OvertimeRequestModal';
 import { AddEventModal } from '@/components/calendar/AddEventModal';
+import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { calendarSyncService } from '@/services/calendarSync.service';
@@ -22,12 +23,10 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CalendarScreen() {
   const palette = useThemeColors();
-  const insets = useSafeAreaInsets();
-  const styles = useMemo(() => createStyles(palette, insets), [palette, insets]);
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const router = useRouter();
   const { user } = useAuthStore();
   const {
@@ -91,23 +90,23 @@ export default function CalendarScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Calendar</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity
-            style={styles.headerButton}
-            onPress={handleRefresh}
-          >
-            <Ionicons
-              name="refresh"
-              size={24}
-              color={palette.textPrimary}
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+        <ScreenHeader
+          title="Calendar"
+          rightAction={
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={handleRefresh}
+            >
+              <Ionicons
+                name="refresh"
+                size={24}
+                color={palette.textPrimary}
+              />
+            </TouchableOpacity>
+          }
+        />
 
-      <View style={styles.contentWrapper}>
+        <View style={styles.contentWrapper}>
         <CalendarView
           onDateSelect={handleDateSelect}
           onEventSelect={handleEventSelect}
@@ -192,29 +191,11 @@ export default function CalendarScreen() {
   );
 }
 
-const createStyles = (palette: any, insets: any) =>
+const createStyles = (palette: any) =>
   StyleSheet.create({
     container: {
       flex: 1,
       backgroundColor: palette.background,
-    },
-    header: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingHorizontal: Theme.spacing.lg,
-      paddingVertical: Theme.spacing.md,
-      borderBottomWidth: 1,
-      borderBottomColor: palette.borderLight,
-    },
-    title: {
-      fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.bold,
-      color: palette.textPrimary,
-    },
-    headerActions: {
-      flexDirection: 'row',
-      gap: Theme.spacing.sm,
     },
     headerButton: {
       padding: Theme.spacing.sm,
