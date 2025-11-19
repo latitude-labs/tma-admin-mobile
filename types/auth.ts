@@ -7,6 +7,7 @@ export interface User {
   email_verified_at?: string | null;
   created_at: string;
   updated_at: string;
+  class_time_ids?: number[];
 }
 
 export interface LoginRequest {
@@ -15,9 +16,12 @@ export interface LoginRequest {
 }
 
 export interface LoginResponse {
-  token: string;
-  user: User;
-  expires_at: string;
+  token: string | null;
+  user: User | null;
+  expires_at: string | null;
+  requires_2fa?: boolean;
+  two_fa_methods?: ('otp' | 'biometric')[];
+  temp_token?: string;
 }
 
 export interface ApiError {

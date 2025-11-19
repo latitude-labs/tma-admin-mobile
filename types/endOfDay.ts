@@ -32,6 +32,7 @@ export interface EndOfDayReport {
   // Additional info
   signup_names?: string | null;
   helper_names?: string | null;
+  helper_attendance?: HelperAttendance[] | null;
   incidents?: string | null;
   general_notes?: string | null;
 
@@ -74,6 +75,7 @@ export interface CreateEndOfDayReportData {
   total_cash_taken: number;
   signup_names?: string | null;
   helper_names?: string | null;
+  helper_attendance?: HelperAttendance[] | null;
   incidents?: string | null;
   general_notes?: string | null;
 }
@@ -87,6 +89,13 @@ export interface EndOfDayReportFilters {
   per_page?: number;
 }
 
+// Helper attendance tracking
+export interface HelperAttendance {
+  name: string;
+  status: 'on_time' | 'late' | 'no_show';
+  message?: string;
+}
+
 // Wizard steps for the creation flow
 export enum EoDWizardStep {
   SelectClub = 'selectClub',
@@ -95,6 +104,7 @@ export enum EoDWizardStep {
   NewSignups = 'newSignups',
   ReturningSignups = 'returningSignups',
   Financial = 'financial',
+  HelperCheckups = 'helperCheckups',
   AdditionalInfo = 'additionalInfo',
   Review = 'review',
 }

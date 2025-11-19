@@ -7,8 +7,10 @@ import apiClient from '../services/api/client';
 import {
   FacebookPage,
   AdvertisingMetrics,
-  TimeRange
+  TimeRange,
+  TimeSeriesResponse
 } from '../types/facebook';
+import { facebookService } from '../services/api/facebook.service';
 import { useApiHealthStore } from './apiHealthStore';
 
 interface FacebookPageWithMetrics extends FacebookPage {
@@ -35,16 +37,22 @@ interface FacebookState {
   selectedTimeRange: TimeRange;
   isOffline: boolean;
   lastSync: string | null;
-  metricsDebounceTimer: NodeJS.Timeout | null;
+  metricsDebounceTimer: ReturnType<typeof setTimeout> | null;
+  timeSeriesData: Map<string, TimeSeriesResponse>;
+  isLoadingTimeSeries: boolean;
+  timeSeriesError: string | null;
 
   fetchFacebookPages: () => Promise<void>;
   refreshPages: () => Promise<void>;
   fetchMetricsForPage: (pageUuid: string, timeRange: TimeRange) => Promise<void>;
   fetchAllMetrics: (timeRange: TimeRange) => Promise<void>;
+  fetchTimeSeriesForPage: (pageUuid: string, startDate: string, endDate: string) => Promise<void>;
   setSearchQuery: (query: string) => void;
   setTimeRange: (range: TimeRange) => void;
   getFilteredPages: () => FacebookPageWithMetrics[];
+  getTimeSeriesForPage: (pageUuid: string) => TimeSeriesResponse | undefined;
   clearError: () => void;
+  clearTimeSeriesError: () => void;
 }
 
 const getDateRange = (range: TimeRange): { start: string; end: string } => {
@@ -88,6 +96,9 @@ export const useFacebookStore = create<FacebookState>()(
       isOffline: false,
       lastSync: null,
       metricsDebounceTimer: null,
+      timeSeriesData: new Map(),
+      isLoadingTimeSeries: false,
+      timeSeriesError: null,
 
       fetchFacebookPages: async () => {
         // Check API health first
@@ -232,61 +243,47 @@ export const useFacebookStore = create<FacebookState>()(
         }
 
         try {
-          // Batch requests - process 3 at a time to reduce concurrent connections
-          const batchSize = 3;
-          const batches = [];
+          // Use the new batch endpoint - single request for all pages!
+          // Group all page UUIDs into a single request as per API spec
+          const batchRequest = {
+            requests: [{
+              page_uuids: pageUuids, // All UUIDs in one request
+              start_date: start,
+              end_date: end,
+            }]
+          };
 
-          for (let i = 0; i < pageUuids.length; i += batchSize) {
-            batches.push(pageUuids.slice(i, i + batchSize));
-          }
+          const response = await apiClient.post<{
+            data: Array<{
+              page_uuid: string;
+              metrics: AdvertisingMetrics;
+              error?: string;
+            }>;
+          }>(`${ENDPOINTS.advertisingMetrics}/batch`, batchRequest);
 
-          const allMetrics = new Map();
+          // Process batch response
+          const metricsMap = new Map();
 
-          // Process each batch
-          for (const batch of batches) {
-            const batchPromises = batch.map(async (uuid) => {
-              try {
-                const params = new URLSearchParams({
-                  start_date: start,
-                  end_date: end,
-                });
-                params.append('facebook_page_uuids[]', uuid);
-
-                const response = await apiClient.get<AdvertisingMetrics>(
-                  `${ENDPOINTS.advertisingMetrics}?${params.toString()}`
-                );
-
-                return {
-                  uuid,
-                  metrics: {
-                    total_spend: response.data.total_spend,
-                    total_bookings: response.data.total_bookings,
-                    cost_per_booking: response.data.cost_per_booking,
-                    club_bookings: response.data.club_bookings,
-                    timeRange,
-                    lastFetched: new Date().toISOString(),
-                  }
-                };
-              } catch (error) {
-                console.error(`Failed to fetch metrics for page ${uuid}:`, error);
-                return { uuid, metrics: undefined };
-              }
-            });
-
-            // Wait for this batch to complete
-            const batchResults = await Promise.all(batchPromises);
-
-            // Add to results map
-            batchResults.forEach(result => {
-              allMetrics.set(result.uuid, result.metrics);
-            });
-          }
+          response.data.data.forEach(item => {
+            if (!item.error && item.metrics) {
+              metricsMap.set(item.page_uuid, {
+                total_spend: item.metrics.total_spend,
+                total_bookings: item.metrics.total_bookings,
+                cost_per_booking: item.metrics.cost_per_booking,
+                club_bookings: item.metrics.club_bookings,
+                timeRange,
+                lastFetched: new Date().toISOString(),
+              });
+            } else if (item.error) {
+              console.error(`Failed to fetch metrics for page ${item.page_uuid}:`, item.error);
+            }
+          });
 
           // Update all pages at once with their metrics
           const currentPages = get().pages;
           const updatedPages = currentPages.map(page => ({
             ...page,
-            metrics: allMetrics.get(page.uuid)
+            metrics: metricsMap.get(page.uuid)
           }));
 
           set({ pages: updatedPages, isLoadingMetrics: false });
@@ -318,7 +315,47 @@ export const useFacebookStore = create<FacebookState>()(
           set({ metricsDebounceTimer: null });
         }, 300);
 
-        set({ metricsDebounceTimer: timer });
+        set({ metricsDebounceTimer: timer as any });
+      },
+
+      fetchTimeSeriesForPage: async (pageUuid: string, startDate: string, endDate: string) => {
+        // Check API health first
+        const apiHealth = useApiHealthStore.getState();
+        if (!apiHealth.canMakeApiCall()) {
+          return;
+        }
+
+        const netInfo = await NetInfo.fetch();
+
+        if (!netInfo.isConnected) {
+          set({ isOffline: true, timeSeriesError: 'No internet connection' });
+          return;
+        }
+
+        set({ isLoadingTimeSeries: true, timeSeriesError: null, isOffline: false });
+
+        try {
+          const timeSeriesResponse = await facebookService.fetchTimeSeriesMetrics(
+            pageUuid,
+            startDate,
+            endDate
+          );
+
+          const currentData = get().timeSeriesData;
+          const newData = new Map(currentData);
+          newData.set(pageUuid, timeSeriesResponse);
+
+          set({
+            timeSeriesData: newData,
+            isLoadingTimeSeries: false,
+          });
+        } catch (error: any) {
+          console.error(`Failed to fetch time series for page ${pageUuid}:`, error);
+          set({
+            timeSeriesError: error.message || 'Failed to fetch time series data',
+            isLoadingTimeSeries: false,
+          });
+        }
       },
 
       getFilteredPages: () => {
@@ -333,7 +370,13 @@ export const useFacebookStore = create<FacebookState>()(
         );
       },
 
+      getTimeSeriesForPage: (pageUuid: string) => {
+        return get().timeSeriesData.get(pageUuid);
+      },
+
       clearError: () => set({ error: null }),
+
+      clearTimeSeriesError: () => set({ timeSeriesError: null }),
     }),
     {
       name: 'facebook-storage',

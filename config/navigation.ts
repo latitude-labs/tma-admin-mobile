@@ -31,16 +31,28 @@ export const navigationItems: NavigationItem[] = [
     href: '/(drawer)/clubs',
   },
   {
-    name: 'classes',
-    title: 'Classes',
+    name: 'calendar',
+    title: 'Calendar',
     icon: 'calendar',
-    href: '/(drawer)/classes',
+    href: '/(drawer)/calendar',
+  },
+  {
+    name: 'holiday-requests',
+    title: 'Holiday Requests',
+    icon: 'airplane',
+    href: '/(drawer)/holiday-requests',
   },
   {
     name: 'trials',
     title: 'Trials',
     icon: 'person-add',
     href: '/(drawer)/trials',
+  },
+  {
+    name: 'reminders',
+    title: 'Reminders',
+    icon: 'notifications',
+    href: '/(drawer)/reminders',
   },
   {
     name: 'eod-reports',
@@ -60,6 +72,12 @@ export const navigationItems: NavigationItem[] = [
     icon: 'document-text',
     href: '/(drawer)/reports',
     requiresAdmin: true,
+  },
+  {
+    name: 'security-settings',
+    title: 'Security',
+    icon: 'shield-checkmark',
+    href: '/(drawer)/security-settings',
   },
 ];
 

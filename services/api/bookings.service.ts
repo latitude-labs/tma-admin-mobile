@@ -11,19 +11,46 @@ interface BookingsParams {
   status?: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
   per_page?: number;
   page?: number;
+  modified_since?: string;
+  cursor?: string;
+  include_deleted?: boolean;
+}
+
+interface SyncResponse {
+  data: {
+    updated: Booking[];
+    deleted: number[];
+  };
+  meta: {
+    sync_timestamp: string;
+    has_more: boolean;
+    next_cursor?: string;
+    counts: {
+      updated: number;
+      deleted: number;
+    };
+  };
 }
 
 interface UpdateBookingStatusParams {
   status: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
   kit_items?: Array<{ type: string; size: string; }>;
+  package_name?: 'basic' | 'silver' | 'gold';
   reminder_time?: string;
+}
+
+interface UpdateAttendanceStatusParams {
+  status: 'completed' | 'no-show' | 'cancelled' | 'scheduled';
 }
 
 export class BookingsService {
   async getBookings(params: BookingsParams = {}): Promise<PaginatedResponse<Booking>> {
     try {
       const response = await apiClient.get<PaginatedResponse<Booking>>('/bookings', {
-        params,
+        params: {
+          ...params,
+          include: 'club,class_time',
+        },
       });
       return response.data;
     } catch (error) {
@@ -56,13 +83,14 @@ export class BookingsService {
     return allBookings;
   }
 
-  async getBookingsTotals(): Promise<{ month: number; today: number; upcoming: number }> {
+  async getBookingsTotals(): Promise<{ month: number; today: number; trials_today: number; upcoming: number }> {
     try {
-      const response = await apiClient.get<{ data: { today: number; month: number; upcoming: number } }>('/bookings/totals');
+      const response = await apiClient.get<{ data: { today: number; trials_today: number; month: number; upcoming: number } }>('/bookings/totals');
 
       return {
         month: response.data.data.month || 0,
         today: response.data.data.today || 0,
+        trials_today: response.data.data.trials_today || 0,
         upcoming: response.data.data.upcoming || 0
       };
     } catch (error) {
@@ -83,7 +111,7 @@ export class BookingsService {
     }
   }
 
-  async updateBookingStatus(bookingId: number, params: UpdateBookingStatusParams): Promise<{
+  async updateBookingConversionStatus(bookingId: number, params: UpdateBookingStatusParams): Promise<{
     success: boolean;
     message: string;
     booking: {
@@ -94,22 +122,36 @@ export class BookingsService {
     };
   }> {
     try {
-      const response = await apiClient.put(`/bookings/${bookingId}/status`, params);
+      const response = await apiClient.put(`/bookings/${bookingId}/conversion-status`, params);
       return response.data;
     } catch (error) {
-      console.error('Failed to update booking status:', error);
+      console.error('Failed to update booking conversion status:', error);
       throw error;
     }
   }
 
-  // Offline-capable version of updateBookingStatus
-  async updateBookingStatusOffline(bookingId: number, status: string): Promise<void> {
+  async updateBookingAttendanceStatus(bookingId: number, params: UpdateAttendanceStatusParams): Promise<{
+    success: boolean;
+    message: string;
+    booking: Booking;
+  }> {
+    try {
+      const response = await apiClient.put(`/bookings/${bookingId}/status`, params);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to update booking attendance status:', error);
+      throw error;
+    }
+  }
+
+  // Offline-capable version of updateBookingAttendanceStatus
+  async updateBookingAttendanceStatusOffline(bookingId: number, status: 'completed' | 'no-show' | 'cancelled' | 'scheduled'): Promise<void> {
     const isOnline = await offlineStorage.isOnline();
 
     if (isOnline) {
       // Try to update directly if online
       try {
-        await this.updateBookingStatus(bookingId, { status: status as any });
+        await this.updateBookingAttendanceStatus(bookingId, { status });
         return;
       } catch (error) {
         console.log('Direct update failed, queuing for sync:', error);
@@ -123,23 +165,6 @@ export class BookingsService {
     // This would be handled by the booking store
   }
 
-  // Offline-capable version of marking a booking as no-show
-  async markBookingNoShowOffline(bookingId: number): Promise<void> {
-    const isOnline = await offlineStorage.isOnline();
-
-    if (isOnline) {
-      // Try to update directly if online
-      try {
-        await apiClient.patch(`/bookings/${bookingId}/no-show`, { no_show: true });
-        return;
-      } catch (error) {
-        console.log('Direct update failed, queuing for sync:', error);
-      }
-    }
-
-    // Queue the operation for later sync
-    queueCommand(CommandFactory.markBookingNoShow(bookingId));
-  }
 
   async createKitOrder(bookingId: number, items: Array<{ type: string; size: string; }>): Promise<KitOrder> {
     try {
@@ -197,6 +222,82 @@ export class BookingsService {
       return response.data;
     } catch (error) {
       console.error('Failed to complete reminder:', error);
+      throw error;
+    }
+  }
+
+  async syncBookings(params: {
+    modified_since?: string;
+    cursor?: string;
+    include_deleted?: boolean;
+  }): Promise<SyncResponse> {
+    try {
+      // Format the timestamp to match backend expected format: Y-m-d\TH:i:s
+      let formattedSince: string | undefined;
+      if (params.modified_since) {
+        // Convert from ISO 8601 with milliseconds to Y-m-d\TH:i:s format
+        const date = new Date(params.modified_since);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        const hours = String(date.getHours()).padStart(2, '0');
+        const minutes = String(date.getMinutes()).padStart(2, '0');
+        const seconds = String(date.getSeconds()).padStart(2, '0');
+        formattedSince = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+      }
+
+      // Map frontend param names to backend expected names
+      const apiParams: any = {
+        include: 'club,class_time',
+      };
+      if (formattedSince) {
+        apiParams.since = formattedSince;
+      }
+      if (params.cursor) {
+        apiParams.cursor = params.cursor;
+      }
+      // Note: include_deleted is not in the API spec, removing it
+
+      const response = await apiClient.get<SyncResponse>('/bookings/sync', {
+        params: apiParams,
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to sync bookings:', error);
+      throw error;
+    }
+  }
+
+  async createBooking(data: {
+    class_id: number;
+    datetime: string;
+    phone: string;
+    email: string;
+    names: string[];
+    whatsapp_reminder?: boolean;
+    mailing_list_opt_in?: boolean;
+    contact_name?: string;
+  }): Promise<Booking> {
+    try {
+      const response = await apiClient.post<{ bookings: Booking[]; message: string }>('/admin/bookings', {
+        bookings: [
+          {
+            class_id: data.class_id,
+            datetime: data.datetime,
+            phone: data.phone,
+            email: data.email,
+            names: data.names,
+            whatsapp_reminder: data.whatsapp_reminder || false,
+          },
+        ],
+        mailing_list_opt_in: data.mailing_list_opt_in || false,
+        contact_name: data.contact_name || null,
+      });
+
+      // The API returns an array of created bookings, we return the first one
+      return response.data.bookings[0];
+    } catch (error) {
+      console.error('Failed to create booking:', error);
       throw error;
     }
   }

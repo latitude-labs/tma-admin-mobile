@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type BadgeVariant = 'default' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 type BadgeSize = 'sm' | 'md' | 'lg';
@@ -18,9 +19,39 @@ export const Badge: React.FC<BadgeProps> = ({
   size = 'md',
   style,
 }) => {
+  const palette = useThemeColors();
+
+  const variantStyles: Record<BadgeVariant, ViewStyle> = useMemo(() => ({
+    default: {
+      backgroundColor: palette.backgroundSecondary,
+    },
+    secondary: {
+      backgroundColor: palette.backgroundSecondary,
+    },
+    success: {
+      backgroundColor: palette.statusSuccess,
+    },
+    warning: {
+      backgroundColor: palette.statusWarning,
+    },
+    error: {
+      backgroundColor: palette.statusError,
+    },
+    info: {
+      backgroundColor: palette.statusInfo,
+    },
+  }), [palette]);
+
+  const textColor =
+    variant === 'default' || variant === 'secondary'
+      ? palette.textPrimary
+      : palette.textInverse;
+
   return (
-    <View style={[styles.base, styles[variant], styles[size], style]}>
-      <Text style={[styles.text, styles[`${size}Text`]]}>
+    <View style={[styles.base, variantStyles[variant], styles[size], style]}>
+      <Text
+        style={[styles.text, styles[`${size}Text`], { color: textColor }]}
+      >
         {children}
       </Text>
     </View>
@@ -32,24 +63,6 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: Theme.borderRadius.full,
     paddingHorizontal: Theme.spacing.sm,
-  },
-  default: {
-    backgroundColor: Theme.colors.secondary.light,
-  },
-  secondary: {
-    backgroundColor: Theme.colors.secondary.light,
-  },
-  success: {
-    backgroundColor: Theme.colors.status.success,
-  },
-  warning: {
-    backgroundColor: Theme.colors.status.warning,
-  },
-  error: {
-    backgroundColor: Theme.colors.status.error,
-  },
-  info: {
-    backgroundColor: Theme.colors.status.info,
   },
   sm: {
     paddingVertical: 2,
@@ -65,7 +78,6 @@ const styles = StyleSheet.create({
   },
   text: {
     fontFamily: Theme.typography.fonts.medium,
-    color: Theme.colors.text.inverse,
   },
   smText: {
     fontSize: Theme.typography.sizes.xs,

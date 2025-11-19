@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TouchableOpacity, Text, StyleSheet, ViewStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface ChipProps {
   label: string;
@@ -18,56 +19,58 @@ export const Chip: React.FC<ChipProps> = ({
   onClose,
   style,
 }) => {
+  const palette = useThemeColors();
+
+  const dynamicStyles = useMemo(() => StyleSheet.create({
+    base: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      paddingVertical: Theme.spacing.xs,
+      paddingHorizontal: Theme.spacing.md,
+      borderRadius: Theme.borderRadius.full,
+      borderWidth: 1,
+      borderColor: palette.borderDefault,
+      backgroundColor: palette.background,
+      marginRight: Theme.spacing.sm,
+      marginBottom: Theme.spacing.sm,
+    },
+    selected: {
+      backgroundColor: palette.primary,
+      borderColor: palette.primary,
+    },
+    label: {
+      fontSize: Theme.typography.sizes.sm,
+      fontFamily: Theme.typography.fonts.regular,
+      color: palette.textPrimary,
+    },
+    selectedLabel: {
+      color: palette.textInverse,
+    },
+    closeButton: {
+      marginLeft: Theme.spacing.xs,
+    },
+  }), [palette]);
+
   return (
     <TouchableOpacity
-      style={[styles.base, selected && styles.selected, style]}
+      style={[dynamicStyles.base, selected && dynamicStyles.selected, style]}
       onPress={onPress}
       activeOpacity={onPress ? 0.7 : 1}
       disabled={!onPress}
     >
-      <Text style={[styles.label, selected && styles.selectedLabel]}>
+      <Text style={[dynamicStyles.label, selected && dynamicStyles.selectedLabel]}>
         {label}
       </Text>
       {onClose && (
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+        <TouchableOpacity onPress={onClose} style={dynamicStyles.closeButton}>
           <Ionicons
             name="close-circle"
             size={16}
-            color={selected ? Theme.colors.text.inverse : Theme.colors.text.secondary}
+            color={selected ? palette.textInverse : palette.textSecondary}
           />
         </TouchableOpacity>
       )}
     </TouchableOpacity>
   );
 };
-
-const styles = StyleSheet.create({
-  base: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    paddingVertical: Theme.spacing.xs,
-    paddingHorizontal: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.full,
-    borderWidth: 1,
-    borderColor: Theme.colors.border.default,
-    backgroundColor: Theme.colors.background.primary,
-    marginRight: Theme.spacing.sm,
-    marginBottom: Theme.spacing.sm,
-  },
-  selected: {
-    backgroundColor: Theme.colors.primary,
-    borderColor: Theme.colors.primary,
-  },
-  label: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
-    color: Theme.colors.text.primary,
-  },
-  selectedLabel: {
-    color: Theme.colors.text.inverse,
-  },
-  closeButton: {
-    marginLeft: Theme.spacing.xs,
-  },
-});

@@ -1,0 +1,2 @@
+- Create standalone reminders section (as well as the dashboard reminder alert)
+- Ensure that input boxes on EoD wizard have good UX. For example, when in the notes sections, you have to click the small area of background in between the inputs to actually stop typing. we need to ensure they can easily proceed to the next box in the native keyboard.

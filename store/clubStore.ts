@@ -1,12 +1,30 @@
-import { create } from 'zustand';
-import { Club } from '@/types/api';
 import { clubsService } from '@/services/api/clubs.service';
 import { offlineStorage } from '@/services/offline/storage';
+import { Club } from '@/types/api';
+import { create } from 'zustand';
 import { useApiHealthStore } from './apiHealthStore';
+
+interface ClubFormData {
+  name: string;
+  address?: string;
+  postcode?: string;
+  directions?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  cadence_channel_ids?: string[];
+  acuity_calendar_id?: string;
+  google_place_id?: string;
+  sync_hours_to_google?: boolean;
+  class_prioritisation_enabled?: boolean;
+}
 
 interface ClubState {
   clubs: Club[];
+  selectedClub: Club | null;
   isLoading: boolean;
+  isCreating: boolean;
+  isUpdating: boolean;
+  isDeleting: boolean;
   error: string | null;
   isOffline: boolean;
   lastSync: string | null;
@@ -15,11 +33,23 @@ interface ClubState {
   getClubById: (id: number) => Club | undefined;
   getClassCountForClub: (clubId: number) => number;
   getStudentCountForClub: (clubId: number) => number;
+  // Admin methods
+  fetchAdminClubs: (search?: string) => Promise<void>;
+  fetchAdminClub: (id: number) => Promise<void>;
+  createClub: (data: ClubFormData) => Promise<Club>;
+  updateClub: (id: number, data: Partial<ClubFormData>) => Promise<Club>;
+  deleteClub: (id: number) => Promise<void>;
+  setSelectedClub: (club: Club | null) => void;
+  clearError: () => void;
 }
 
 export const useClubStore = create<ClubState>((set, get) => ({
   clubs: [],
+  selectedClub: null,
   isLoading: false,
+  isCreating: false,
+  isUpdating: false,
+  isDeleting: false,
   error: null,
   isOffline: false,
   lastSync: null,
@@ -121,5 +151,89 @@ export const useClubStore = create<ClubState>((set, get) => ({
     // For now, returning a placeholder
     const classCount = get().getClassCountForClub(clubId);
     return classCount * 15; // Assuming average of 15 students per class
+  },
+
+  // Admin methods
+  fetchAdminClubs: async (search?: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      const clubs = await clubsService.getAdminClubs(search);
+      set({ clubs, isLoading: false });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch admin clubs',
+      });
+    }
+  },
+
+  fetchAdminClub: async (id: number) => {
+    set({ isLoading: true, error: null });
+    try {
+      const club = await clubsService.getAdminClub(id);
+      set({ selectedClub: club, isLoading: false });
+    } catch (error) {
+      set({
+        isLoading: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch club details',
+      });
+    }
+  },
+
+  createClub: async (data: ClubFormData) => {
+    set({ isCreating: true, error: null });
+    try {
+      const newClub = await clubsService.createClub(data);
+      const clubs = [...get().clubs, newClub];
+      set({ clubs, isCreating: false });
+      return newClub;
+    } catch (error) {
+      set({
+        isCreating: false,
+        error: error instanceof Error ? error.message : 'Failed to create club',
+      });
+      throw error;
+    }
+  },
+
+  updateClub: async (id: number, data: Partial<ClubFormData>) => {
+    set({ isUpdating: true, error: null });
+    try {
+      const updatedClub = await clubsService.updateClub(id, data);
+      const clubs = get().clubs.map(club =>
+        club.id === id ? updatedClub : club
+      );
+      set({ clubs, selectedClub: updatedClub, isUpdating: false });
+      return updatedClub;
+    } catch (error) {
+      set({
+        isUpdating: false,
+        error: error instanceof Error ? error.message : 'Failed to update club',
+      });
+      throw error;
+    }
+  },
+
+  deleteClub: async (id: number) => {
+    set({ isDeleting: true, error: null });
+    try {
+      await clubsService.deleteClub(id);
+      const clubs = get().clubs.filter(club => club.id !== id);
+      set({ clubs, isDeleting: false });
+    } catch (error) {
+      set({
+        isDeleting: false,
+        error: error instanceof Error ? error.message : 'Failed to delete club',
+      });
+      throw error;
+    }
+  },
+
+  setSelectedClub: (club: Club | null) => {
+    set({ selectedClub: club });
+  },
+
+  clearError: () => {
+    set({ error: null });
   },
 }));

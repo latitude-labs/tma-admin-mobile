@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import {
   TouchableOpacity,
   Text,
@@ -9,6 +9,7 @@ import {
   TouchableOpacityProps,
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'text';
 type ButtonSize = 'sm' | 'md' | 'lg';
@@ -31,9 +32,43 @@ export const Button: React.FC<ButtonProps> = ({
   style,
   ...props
 }) => {
+  const palette = useThemeColors();
+
+  const variantStyles: Record<ButtonVariant, ViewStyle> = useMemo(() => ({
+    primary: {
+      backgroundColor: palette.primary,
+    },
+    secondary: {
+      backgroundColor: palette.backgroundSecondary,
+    },
+    outline: {
+      backgroundColor: 'transparent',
+      borderWidth: 1,
+      borderColor: palette.primary,
+    },
+    text: {
+      backgroundColor: 'transparent',
+    },
+  }), [palette]);
+
+  const textVariantStyles: Record<ButtonVariant, TextStyle> = useMemo(() => ({
+    primary: {
+      color: palette.textInverse,
+    },
+    secondary: {
+      color: palette.textPrimary,
+    },
+    outline: {
+      color: palette.primary,
+    },
+    text: {
+      color: palette.primary,
+    },
+  }), [palette]);
+
   const buttonStyles = [
     styles.base,
-    styles[variant],
+    variantStyles[variant],
     styles[size],
     fullWidth && styles.fullWidth,
     disabled && styles.disabled,
@@ -41,10 +76,60 @@ export const Button: React.FC<ButtonProps> = ({
   ];
 
   const textStyles = [
-    styles.text,
-    styles[`${variant}Text` as keyof typeof styles] as TextStyle,
+    styles.textBase,
+    textVariantStyles[variant],
     styles[`${size}Text` as keyof typeof styles] as TextStyle,
   ];
+
+  const getActivityIndicatorColor = () => {
+    if (variant === 'primary') {
+      return palette.textInverse;
+    }
+    return palette.primary;
+  };
+
+  const renderContent = () => {
+    const childArray = React.Children.toArray(children);
+
+    const rendered = childArray
+      .map((child, index) => {
+        if (typeof child === 'string') {
+          const trimmed = child.trim();
+          if (!trimmed) {
+            return null;
+          }
+
+          return (
+            <Text key={index} style={textStyles}>
+              {trimmed}
+            </Text>
+          );
+        }
+
+        if (typeof child === 'number') {
+          return (
+            <Text key={index} style={textStyles}>
+              {child}
+            </Text>
+          );
+        }
+
+        if (React.isValidElement(child)) {
+          return React.cloneElement(child, {
+            key: child.key ?? index,
+          });
+        }
+
+        return null;
+      })
+      .filter(Boolean);
+
+    if (rendered.length === 0) {
+      return null;
+    }
+
+    return rendered.length === 1 ? rendered[0] : rendered;
+  };
 
   return (
     <TouchableOpacity
@@ -55,11 +140,11 @@ export const Button: React.FC<ButtonProps> = ({
     >
       {loading ? (
         <ActivityIndicator
-          color={variant === 'primary' ? '#FFFFFF' : Theme.colors.primary}
+          color={getActivityIndicatorColor()}
           size={size === 'sm' ? 'small' : 'small'}
         />
       ) : (
-        <Text style={textStyles}>{children}</Text>
+        renderContent()
       )}
     </TouchableOpacity>
   );
@@ -71,20 +156,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderRadius: Theme.borderRadius.md,
-  },
-  primary: {
-    backgroundColor: Theme.colors.primary,
-  },
-  secondary: {
-    backgroundColor: Theme.colors.secondary.light,
-  },
-  outline: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: Theme.colors.primary,
-  },
-  text: {
-    backgroundColor: 'transparent',
   },
   sm: {
     paddingHorizontal: Theme.spacing.md,
@@ -107,20 +178,8 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.5,
   },
-  text: {
+  textBase: {
     fontFamily: Theme.typography.fonts.semibold,
-  },
-  primaryText: {
-    color: Theme.colors.text.inverse,
-  },
-  secondaryText: {
-    color: Theme.colors.text.primary,
-  },
-  outlineText: {
-    color: Theme.colors.primary,
-  },
-  textText: {
-    color: Theme.colors.primary,
   },
   smText: {
     fontSize: Theme.typography.sizes.sm,

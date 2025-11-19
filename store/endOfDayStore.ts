@@ -51,6 +51,7 @@ const WIZARD_STEPS_ORDER: EoDWizardStep[] = [
   EoDWizardStep.NewSignups,
   EoDWizardStep.ReturningSignups,
   EoDWizardStep.Financial,
+  EoDWizardStep.HelperCheckups,
   EoDWizardStep.AdditionalInfo,
   EoDWizardStep.Review,
 ];
@@ -152,7 +153,11 @@ export const useEndOfDayStore = create<EndOfDayStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await endOfDayApi.createReport(data);
-      const { report } = response;
+      const report = response?.report;
+
+      if (!report) {
+        throw new Error('Invalid response from server');
+      }
 
       // Add to reports list
       set(state => ({
@@ -175,7 +180,11 @@ export const useEndOfDayStore = create<EndOfDayStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
       const response = await endOfDayApi.updateReport(id, data);
-      const { report } = response;
+      const report = response?.report;
+
+      if (!report) {
+        throw new Error('Invalid response from server');
+      }
 
       // Update in reports list
       set(state => ({

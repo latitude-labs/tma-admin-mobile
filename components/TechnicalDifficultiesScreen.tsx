@@ -8,9 +8,8 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from './useColorScheme';
-import Colors from '../constants/Colors';
 import { Theme } from '../constants/Theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface TechnicalDifficultiesScreenProps {
   onRetry: () => void;
@@ -21,8 +20,7 @@ export const TechnicalDifficultiesScreen: React.FC<TechnicalDifficultiesScreenPr
   onRetry,
   retryTime,
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = Colors[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const [timeRemaining, setTimeRemaining] = useState<string>('');
   const [canRetry, setCanRetry] = useState(false);
 
@@ -54,32 +52,36 @@ export const TechnicalDifficultiesScreen: React.FC<TechnicalDifficultiesScreenPr
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.content}>
-        <View style={[styles.iconContainer, { backgroundColor: colors.error + '20' }]}>
+        <View
+          style={[styles.iconContainer, { backgroundColor: colors.statusError + '20' }]}
+        >
           <Ionicons
             name="cloud-offline-outline"
             size={64}
-            color={colors.error}
+            color={colors.statusError}
           />
         </View>
 
-        <Text style={[styles.title, { color: colors.text }]}>
+        <Text style={[styles.title, { color: colors.textPrimary }]}>
           Technical Difficulties
         </Text>
 
-        <Text style={[styles.message, { color: colors.text + 'CC' }]}>
+        <Text style={[styles.message, { color: colors.textSecondary }]}>
           We're experiencing some technical issues with our servers.
           Please try again in a few moments.
         </Text>
 
         {timeRemaining && (
-          <View style={[styles.timerContainer, { backgroundColor: colors.card }]}>
+          <View
+            style={[styles.timerContainer, { backgroundColor: colors.backgroundSecondary }]}
+          >
             <Ionicons
               name="timer-outline"
               size={20}
-              color={colors.primary}
+              color={colors.tint}
               style={styles.timerIcon}
             />
-            <Text style={[styles.timerText, { color: colors.text }]}>
+            <Text style={[styles.timerText, { color: colors.textPrimary }]}>
               Retry available in: {timeRemaining}
             </Text>
           </View>
@@ -89,7 +91,7 @@ export const TechnicalDifficultiesScreen: React.FC<TechnicalDifficultiesScreenPr
           style={[
             styles.retryButton,
             {
-              backgroundColor: canRetry ? colors.primary : colors.border,
+              backgroundColor: canRetry ? colors.tint : colors.borderLight,
               opacity: canRetry ? 1 : 0.6,
             }
           ]}
@@ -101,24 +103,26 @@ export const TechnicalDifficultiesScreen: React.FC<TechnicalDifficultiesScreenPr
               <Ionicons
                 name="refresh"
                 size={20}
-                color="#FFFFFF"
+                color={colors.textInverse}
                 style={styles.buttonIcon}
               />
-              <Text style={styles.retryButtonText}>Try Again</Text>
+              <Text style={[styles.retryButtonText, { color: colors.textInverse }]}>Try Again</Text>
             </>
           ) : (
-            <ActivityIndicator color="#FFFFFF" size="small" />
+            <ActivityIndicator color={colors.textInverse} size="small" />
           )}
         </TouchableOpacity>
 
-        <View style={[styles.infoBox, { backgroundColor: colors.notification + '10' }]}>
+        <View
+          style={[styles.infoBox, { backgroundColor: colors.statusInfo + '15' }]}
+        >
           <Ionicons
             name="information-circle-outline"
             size={20}
-            color={colors.notification}
+            color={colors.statusInfo}
             style={styles.infoIcon}
           />
-          <Text style={[styles.infoText, { color: colors.text + 'AA' }]}>
+          <Text style={[styles.infoText, { color: colors.textSecondary }]}>
             Error code: 5XX - Server Error{'\n'}
             Your data is safe and will sync when the connection is restored.
           </Text>
@@ -189,7 +193,6 @@ const styles = StyleSheet.create({
     marginRight: Theme.spacing.xs,
   },
   retryButtonText: {
-    color: '#FFFFFF',
     fontSize: 16,
     fontFamily: 'Manrope_600SemiBold',
   },

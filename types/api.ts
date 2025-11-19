@@ -15,9 +15,18 @@ export interface Club {
   slug?: string;
   address?: string;
   postcode?: string;
+  directions?: string;
   latitude?: number | null;
   longitude?: number | null;
+  cadence_channel_ids?: string[];
+  acuity_calendar_id?: string;
+  google_place_id?: string;
+  sync_hours_to_google?: boolean;
+  class_prioritisation_enabled?: boolean;
   class_times?: ClassTime[];
+  last_synced_at?: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface ClassTime {
@@ -29,6 +38,8 @@ export interface ClassTime {
   end_time?: string;
   coaches?: string;
   helpers?: string[];
+  priority?: number;
+  is_accepting_bookings?: boolean;
   todays_booking_count?: number;
   club?: Club;
 }
@@ -40,14 +51,19 @@ export interface Booking {
   email?: string;
   phone?: string;
   status?: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
+  attendance_status?: 'scheduled' | 'completed' | 'no-show' | 'cancelled';
   start_time: string;
   cancelled_at?: string | null;
+  checked_in_at?: string | null;
+  no_show_at?: string | null;
   no_show: boolean;
   channel: 'Cadence' | 'Website';
   channel_display_name?: string;
   source?: string;
   class_time?: ClassTime;
   club?: Club;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PaginationMeta {

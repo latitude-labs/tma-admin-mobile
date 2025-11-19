@@ -1,0 +1,36 @@
+{
+  "name": "@tma-admin/constitution-audit",
+  "version": "1.0.0",
+  "description": "Constitution compliance audit tool for TMA Admin Mobile",
+  "main": "dist/index.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "audit": "node dist/index.js",
+    "dev": "tsx src/index.ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "audit",
+    "compliance",
+    "code-quality",
+    "tma-admin"
+  ],
+  "author": "TMA Admin Team",
+  "license": "MIT",
+  "dependencies": {
+    "ts-morph": "^21.0.0",
+    "glob": "^10.3.0",
+    "commander": "^11.1.0",
+    "chalk": "^5.3.0",
+    "markdown-table": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "typescript": "^5.9.2",
+    "tsx": "^4.7.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
