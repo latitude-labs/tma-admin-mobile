@@ -1,8 +1,7 @@
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
-import { biometricService } from '@/services/biometric.service';
-import * as Haptics from 'expo-haptics';
+import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { router } from 'expo-router';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
   Alert,
@@ -23,8 +22,14 @@ import { LoginRequest } from '../types/auth';
 
 export default function LoginScreen() {
   const [isLoading, setIsLoading] = useState(false);
-  const [biometricAvailable, setBiometricAvailable] = useState(false);
-  const [biometricType, setBiometricType] = useState('Biometric');
+  const { 
+    isBiometricAvailable, 
+    biometricType, 
+    isAuthenticating, 
+    loginWithBiometrics, 
+    checkAndPromptEnrollment 
+  } = useBiometricAuth();
+  
   const { login } = useAuthStore();
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -40,148 +45,6 @@ export default function LoginScreen() {
     },
   });
 
-  useEffect(() => {
-    checkBiometricAvailability();
-  }, []);
-
-  const checkBiometricAvailability = async () => {
-    try {
-      const capabilities = await biometricService.checkBiometricCapabilities();
-      const isEnrolled = await biometricService.isBiometricEnrolled();
-
-      if (capabilities.hasHardware && capabilities.isEnrolled && isEnrolled) {
-        setBiometricAvailable(true);
-        setBiometricType(" " + biometricService.getBiometricTypeString(capabilities.biometricType));
-      }
-    } catch (error) {
-      console.error('Error checking biometric availability:', error);
-    }
-  };
-
-  const handleBiometricLogin = async () => {
-    try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-      const authResult = await biometricService.authenticate(
-        'Authenticate to access your TMA Admin account'
-      );
-
-      if (authResult.success) {
-        // Get stored credentials
-        const credentials = await biometricService.getStoredCredentials();
-
-        if (credentials) {
-          setIsLoading(true);
-          try {
-            // Use the stored credentials to log in
-            await login(credentials);
-
-            // Check authentication state
-            const state = useAuthStore.getState();
-            if (state.isAuthenticated && state.user) {
-              // Ensure token is fully propagated before navigation
-              await new Promise(resolve => setTimeout(resolve, 500));
-
-              // Navigate to dashboard
-              router.replace('/(tabs)/dashboard');
-            }
-          } catch (error: any) {
-            await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-            Alert.alert(
-              'Login Failed',
-              'Failed to authenticate with stored credentials. Please try logging in manually.',
-              [{ text: 'OK' }]
-            );
-          } finally {
-            setIsLoading(false);
-          }
-        } else {
-          Alert.alert(
-            'Setup Required',
-            'Please log in with your credentials first to set up biometric authentication.',
-            [{ text: 'OK' }]
-          );
-        }
-      } else {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        if (authResult.error && authResult.error !== 'Authentication was cancelled') {
-          Alert.alert('Authentication Failed', authResult.error, [{ text: 'OK' }]);
-        }
-      }
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to authenticate', [{ text: 'OK' }]);
-    }
-  };
-
-  const checkAndPromptBiometricEnrollment = async (userId: string, email: string, password: string) => {
-    try {
-      // Check if biometric is available on the device
-      const capabilities = await biometricService.checkBiometricCapabilities();
-
-      // Only prompt if device has biometric hardware, user has enrolled biometric on device,
-      // but hasn't enrolled for this app yet
-      if (capabilities.hasHardware && capabilities.isEnrolled) {
-        const isAppEnrolled = await biometricService.isBiometricEnrolled();
-
-        if (!isAppEnrolled) {
-          const biometricType = " " + biometricService.getBiometricTypeString(capabilities.biometricType);
-
-          // Delay to let the login animation complete
-          await new Promise(resolve => setTimeout(resolve, 1000));
-
-          Alert.alert(
-            `Enable ${biometricType}?`,
-            `Would you like to use ${biometricType} for faster and more secure login in the future?`,
-            [
-              {
-                text: 'Not Now',
-                style: 'cancel',
-                onPress: () => {
-                  // Continue to dashboard
-                  router.replace('/(tabs)/dashboard');
-                }
-              },
-              {
-                text: `Enable ${biometricType}`,
-                onPress: async () => {
-                  await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-
-                  const result = await biometricService.enrollBiometric(
-                    userId,
-                    email,
-                    password
-                  );
-
-                  if (result) {
-                    await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-                    Alert.alert(
-                      'Success',
-                      `${biometricType} has been enabled! You can use it for your next login.`,
-                      [{ text: 'OK', onPress: () => router.replace('/(tabs)/dashboard') }]
-                    );
-                  } else {
-                    // Continue to dashboard even if enrollment failed
-                    router.replace('/(tabs)/dashboard');
-                  }
-                }
-              }
-            ]
-          );
-        } else {
-          // Biometric already enrolled, continue to dashboard
-          router.replace('/(tabs)/dashboard');
-        }
-      } else {
-        // No biometric available, continue to dashboard
-        router.replace('/(tabs)/dashboard');
-      }
-    } catch (error) {
-      console.error('Error checking biometric enrollment:', error);
-      // Continue to dashboard on error
-      router.replace('/(tabs)/dashboard');
-    }
-  };
-
   const onSubmit = async (data: LoginRequest) => {
     setIsLoading(true);
     try {
@@ -195,7 +58,7 @@ export default function LoginScreen() {
         await new Promise(resolve => setTimeout(resolve, 500));
 
         // Check for biometric enrollment - pass the credentials
-        await checkAndPromptBiometricEnrollment(
+        await checkAndPromptEnrollment(
           state.user.id.toString(),
           data.email,
           data.password
@@ -211,6 +74,8 @@ export default function LoginScreen() {
       setIsLoading(false);
     }
   };
+
+  const showLoading = isLoading || isAuthenticating;
 
   return (
     <SafeAreaView style={styles.container}>
@@ -248,7 +113,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoComplete="email"
                   error={errors.email?.message}
-                  editable={!isLoading}
+                  editable={!showLoading}
                 />
               )}
             />
@@ -274,7 +139,7 @@ export default function LoginScreen() {
                   autoCapitalize="none"
                   autoComplete="password"
                   error={errors.password?.message}
-                  editable={!isLoading}
+                  editable={!showLoading}
                 />
               )}
             />
@@ -288,7 +153,7 @@ export default function LoginScreen() {
               Sign In
             </Button>
 
-            {biometricAvailable && (
+            {isBiometricAvailable && (
               <>
                 <View style={styles.divider}>
                   <View style={[styles.dividerLine, { backgroundColor: palette.borderDefault }]} />
@@ -298,8 +163,8 @@ export default function LoginScreen() {
 
                 <Button
                   variant="outline"
-                  onPress={handleBiometricLogin}
-                  loading={isLoading}
+                  onPress={loginWithBiometrics}
+                  loading={isAuthenticating}
                   style={styles.biometricButton}
                 >
                   Sign in with Face ID

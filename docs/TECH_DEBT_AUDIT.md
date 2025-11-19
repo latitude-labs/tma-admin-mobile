@@ -62,10 +62,15 @@ The project already contains the blueprint for success. Future refactoring shoul
 2.  **View Component:** Pure UI, receives data via props or hooks.
 3.  **Custom Hook/Store:** Handles data fetching, transformations, and state updates.
 
-## 5. Action Plan
+## 5. Action Plan & Status
 
-1.  **Refactor `app/login.tsx`**: Quick win to simplify the entry point.
-2.  **Decompose `AdminDashboard.tsx`**: Break down the UI into smaller components first (no logic change).
-3.  **Extract Admin Logic**: Move data fetching to a hook/store.
-4.  **Refactor `CoachDashboard.tsx`**: Address the N+1 data fetching issue and decompose UI.
-5.  **Audit Services**: Ensure all API calls are centralized in `services/` and not called directly from components.
+1.  [x] **Refactor `app/login.tsx`**: Extracted biometric logic to `hooks/useBiometricAuth.ts`.
+2.  [x] **Decompose `AdminDashboard.tsx`**:
+    -   Created `hooks/useAdminDashboard.ts` for logic.
+    -   Created `DashboardHeader`, `StatsGrid`, `StatCard` components.
+    -   Simplified main component to simple View.
+3.  [x] **Refactor `CoachDashboard.tsx`**:
+    -   Created `hooks/useCoachDashboard.ts` for logic.
+    -   **Solved N+1 issue** by fetching all bookings in parallel with classes and matching in memory.
+    -   Created `CoachHeader`, `CoachClassesList`, `ClassCard` components.
+4.  [x] **Audit Services**: Verified no direct API calls exist in `app/` or `components/`.
