@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   View,
   Text,
@@ -26,7 +27,7 @@ import { useFacebookStore } from '@/store/facebookStore';
 import { ChartMetric, RunningAd, TimeSeriesDataPoint } from '@/types/facebook';
 import { getMockAdsForPage } from '@/utils/mockFacebookAds';
 import { facebookService } from '@/services/api/facebook.service';
-import { Toast } from '@/components/ui/Toast';
+import { toast } from '@/components/ui/Toast';
 
 const { width: screenWidth } = Dimensions.get('window');
 const AnimatedCard = Animated.createAnimatedComponent(Card);
@@ -169,20 +170,14 @@ export default function FacebookAdDetailScreen() {
           )
         );
 
-        Toast.show({
-          type: 'success',
-          text: result.message,
-        });
+        toast.show(result.message, 'success');
 
         if (Platform.OS === 'ios') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
       }
     } catch (error: any) {
-      Toast.show({
-        type: 'error',
-        text: error.message || 'Failed to update ad status',
-      });
+      toast.show(error.message || 'Failed to update ad status', 'error');
     } finally {
       setPausingAdId(null);
     }
@@ -665,6 +660,7 @@ export default function FacebookAdDetailScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader title={pageName} />
       <ScrollView
         style={styles.scrollView}
@@ -765,7 +761,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     metricTitle: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textSecondary,
       textTransform: 'uppercase',
       letterSpacing: 0.5,
@@ -777,17 +773,17 @@ const createStyles = (palette: ThemeColors) =>
     },
     trendText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
     },
     currentValue: {
       fontSize: 48,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       marginBottom: Theme.spacing.xs,
       letterSpacing: -1,
     },
     valueSubtitle: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
       marginBottom: Theme.spacing.lg,
     },
@@ -821,7 +817,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     chartHint: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
       textAlign: 'center',
       marginBottom: Theme.spacing.xs,
@@ -829,7 +825,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     dateRangeLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textSecondary,
       textAlign: 'center',
       paddingBottom: Theme.spacing.sm,
@@ -854,7 +850,7 @@ const createStyles = (palette: ThemeColors) =>
     chartLoadingText: {
       marginTop: Theme.spacing.md,
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
     },
     chartErrorContainer: {
@@ -866,7 +862,7 @@ const createStyles = (palette: ThemeColors) =>
     chartErrorText: {
       marginTop: Theme.spacing.md,
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
       textAlign: 'center',
     },
@@ -879,7 +875,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     retryButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textInverse,
     },
     noChartData: {
@@ -889,7 +885,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     noChartDataText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
     },
     runningAdsSection: {
@@ -903,7 +899,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     runningAdsTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
     },
     adCountBadge: {
@@ -916,7 +912,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     adCountText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textInverse,
     },
     adsList: {
@@ -936,7 +932,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     adName: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: Theme.spacing.xs,
     },
@@ -952,7 +948,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     adStatusText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
     },
     adImagePlaceholder: {
@@ -969,12 +965,12 @@ const createStyles = (palette: ThemeColors) =>
     adImagePlaceholderText: {
       marginTop: Theme.spacing.sm,
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
     },
     adCopy: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       lineHeight: 20,
       marginBottom: Theme.spacing.lg,
@@ -994,13 +990,13 @@ const createStyles = (palette: ThemeColors) =>
     },
     adMetricLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
       marginBottom: Theme.spacing.xs,
     },
     adMetricValue: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
     },
     adActions: {
@@ -1016,6 +1012,6 @@ const createStyles = (palette: ThemeColors) =>
     },
     adActionButtonText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
     },
   });

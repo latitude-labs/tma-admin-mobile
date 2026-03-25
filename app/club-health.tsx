@@ -18,6 +18,7 @@ import { DateRangePicker } from '@/components/club-health/DateRangePicker';
 import { DateRange } from '@/types/clubHealth';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ClubHealthScreen() {
   const router = useRouter();
@@ -99,6 +100,7 @@ export default function ClubHealthScreen() {
   if (isOffline) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="Club Health"
           onBackPress={() => router.back()}
@@ -231,21 +233,21 @@ const createStyles = (palette: ThemeColors) =>
     },
     offlineTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     offlineText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
       marginBottom: 4,
     },
     offlineSubtext: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
       textAlign: 'center',
     },
@@ -257,7 +259,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     emptyContainer: {
@@ -268,14 +270,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     emptyTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     emptyText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
     },
@@ -289,7 +291,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     clubIndicatorText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: 8,
     },
@@ -325,7 +327,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     swipeHintText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
     },
   });

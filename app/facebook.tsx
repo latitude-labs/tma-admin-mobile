@@ -37,6 +37,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { Chip } from '@/components/ui/Chip';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -255,6 +256,7 @@ export default function FacebookScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader title="Ad Performance" />
         <ScrollView
           showsVerticalScrollIndicator={false}
@@ -550,7 +552,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   errorContainer: {
     alignItems: 'center',
@@ -568,13 +570,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   errorTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   errorMessage: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     textAlign: 'center',
     marginBottom: Theme.spacing.xl,
@@ -590,7 +592,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   retryButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   content: {
     padding: Theme.spacing.lg,
@@ -615,12 +617,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   offlineText: {
     color: '#FFF',
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   syncText: {
     fontSize: Theme.typography.sizes.xs,
     color: palette.textTertiary,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   searchContainer: {
     flexDirection: 'row',
@@ -637,7 +639,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginLeft: Theme.spacing.sm,
     fontSize: Theme.typography.sizes.md,
     color: palette.textPrimary,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   timeRangeContainer: {
     marginBottom: Theme.spacing.lg,
@@ -672,7 +674,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   pageName: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
@@ -689,7 +691,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   statusText: {
     fontSize: Theme.typography.sizes.sm,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   performanceIndicator: {
     width: 40,
@@ -711,13 +713,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   metricValue: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginTop: Theme.spacing.xs,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -728,7 +730,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   noMetricsText: {
     fontSize: Theme.typography.sizes.sm,
     color: palette.textTertiary,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: Theme.spacing.md,
   },
   emptyState: {
@@ -743,13 +745,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyMessage: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
@@ -776,7 +778,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   clubBreakdownTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   clubGrid: {
@@ -796,7 +798,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   clubName: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   clubBookingBadge: {
@@ -809,7 +811,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   clubBookingsCount: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textInverse,
   },
 });

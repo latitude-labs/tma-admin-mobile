@@ -27,6 +27,7 @@ import { format, formatDistanceToNow } from 'date-fns';
 import { MetricsRadarChart } from '@/components/club-health/MetricsRadarChart';
 import { LineGraph } from 'react-native-graph';
 import { Button, Chip } from '@/components/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -144,15 +145,15 @@ export default function ClubHealthDetailScreen() {
             style={[
               styles.issueItem,
               {
-                borderLeftColor: issue.severity === 'critical' ? '#ef4444' : '#f59e0b',
-                backgroundColor: issue.severity === 'critical' ? '#ef444410' : '#f59e0b10',
+                borderLeftColor: issue.severity === 'critical' ? palette.statusError : palette.statusWarning,
+                backgroundColor: issue.severity === 'critical' ? `${palette.statusError}10` : `${palette.statusWarning}10`,
               },
             ]}
           >
             <Ionicons
               name={issue.severity === 'critical' ? 'alert-circle' : 'warning'}
               size={20}
-              color={issue.severity === 'critical' ? '#ef4444' : '#f59e0b'}
+              color={issue.severity === 'critical' ? palette.statusError : palette.statusWarning}
             />
             <View style={styles.issueContent}>
               <Text style={styles.issueMessage}>{issue.message}</Text>
@@ -247,11 +248,11 @@ export default function ClubHealthDetailScreen() {
                 <Ionicons
                   name={trendData.summary.improvement > 0 ? 'trending-up' : trendData.summary.improvement < 0 ? 'trending-down' : 'remove'}
                   size={16}
-                  color={trendData.summary.improvement > 0 ? '#10b981' : trendData.summary.improvement < 0 ? '#ef4444' : palette.textTertiary}
+                  color={trendData.summary.improvement > 0 ? palette.statusSuccess : trendData.summary.improvement < 0 ? palette.statusError : palette.textTertiary}
                 />
                 <Text style={[
                   styles.trendStatValue,
-                  { color: trendData.summary.improvement > 0 ? '#10b981' : trendData.summary.improvement < 0 ? '#ef4444' : palette.textTertiary }
+                  { color: trendData.summary.improvement > 0 ? palette.statusSuccess : trendData.summary.improvement < 0 ? palette.statusError : palette.textTertiary }
                 ]}>
                   {Math.abs(trendData.summary.improvement)}%
                 </Text>
@@ -267,6 +268,7 @@ export default function ClubHealthDetailScreen() {
   if (isLoading && !healthData) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader title={clubName} onBackPress={() => router.back()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Theme.colors.primary} />
@@ -523,7 +525,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     errorContainer: {
@@ -535,12 +537,12 @@ const createStyles = (palette: ThemeColors) =>
     },
     errorTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
     },
     errorText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
     },
@@ -552,7 +554,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     lastUpdated: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
       marginTop: 12,
     },
@@ -575,7 +577,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     sectionTitle: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       paddingHorizontal: 16,
       marginBottom: 12,
@@ -592,13 +594,13 @@ const createStyles = (palette: ThemeColors) =>
     },
     summaryText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       lineHeight: 20,
     },
     showMoreText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       marginTop: 8,
     },
     metricsGrid: {
@@ -624,14 +626,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     metricLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
       textAlign: 'center',
       marginBottom: 4,
     },
     metricValue: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
     },
     metricBar: {
       width: '100%',
@@ -663,7 +665,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     issueMessage: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textPrimary,
       marginBottom: 4,
     },
@@ -674,12 +676,12 @@ const createStyles = (palette: ThemeColors) =>
     },
     issueMeta: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
     },
     issueValue: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textSecondary,
     },
     noIssuesContainer: {
@@ -689,7 +691,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     noIssuesText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     issueBadge: {
@@ -700,8 +702,8 @@ const createStyles = (palette: ThemeColors) =>
     },
     issueBadgeText: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.semibold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '600',
+      color: palette.textInverse,
     },
     chartContainer: {
       paddingHorizontal: 16,
@@ -731,7 +733,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     axisLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
     },
     noDataContainer: {
@@ -740,7 +742,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     noDataText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
     },
     trendPeriodSelector: {
@@ -763,11 +765,11 @@ const createStyles = (palette: ThemeColors) =>
     },
     trendPeriodText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
     },
     trendPeriodTextActive: {
-      color: '#FFFFFF',
+      color: palette.textInverse,
     },
     trendSummary: {
       flexDirection: 'row',
@@ -782,13 +784,13 @@ const createStyles = (palette: ThemeColors) =>
     },
     trendStatLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
       marginBottom: 4,
     },
     trendStatValue: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
     },
     trendChange: {
       flexDirection: 'row',

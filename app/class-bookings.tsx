@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useMemo } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   ScrollView,
   StyleSheet,
@@ -1154,7 +1155,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   content: {
     padding: Theme.spacing.lg,
@@ -1177,7 +1178,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   className: {
     fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   countBadge: {
@@ -1189,11 +1190,11 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   countText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   classDetails: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: Theme.spacing.xs,
   },
@@ -1213,7 +1214,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flex: 1,
     height: 48,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textPrimary,
   },
   clearButton: {
@@ -1256,7 +1257,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   avatarText: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.tint,
   },
   nameSection: {
@@ -1265,7 +1266,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   trialName: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   statusContainer: {
@@ -1280,7 +1281,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statusText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   classBadge: {
     alignSelf: 'flex-start',
@@ -1311,7 +1312,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   detailText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     flex: 1,
   },
@@ -1345,7 +1346,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   actionButtonText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   emptyState: {
     alignItems: 'center',
@@ -1359,13 +1360,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyMessage: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     textAlign: 'center',
     paddingHorizontal: Theme.spacing['2xl'],
@@ -1380,7 +1381,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   clearSearchButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   contactRow: {
     flexDirection: 'row',
@@ -1390,7 +1391,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   contactText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   sourceRow: {
@@ -1429,7 +1430,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     flex: 1,
   },
@@ -1453,12 +1454,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalAvatarText: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.tint,
   },
   modalSubtitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     textAlign: 'center',
   },
@@ -1493,18 +1494,18 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statusOptionLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: 2,
   },
   statusOptionDescription: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   statusOptionText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
     flex: 1,
   },
@@ -1513,7 +1514,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalDescription: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: Theme.spacing.xs,
     textAlign: 'center',
@@ -1539,7 +1540,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalCancelButtonText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textSecondary,
   },
   modalPrimaryButton: {
@@ -1555,7 +1556,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalPrimaryButtonText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textInverse,
   },
   modalButtonPressed: {
@@ -1588,7 +1589,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   kitItemNumber: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.tint,
   },
   removeButton: {
@@ -1601,13 +1602,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   pickerLabel: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
     marginBottom: Theme.spacing.xs,
   },
   noItemsText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textTertiary,
     textAlign: 'center',
     paddingVertical: Theme.spacing.xl,
@@ -1631,7 +1632,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   addKitButtonText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.tint,
   },
   modalButtons: {
@@ -1646,7 +1647,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   reminderLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.md,
   },
@@ -1669,7 +1670,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   dateTimeButtonText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     flex: 1,
   },
@@ -1679,7 +1680,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   packageSelectionTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.md,
   },
@@ -1709,7 +1710,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   packageOptionLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: 2,
   },
@@ -1718,7 +1719,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   packageOptionDescription: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   modalScrollView: {
@@ -1758,7 +1759,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   packageBadgeText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   sizeSelectionContainer: {
     paddingHorizontal: Theme.spacing.xl,
@@ -1775,7 +1776,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   sizeItemLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   kitSizeSelectionHeader: {
@@ -1784,13 +1785,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   kitSizeSelectionTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   kitSizeSelectionSubtitle: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     fontStyle: 'italic',
   },

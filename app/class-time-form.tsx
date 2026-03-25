@@ -26,6 +26,7 @@ import Animated, {
   useSharedValue,
   withSpring
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const DAYS = [
   'Monday',
@@ -300,6 +301,7 @@ export default function ClassTimeFormScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
           <ScreenHeader title="Loading..." />
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.tint} />
@@ -547,7 +549,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   formSection: {
     padding: Theme.spacing.lg,
@@ -564,7 +566,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   clubName: {
     marginLeft: Theme.spacing.sm,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   inputContainer: {
@@ -572,7 +574,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   label: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
@@ -603,12 +605,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   dayChipText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   dayChipTextSelected: {
     color: palette.textInverse,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   timeRow: {
     flexDirection: 'row',
@@ -629,7 +631,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   toggleLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   toggle: {
@@ -652,7 +654,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   errorText: {
     color: palette.statusError,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginTop: Theme.spacing.xs,
     marginBottom: Theme.spacing.sm,
   },
@@ -679,7 +681,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   buttonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   classTypeContainer: {
     flexDirection: 'row',
@@ -705,7 +707,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   classTypeText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textSecondary,
   },
   classTypeTextSelected: {
@@ -724,7 +726,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   timePickerText: {
     flex: 1,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   modalOverlay: {
@@ -748,17 +750,17 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   modalCancel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   modalDone: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.tint,
   },
   iosTimePicker: {

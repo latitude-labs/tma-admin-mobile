@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   View,
   Text,
@@ -210,6 +211,7 @@ export default function SecuritySettingsScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={[colors.backgroundGradientStart, colors.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
@@ -392,7 +394,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: Theme.spacing.md,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   card: {
     marginBottom: Theme.spacing.lg,
@@ -408,19 +410,19 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: Theme.spacing.xs,
   },
   cardSubtitle: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   methodsList: {
     marginTop: Theme.spacing.md,
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: Theme.spacing.md,
   },
   methodItem: {
@@ -432,7 +434,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Theme.spacing.md,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   badge: {
     paddingHorizontal: Theme.spacing.sm,
@@ -441,7 +443,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   enrollButton: {
     marginTop: Theme.spacing.md,
@@ -462,11 +464,11 @@ const styles = StyleSheet.create({
   },
   deviceName: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   deviceDate: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: Theme.spacing.xs,
   },
   tipsHeader: {
@@ -476,12 +478,12 @@ const styles = StyleSheet.create({
   },
   tipsTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginLeft: Theme.spacing.sm,
   },
   tipText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: Theme.spacing.sm,
     lineHeight: 20,
   },

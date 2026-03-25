@@ -16,6 +16,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { CreateCoachData, UpdateCoachData } from '@/types/coaches';
 import { coachesService } from '@/services/api/coaches.service';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface CoachFormData {
   name: string;
@@ -133,6 +134,7 @@ export default function CoachFormScreen() {
   if (isLoadingCoach) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <Stack.Screen options={{ headerShown: false }} />
         <ScreenHeader
           title={isEditMode ? 'Edit Coach' : 'New Coach'}
@@ -298,7 +300,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     scrollView: {
@@ -315,7 +317,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     sectionTitle: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: 16,
     },

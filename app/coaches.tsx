@@ -18,6 +18,7 @@ import { coachesService } from '@/services/api/coaches.service';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuthStore } from '@/store/authStore';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CoachesScreen() {
   const router = useRouter();
@@ -89,7 +90,7 @@ export default function CoachesScreen() {
         style={[styles.emptyButton, { backgroundColor: Theme.colors.primary }]}
         onPress={handleAddCoach}
       >
-        <Ionicons name="add" size={20} color="#FFFFFF" />
+        <Ionicons name="add" size={20} color={palette.textInverse} />
         <Text style={styles.emptyButtonText}>Add First Coach</Text>
       </TouchableOpacity>
     </View>
@@ -114,6 +115,7 @@ export default function CoachesScreen() {
   if (isLoading && coaches.length === 0) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <Stack.Screen options={{ headerShown: false }} />
         <ScreenHeader title="Coaches" onBackPress={() => router.back()} />
         <View style={styles.loadingContainer}>
@@ -169,7 +171,7 @@ export default function CoachesScreen() {
           style={[styles.fab, { backgroundColor: Theme.colors.primary }]}
           onPress={handleAddCoach}
         >
-          <Ionicons name="add" size={28} color="#FFFFFF" />
+          <Ionicons name="add" size={28} color={palette.textInverse} />
         </TouchableOpacity>
       ) : null}
     </View>
@@ -190,7 +192,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     listContent: {
@@ -208,14 +210,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     emptyTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     emptyText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
       marginBottom: 24,
@@ -230,8 +232,8 @@ const createStyles = (palette: ThemeColors) =>
     },
     emptyButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '600',
+      color: palette.textInverse,
     },
     errorContainer: {
       flex: 1,
@@ -241,14 +243,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     errorTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     errorText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
       marginBottom: 20,
@@ -260,8 +262,8 @@ const createStyles = (palette: ThemeColors) =>
     },
     retryButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '600',
+      color: palette.textInverse,
     },
     fab: {
       position: 'absolute',

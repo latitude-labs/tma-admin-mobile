@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/Button';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Card } from '@/components/ui/Card';
 import { IconBox } from '@/components/ui/IconBox';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
@@ -104,6 +105,7 @@ export default function NotificationSettingsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader title="Notification Settings" />
         <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Permission Status Card */}

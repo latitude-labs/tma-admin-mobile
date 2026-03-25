@@ -1046,7 +1046,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   cartBadgeText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   tabs: {
     flexDirection: 'row',
@@ -1061,7 +1061,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   tabText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   tabIndicator: {
     position: 'absolute',
@@ -1108,12 +1108,12 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   catalogTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: 4,
   },
   catalogDescription: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 8,
     lineHeight: 18,
   },
@@ -1125,7 +1125,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   catalogPrice: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
@@ -1163,18 +1163,18 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: 8,
   },
   modalDescription: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 16,
     lineHeight: 22,
   },
   modalPrice: {
     fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     marginBottom: 20,
   },
   sizeSelector: {
@@ -1182,7 +1182,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   sizeSelectorTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: 12,
   },
   sizeScrollView: {
@@ -1199,7 +1199,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   sizeOptionText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   modalActions: {
     flexDirection: 'row',
@@ -1220,7 +1220,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: 16,
   },
   input: {
@@ -1236,12 +1236,12 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   emptyCartText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginTop: 12,
   },
   emptyCartHint: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: 4,
   },
   cartItems: {
@@ -1260,17 +1260,17 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   cartItemName: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: 4,
   },
   cartItemSize: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 4,
   },
   cartItemPrice: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   removeButton: {
     padding: 8,
@@ -1288,11 +1288,11 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   totalLabel: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   totalAmount: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   submitButton: {
     marginHorizontal: 16,
@@ -1307,7 +1307,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   emptyOrdersText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginTop: 12,
   },
   orderCard: {
@@ -1322,11 +1322,11 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   orderStudent: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   orderDate: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: 2,
   },
   orderItems: {
@@ -1334,12 +1334,12 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   orderItem: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 2,
   },
   orderNotes: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     fontStyle: 'italic',
     marginTop: 8,
   },
@@ -1366,11 +1366,11 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   batchItemName: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   batchItemPrice: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   selectionHeader: {
     flexDirection: 'row',
@@ -1381,11 +1381,11 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   selectionHeaderText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   selectionHeaderAction: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   catalogHeader: {
     padding: 16,
@@ -1401,7 +1401,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   selectMultipleText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   fab: {
     position: 'absolute',
@@ -1426,7 +1426,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   fabText: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   tabWithBadge: {
     position: 'relative',
@@ -1446,7 +1446,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   tabBadgeText: {
     color: '#fff',
     fontSize: 10,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   checkboxContainer: {
     marginLeft: 12,

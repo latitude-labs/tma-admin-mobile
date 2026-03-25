@@ -21,6 +21,7 @@ import Animated, {
   FadeOutUp,
   Layout
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function NotificationsScreen() {
   const {
@@ -202,6 +203,7 @@ export default function NotificationsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
       <ScreenHeader
         title="Notifications"
         rightAction={headerRightAction}

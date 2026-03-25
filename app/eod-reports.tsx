@@ -36,6 +36,7 @@ import Animated, {
   withSpring,
   withTiming
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -341,6 +342,7 @@ export default function EoDReportsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="End of Day Reports"
           rightAction={
@@ -404,7 +406,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
@@ -416,12 +418,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   headerTitle: {
     fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   headerSubtitle: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -441,7 +443,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   createHeaderButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   filterContainer: {
     paddingVertical: Theme.spacing.md,
@@ -492,12 +494,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   reportDate: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   reportYear: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   clubInfo: {
@@ -516,7 +518,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   clubName: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   coachInfo: {
@@ -534,7 +536,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   coachName: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textTertiary,
   },
   todayBadge: {
@@ -550,7 +552,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   todayText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -565,13 +567,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   metricValue: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginTop: Theme.spacing.xs,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -594,12 +596,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   cashLabel: {
     flex: 1,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   cashValue: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.statusSuccess,
   },
   emptyState: {
@@ -616,13 +618,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
@@ -642,6 +644,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   createButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
 });

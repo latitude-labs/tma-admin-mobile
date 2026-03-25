@@ -27,6 +27,7 @@ import Animated, {
   useSharedValue,
   withSpring
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 
@@ -193,6 +194,7 @@ export default function ClubDetailScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
           <ScreenHeader title="Loading..." />
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.tint} />
@@ -279,11 +281,11 @@ export default function ClubDetailScreen() {
             <View style={styles.noMapContent}>
               <Ionicons name="map-outline" size={48} color={palette.textTertiary} />
               <Text style={styles.noMapText}>No location set</Text>
-              {isAdmin && (
+              {isAdmin ? (
                 <Text style={styles.noMapSubtext}>
                   Edit this club to add a location
                 </Text>
-              )}
+              ) : null}
             </View>
           </AnimatedCard>
         )}
@@ -373,9 +375,9 @@ export default function ClubDetailScreen() {
                       </View>
                       <View style={styles.classInfo}>
                         <Text style={styles.className}>{classTime.name || 'Class'}</Text>
-                        {classTime.coaches && (
+                        {classTime.coaches ? (
                           <Text style={styles.classCoaches}>Coach: {classTime.coaches}</Text>
-                        )}
+                        ) : null}
                       </View>
                       {isAdmin ? (
                         <View style={styles.classActions}>
@@ -418,7 +420,7 @@ export default function ClubDetailScreen() {
             <View style={styles.emptySchedule}>
               <Ionicons name="calendar-outline" size={48} color={palette.textTertiary} />
               <Text style={styles.emptyScheduleText}>No classes scheduled</Text>
-              {isAdmin && (
+              {isAdmin ? (
                 <>
                   <Text style={styles.emptyScheduleSubtext}>
                     Add your first class to get started
@@ -431,13 +433,13 @@ export default function ClubDetailScreen() {
                     <Text style={styles.emptyScheduleButtonText}>Add Class</Text>
                   </Pressable>
                 </>
-              )}
+              ) : null}
             </View>
           )}
         </AnimatedCard>
 
         {/* Admin Action Buttons */}
-        {isAdmin && (
+        {isAdmin ? (
           <View style={styles.actionButtons}>
             <Animated.View style={[styles.actionButton, animatedButtonStyle]}>
               <Pressable
@@ -470,7 +472,7 @@ export default function ClubDetailScreen() {
               )}
             </Pressable>
           </View>
-        )}
+        ) : null}
         </ScrollView>
       </View>
     </>
@@ -498,7 +500,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   errorContainer: {
     flex: 1,
@@ -509,13 +511,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   errorTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginTop: Theme.spacing.lg,
   },
   errorMessage: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: Theme.spacing.sm,
     textAlign: 'center',
@@ -531,7 +533,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   retryButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   headerActions: {
     flexDirection: 'row',
@@ -555,13 +557,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   noMapText: {
     marginTop: Theme.spacing.md,
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   noMapSubtext: {
     marginTop: Theme.spacing.xs,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   infoCard: {
@@ -584,7 +586,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   infoHeaderText: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   infoContent: {
@@ -606,12 +608,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   infoLabel: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textTertiary,
   },
   infoValue: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textPrimary,
     flexShrink: 1,
     flexWrap: 'wrap',
@@ -637,7 +639,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   scheduleHeaderText: {
     flex: 1,
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   classBadge: {
@@ -649,7 +651,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   classBadgeText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   addClassButton: {
     padding: Theme.spacing.xs,
@@ -670,12 +672,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   classDayText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   classTime: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   classInfo: {
@@ -684,12 +686,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   className: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   classCoaches: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -711,13 +713,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   emptyScheduleText: {
     marginTop: Theme.spacing.md,
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   emptyScheduleSubtext: {
     marginTop: Theme.spacing.xs,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   emptyScheduleButton: {
@@ -734,7 +736,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   emptyScheduleButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   settingsCard: {
     margin: Theme.spacing.lg,
@@ -756,7 +758,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   settingsHeaderText: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   settingsList: {
@@ -769,12 +771,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   settingLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   settingValue: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     maxWidth: '60%',
     textAlign: 'right',
@@ -801,7 +803,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   editButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   deleteButton: {
     flex: 1,
@@ -817,6 +819,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   deleteButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
 });
