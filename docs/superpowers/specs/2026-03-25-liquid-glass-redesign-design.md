@@ -40,7 +40,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 **Retained:**
 - Primary brand: `#FF8133` (TMA Orange)
 - Primary dark: `#CC6728` (button lip)
-- Status colors: keep existing per-theme values (light: `#4CAF50`/`#FFC107`/`#F44336`/`#2196F3`; dark: `#66BB6A`/`#FFD54F`/`#EF5350`/`#42A5F5` as currently defined in Colors.ts)
+- Status colors: keep existing per-theme values (light: `#4CAF50`/`#FFC107`/`#F44336`/`#2196F3`; dark: `#66BB6A`/`#FFCA28`/`#EF5350`/`#42A5F5` as currently defined in Colors.ts)
 
 **Changed:**
 - Light backgrounds: secondary shifts from `#F5F5F5` to `#FAFAFA` (cleaner canvas for glass)
