@@ -12,9 +12,9 @@
  */
 
 import React, { useMemo } from 'react';
-import { Platform, StyleSheet, View, type ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, type ViewStyle, type StyleProp } from 'react-native';
 import {
-  default as ExpoGlassView,
+  GlassView as ExpoGlassView,
   GlassContainer as ExpoGlassContainer,
   isGlassEffectAPIAvailable,
   type GlassStyle,
@@ -29,7 +29,7 @@ export type GlassIntensity = 'light' | 'regular' | 'prominent';
 
 export interface GlassViewProps {
   children?: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /** Visual weight of the glass effect. Defaults to 'regular'. */
   intensity?: GlassIntensity;
   /** Optional tint colour overlaid on the glass surface. */
@@ -38,7 +38,7 @@ export interface GlassViewProps {
 
 export interface GlassContainerProps {
   children?: React.ReactNode;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
   /**
    * Whether to render hairline dividers between child items.
    * Defaults to true.

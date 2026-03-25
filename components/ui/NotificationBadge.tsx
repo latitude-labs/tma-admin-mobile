@@ -1,12 +1,12 @@
 import React from 'react';
-import { Text, StyleSheet, useColorScheme } from 'react-native';
+import { Text, StyleSheet } from 'react-native';
 import Animated, {
   useAnimatedStyle,
   withSpring,
   useSharedValue,
   withTiming,
 } from 'react-native-reanimated';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface NotificationBadgeProps {
   count: number;
@@ -20,8 +20,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
   animate = true,
 }) => {
   const scale = useSharedValue(1);
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const colors = useThemeColors();
 
   React.useEffect(() => {
     if (animate && count > 0) {

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-nati
 import Animated, {
   useAnimatedStyle,
   withTiming,
+  withDelay,
   withSpring,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -33,14 +34,8 @@ export const ClubHealthCard: React.FC<ClubHealthCardProps> = ({
   const translateY = useSharedValue(20);
 
   React.useEffect(() => {
-    opacity.value = withTiming(1, {
-      duration: 300,
-      delay: index * 50,
-    });
-    translateY.value = withTiming(0, {
-      duration: 300,
-      delay: index * 50,
-    });
+    opacity.value = withDelay(index * 50, withTiming(1, { duration: 300 }));
+    translateY.value = withDelay(index * 50, withTiming(0, { duration: 300 }));
   }, [index]);
 
   const animatedStyle = useAnimatedStyle(() => ({

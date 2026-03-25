@@ -182,7 +182,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 {format(new Date(event.end_date), 'HH:mm')}
               </Text>
               {event.all_day ? (
-                <Badge variant="secondary" size="xs" style={styles.allDayBadge}>
+                <Badge variant="secondary" size="sm" style={styles.allDayBadge}>
                   All Day
                 </Badge>
               ) : null}

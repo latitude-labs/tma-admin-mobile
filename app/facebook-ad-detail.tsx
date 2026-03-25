@@ -840,7 +840,6 @@ const createStyles = (palette: ThemeColors) =>
     paginationDot: {
       height: 8,
       borderRadius: Theme.borderRadius.full,
-      transition: 'all 0.3s ease',
     },
     chartLoadingContainer: {
       height: 380,
