@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { GlassView } from '@/components/ui/GlassView';
 import { Input } from '@/components/ui/Input';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
@@ -686,7 +687,7 @@ export default function KitOrdersScreen() {
           </Text>
 
           {kitItems.length === 0 ? (
-            <View style={styles.emptyCart}>
+            <GlassView style={styles.emptyCart}>
               <Ionicons name="cart-outline" size={48} color={palette.textTertiary} />
               <Text style={[styles.emptyCartText, { color: palette.textSecondary }]}>
                 Your order is empty
@@ -694,7 +695,7 @@ export default function KitOrdersScreen() {
               <Text style={[styles.emptyCartHint, { color: palette.textTertiary }]}>
                 Go to the catalog to add items
               </Text>
-            </View>
+            </GlassView>
           ) : (
             <View style={styles.cartItems}>
               {kitItems.map((item, index) => {
@@ -792,12 +793,12 @@ export default function KitOrdersScreen() {
       showsVerticalScrollIndicator={false}
     >
       {orders.length === 0 ? (
-        <View style={styles.emptyOrders}>
+        <GlassView style={styles.emptyOrders}>
           <Ionicons name="receipt-outline" size={48} color={palette.textTertiary} />
           <Text style={[styles.emptyOrdersText, { color: palette.textSecondary }]}>
             No orders yet
           </Text>
-        </View>
+        </GlassView>
       ) : (
         orders.map((order, index) => (
           <Animated.View
@@ -864,8 +865,11 @@ export default function KitOrdersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: palette.background }]}>
-        <ActivityIndicator size="large" color={Theme.colors.primary} />
+      <View style={[styles.loadingScreen, { backgroundColor: palette.background }]}>
+        <GlassView style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={palette.tint} />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </GlassView>
       </View>
     );
   }
@@ -1027,10 +1031,22 @@ const createStyles = (palette: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingContainer: {
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    gap: Theme.spacing.md,
+  },
+  loadingText: {
+    fontSize: Theme.typography.sizes.md,
+    color: palette.textSecondary,
+    fontFamily: Theme.typography.fonts.medium,
   },
   cartBadge: {
     position: 'absolute',
@@ -1232,7 +1248,10 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   emptyCart: {
     alignItems: 'center',
-    paddingVertical: 40,
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    gap: Theme.spacing.sm,
   },
   emptyCartText: {
     fontSize: Theme.typography.sizes.md,
@@ -1303,12 +1322,17 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   emptyOrders: {
     alignItems: 'center',
-    paddingVertical: 60,
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    gap: Theme.spacing.sm,
+    marginHorizontal: Theme.spacing.md,
+    marginTop: Theme.spacing.xl,
   },
   emptyOrdersText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: 'System', fontWeight: '500',
-    marginTop: 12,
+    fontFamily: Theme.typography.fonts.medium,
+    color: palette.textSecondary,
   },
   orderCard: {
     marginBottom: 12,

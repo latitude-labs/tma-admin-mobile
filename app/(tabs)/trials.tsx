@@ -1,5 +1,6 @@
 import { BookingCreationModal } from '@/components/features/BookingCreationModal';
 import { Card, Dropdown } from '@/components/ui';
+import { GlassView } from '@/components/ui/GlassView';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { bookingsService } from '@/services/api/bookings.service';
@@ -179,10 +180,10 @@ export default function TrialsScreen() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Animated.View style={loadingAnimatedStyle}>
-          <View style={styles.loadingContainer}>
+          <GlassView style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading trial bookings...</Text>
-          </View>
+          </GlassView>
         </Animated.View>
       </View>
     );
@@ -196,22 +197,24 @@ export default function TrialsScreen() {
           entering={FadeIn.duration(400)}
           style={styles.errorContainer}
         >
-          <View style={styles.errorIconContainer}>
-            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
-          </View>
-          <Text style={styles.errorTitle}>Something went wrong</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <Pressable
-            style={styles.retryButton}
-            onPress={() => {
-              if (Platform.OS === 'ios') {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }
-              fetchBookings();
-            }}
-          >
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </Pressable>
+          <GlassView style={styles.errorGlass}>
+            <View style={styles.errorIconContainer}>
+              <Ionicons name="alert-circle" size={56} color={palette.statusError} />
+            </View>
+            <Text style={styles.errorTitle}>Something went wrong</Text>
+            <Text style={styles.errorMessage}>{error}</Text>
+            <Pressable
+              style={styles.retryButton}
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                fetchBookings();
+              }}
+            >
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </Pressable>
+          </GlassView>
         </Animated.View>
       </View>
     );
@@ -915,30 +918,32 @@ export default function TrialsScreen() {
             entering={FadeIn.duration(400)}
             style={styles.emptyState}
           >
-            <View style={styles.emptyIconContainer}>
-              <Ionicons name="calendar-outline" size={64} color={palette.textTertiary} />
-            </View>
-            <Text style={styles.emptyTitle}>
-              {searchQuery ? 'No results found' : 'No bookings yet'}
-            </Text>
-            <Text style={styles.emptyMessage}>
-              {searchQuery
-                ? `Try adjusting your search for "${searchQuery}"`
-                : 'Trial bookings will appear here once scheduled'}
-            </Text>
-            {searchQuery && (
-              <Pressable
-                style={styles.clearSearchButton}
-                onPress={() => {
-                  setSearchQuery('');
-                  if (Platform.OS === 'ios') {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                }}
-              >
-                <Text style={styles.clearSearchButtonText}>Clear Search</Text>
-              </Pressable>
-            )}
+            <GlassView style={styles.emptyGlass}>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="calendar-outline" size={64} color={palette.textTertiary} />
+              </View>
+              <Text style={styles.emptyTitle}>
+                {searchQuery ? 'No results found' : 'No bookings yet'}
+              </Text>
+              <Text style={styles.emptyMessage}>
+                {searchQuery
+                  ? `Try adjusting your search for "${searchQuery}"`
+                  : 'Trial bookings will appear here once scheduled'}
+              </Text>
+              {searchQuery ? (
+                <Pressable
+                  style={styles.clearSearchButton}
+                  onPress={() => {
+                    setSearchQuery('');
+                    if (Platform.OS === 'ios') {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
+                  }}
+                >
+                  <Text style={styles.clearSearchButtonText}>Clear Search</Text>
+                </Pressable>
+              ) : null}
+            </GlassView>
           </Animated.View>
         )}
       </View>
@@ -1535,9 +1540,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.subtle,
+    overflow: 'hidden',
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -1547,11 +1551,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   errorContainer: {
     alignItems: 'center',
-    padding: Theme.spacing['2xl'],
-    backgroundColor: palette.background,
-    borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.subtle,
     maxWidth: 320,
+  },
+  errorGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   errorIconContainer: {
     padding: Theme.spacing.lg,
@@ -1919,6 +1925,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: Theme.spacing['3xl'],
+    paddingHorizontal: Theme.spacing.md,
+  },
+  emptyGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    width: '100%',
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,

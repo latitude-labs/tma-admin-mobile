@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card';
+import { GlassView } from '@/components/ui/GlassView';
 import { Chip } from '@/components/ui/Chip';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
@@ -288,26 +289,28 @@ export default function EoDReportsScreen() {
       entering={FadeIn.duration(400)}
       style={styles.emptyState}
     >
-      <View style={styles.emptyIconContainer}>
-        <Ionicons name="document-text-outline" size={64} color={palette.textTertiary} />
-      </View>
-      <Text style={styles.emptyTitle}>No Reports Yet</Text>
-      <Text style={styles.emptyText}>
-        {isAdmin
-          ? 'No end of day reports have been submitted yet.'
-          : selectedClub
-          ? 'No reports found for this club.'
-          : 'Select a club and create your first report.'}
-      </Text>
-      {!isAdmin && canCreateReport && selectedClub && (
-        <Pressable
-          style={styles.createButton}
-          onPress={handleCreateReport}
-        >
-          <Ionicons name="add" size={20} color={palette.textInverse} />
-          <Text style={styles.createButtonText}>Create Today's Report</Text>
-        </Pressable>
-      )}
+      <GlassView style={styles.emptyGlass}>
+        <View style={styles.emptyIconContainer}>
+          <Ionicons name="document-text-outline" size={64} color={palette.textTertiary} />
+        </View>
+        <Text style={styles.emptyTitle}>No Reports Yet</Text>
+        <Text style={styles.emptyText}>
+          {isAdmin
+            ? 'No end of day reports have been submitted yet.'
+            : selectedClub
+            ? 'No reports found for this club.'
+            : 'Select a club and create your first report.'}
+        </Text>
+        {!isAdmin && canCreateReport && selectedClub ? (
+          <Pressable
+            style={styles.createButton}
+            onPress={handleCreateReport}
+          >
+            <Ionicons name="add" size={20} color={palette.textInverse} />
+            <Text style={styles.createButtonText}>Create Today's Report</Text>
+          </Pressable>
+        ) : null}
+      </GlassView>
     </Animated.View>
   );
 
@@ -328,11 +331,12 @@ export default function EoDReportsScreen() {
   if (loading && reports.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
+        <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <Animated.View style={loadingAnimatedStyle}>
-          <View style={styles.loadingContainer}>
+          <GlassView style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading reports...</Text>
-          </View>
+          </GlassView>
         </Animated.View>
       </View>
     );
@@ -398,9 +402,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.subtle,
+    overflow: 'hidden',
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -609,6 +612,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Theme.spacing.xl,
+  },
+  emptyGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,

@@ -1,4 +1,5 @@
 import { Button, Input, ScreenHeader, toast } from '@/components/ui';
+import { GlassView } from '@/components/ui/GlassView';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { ClassTimeFormData, classTimesService } from '@/services/api/classTimes.service';
@@ -349,9 +350,11 @@ export default function ClassTimeFormScreen() {
         <View style={styles.container}>
       <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
           <ScreenHeader title="Loading..." />
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={palette.tint} />
-            <Text style={styles.loadingText}>Loading class time...</Text>
+          <View style={styles.loadingWrapper}>
+            <GlassView style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={palette.tint} />
+              <Text style={styles.loadingText}>Loading class time...</Text>
+            </GlassView>
           </View>
         </View>
       </>
@@ -575,10 +578,17 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingBottom: Theme.spacing['3xl'],
   },
-  loadingContainer: {
+  loadingWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: Theme.spacing.xl,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   loadingText: {
     marginTop: Theme.spacing.lg,

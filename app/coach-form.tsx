@@ -12,6 +12,7 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { ScreenHeader, Input, Button } from '@/components/ui';
+import { GlassView } from '@/components/ui/GlassView';
 import { useForm, Controller } from 'react-hook-form';
 import { CreateCoachData, UpdateCoachData } from '@/types/coaches';
 import { coachesService } from '@/services/api/coaches.service';
@@ -140,8 +141,10 @@ export default function CoachFormScreen() {
           title={isEditMode ? 'Edit Coach' : 'New Coach'}
           onBackPress={() => router.back()}
         />
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View style={styles.loadingWrapper}>
+          <GlassView style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </GlassView>
         </View>
       </View>
     );
@@ -293,14 +296,21 @@ const createStyles = (palette: ThemeColors) =>
       flex: 1,
       backgroundColor: palette.backgroundSecondary,
     },
-    loadingContainer: {
+    loadingWrapper: {
       flex: 1,
       justifyContent: 'center',
+      alignItems: 'center',
+      padding: Theme.spacing.xl,
+    },
+    loadingContainer: {
+      padding: Theme.spacing['2xl'],
+      borderRadius: Theme.borderRadius.xl,
+      overflow: 'hidden',
       alignItems: 'center',
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: 'System', fontWeight: '400',
+      fontFamily: Theme.typography.fonts.regular,
       color: palette.textSecondary,
     },
     scrollView: {

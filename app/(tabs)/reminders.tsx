@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { GlassView } from '@/components/ui/GlassView';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { remindersService } from '@/services/api/reminders.service';
@@ -578,13 +579,15 @@ export default function RemindersScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <View style={[styles.emptyIconContainer, { backgroundColor: `${palette.textTertiary}10` }]}>
-                <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
-              </View>
-              <Text style={styles.emptyText}>No reminders yet</Text>
-              <Text style={styles.emptySubtext}>
-                Tap + to create your first reminder
-              </Text>
+              <GlassView style={styles.emptyGlass}>
+                <View style={[styles.emptyIconContainer, { backgroundColor: `${palette.textTertiary}10` }]}>
+                  <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
+                </View>
+                <Text style={styles.emptyText}>No reminders yet</Text>
+                <Text style={styles.emptySubtext}>
+                  Tap + to create your first reminder
+                </Text>
+              </GlassView>
             </View>
           }
         />
@@ -807,6 +810,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Theme.spacing.xxl * 2,
+    paddingHorizontal: Theme.spacing.lg,
+  },
+  emptyGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    width: '100%',
   },
   emptyIconContainer: {
     width: 96,
