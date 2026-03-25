@@ -92,10 +92,10 @@ export default function DesignSystemScreen() {
               This is a filled card with background color.
             </Text>
           </Card>
-          <Card variant="outlined" style={styles.card}>
-            <Text style={styles.cardTitle}>Outlined Card</Text>
+          <Card variant="elevated" style={styles.card}>
+            <Text style={styles.cardTitle}>Elevated Card</Text>
             <Text style={styles.cardText}>
-              This is an outlined card with border.
+              This is an elevated card with glass treatment.
             </Text>
           </Card>
         </Section>

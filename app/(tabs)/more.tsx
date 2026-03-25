@@ -1,5 +1,6 @@
 import { Avatar } from '@/components/ui/Avatar';
 import { Card } from '@/components/ui/Card';
+import { IconBox } from '@/components/ui/IconBox';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
@@ -84,22 +85,13 @@ const MenuItemComponent = React.memo(({
         activeOpacity={0.7}
       >
         <View style={styles.menuItemLeft}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: item.color
-                  ? `${item.color}15`
-                  : `${Theme.colors.primary}15`,
-              },
-            ]}
-          >
-            <Ionicons
-              name={item.icon}
-              size={22}
-              color={item.color || Theme.colors.primary}
-            />
-          </View>
+          <IconBox
+            icon={item.icon}
+            size="md"
+            variant="filled"
+            color={item.color || Theme.colors.primary}
+            style={{ marginRight: Theme.spacing.md }}
+          />
           <Text
             style={[
               styles.menuItemText,
@@ -229,13 +221,7 @@ export default function MoreScreen() {
         style={StyleSheet.absoluteFillObject}
       />
       <ScrollView style={styles.scrollContainer}>
-        <Card variant="filled" style={styles.profileCard}>
-          <LinearGradient
-            colors={[`${Theme.colors.primary}08`, `${Theme.colors.primary}03`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.profileCardGradient}
-          >
+        <Card variant="gradient" padding="xl" style={styles.profileCard}>
             <View style={styles.profileContent}>
               <View style={styles.avatarWrapper}>
                 <View style={[styles.avatarGlow, { backgroundColor: Theme.colors.primary }]} />
@@ -260,7 +246,6 @@ export default function MoreScreen() {
                 ) : null}
               </View>
             </View>
-          </LinearGradient>
         </Card>
 
         {menuSections.map((section, sectionIndex) => (
@@ -276,7 +261,7 @@ export default function MoreScreen() {
               ) : null}
             </View>
             <Card
-              variant="outlined"
+              variant="elevated"
               style={[
                 styles.sectionCard,
                 section.title === 'Admin' && {
@@ -319,7 +304,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   profileCard: {
     margin: Theme.spacing.lg,
     marginBottom: Theme.spacing.md,
-    padding: 0,
     overflow: 'hidden',
     borderRadius: 20,
     shadowColor: '#000',
@@ -327,9 +311,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 4,
-  },
-  profileCardGradient: {
-    padding: Theme.spacing.xl,
   },
   profileContent: {
     flexDirection: 'row',
@@ -442,20 +423,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
-  },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: palette.backgroundSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Theme.spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
   },
   menuItemText: {
     fontSize: Theme.typography.sizes.md,

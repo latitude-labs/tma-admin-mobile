@@ -177,7 +177,7 @@ export default function NotificationSettingsScreen() {
           </View>
         </Card>
 
-        <Card variant="outlined" style={styles.card}>
+        <Card variant="elevated" style={styles.card}>
           <Text style={styles.sectionTitle}>Notification Preferences</Text>
           {[
             { key: 'newSignups', title: 'New Signups', description: 'Notify me of new user signups.' },

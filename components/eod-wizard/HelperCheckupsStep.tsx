@@ -14,11 +14,11 @@ import {
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
 import { useColorScheme } from '@/components/useColorScheme';
-import { Colors } from '@/constants/Colors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { HelperAttendance } from '@/types/endOfDay';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import Animated, {
   useAnimatedStyle,
   withTiming,
@@ -33,7 +33,7 @@ interface HelperItem extends HelperAttendance {
 
 export const HelperCheckupsStep: React.FC = () => {
   const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const currentTheme = useThemeColors();
   const {
     wizardState,
     updateWizardData,
@@ -202,7 +202,7 @@ export const HelperCheckupsStep: React.FC = () => {
 
     return (
       <Animated.View key={helper.id} style={[animatedStyle, { marginBottom: Theme.spacing.md }]}>
-        <Card variant="outlined" style={styles.helperCard}>
+        <Card variant="elevated" style={styles.helperCard}>
           <View style={styles.helperHeader}>
             <View style={styles.helperInfo}>
               <Ionicons
@@ -331,7 +331,7 @@ export const HelperCheckupsStep: React.FC = () => {
             </Text>
             <Button
               variant="primary"
-              size="small"
+              size="sm"
               onPress={() => setShowAddHelper(true)}
               style={styles.emptyButton}
             >
@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Theme.spacing.xs,
     borderRadius: Theme.borderRadius.md,
     borderWidth: 1,
-    borderColor: Colors.border.light,
+    borderColor: Theme.colors.border.light,
     backgroundColor: 'transparent',
   },
   statusButtonText: {
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
     marginTop: Theme.spacing.md,
     paddingTop: Theme.spacing.md,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    borderTopColor: Theme.colors.border.light,
   },
   messageToggle: {
     flexDirection: 'row',
@@ -528,7 +528,7 @@ const styles = StyleSheet.create({
     marginTop: Theme.spacing.sm,
     padding: Theme.spacing.sm,
     borderWidth: 1,
-    borderColor: Colors.border.light,
+    borderColor: Theme.colors.border.light,
     borderRadius: Theme.borderRadius.sm,
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,

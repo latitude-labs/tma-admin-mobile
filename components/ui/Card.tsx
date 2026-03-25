@@ -1,12 +1,14 @@
 import React, { useMemo } from 'react';
-import { View, StyleSheet, ViewProps } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import { Theme, getThemeShadows } from '@/constants/Theme';
+import { StyleSheet, ViewProps } from 'react-native';
+import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { GlassView } from '@/components/ui/GlassView';
+
+type CardVariant = 'elevated' | 'filled' | 'gradient';
 
 interface CardProps extends ViewProps {
   children: React.ReactNode;
-  variant?: 'elevated' | 'filled' | 'outlined' | 'gradient';
+  variant?: CardVariant;
   padding?: keyof typeof Theme.spacing;
 }
 
@@ -18,61 +20,45 @@ export const Card: React.FC<CardProps> = ({
   ...props
 }) => {
   const palette = useThemeColors();
-  const shadows = getThemeShadows(palette.isDark ? 'dark' : 'light');
 
-  const dynamicStyles = useMemo(() => StyleSheet.create({
-    base: {
-      backgroundColor: palette.background,
-      borderRadius: Theme.borderRadius.lg,
-    },
-    elevated: {
-      ...shadows.subtle,
-      backgroundColor: palette.background,
-    },
-    filled: {
-      backgroundColor: palette.backgroundSecondary,
-    },
-    outlined: {
-      borderWidth: 1,
-      borderColor: palette.borderDefault,
-      backgroundColor: palette.background,
-    },
-    gradient: {
-      borderWidth: 1,
-      borderColor: palette.primary + '20',
-    },
-  }), [palette, shadows]);
+  const baseStyle = useMemo(() => ({
+    borderRadius: Theme.borderRadius.xl,
+    padding: Theme.spacing[padding],
+  }), [padding]);
 
   if (variant === 'gradient') {
     return (
-      <LinearGradient
-        colors={[palette.primary + '10', palette.primary + '02']} // 10% to 2% opacity
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={[
-          dynamicStyles.base,
-          dynamicStyles.gradient,
-          { padding: Theme.spacing[padding] },
-          style,
-        ]}
-        {...props}
+      <GlassView
+        intensity="regular"
+        tintColor={palette.primary + '1A'}
+        style={[baseStyle, style] as any}
+        {...(props as any)}
       >
         {children}
-      </LinearGradient>
+      </GlassView>
     );
   }
 
+  if (variant === 'filled') {
+    return (
+      <GlassView
+        intensity="prominent"
+        style={[baseStyle, style] as any}
+        {...(props as any)}
+      >
+        {children}
+      </GlassView>
+    );
+  }
+
+  // elevated (default)
   return (
-    <View
-      style={[
-        dynamicStyles.base,
-        dynamicStyles[variant],
-        { padding: Theme.spacing[padding] },
-        style,
-      ]}
-      {...props}
+    <GlassView
+      intensity="regular"
+      style={[baseStyle, style] as any}
+      {...(props as any)}
     >
       {children}
-    </View>
+    </GlassView>
   );
 };

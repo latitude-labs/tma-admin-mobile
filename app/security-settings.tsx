@@ -10,11 +10,12 @@ import {
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Stack } from 'expo-router';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { IconBox } from '@/components/ui/IconBox';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useAuthStore } from '@/store/authStore';
 import { twoFactorService, TwoFactorStatus } from '@/services/twoFactor.service';
@@ -229,9 +230,10 @@ export default function SecuritySettingsScreen() {
           {/* 2FA Status Card */}
           <Card variant="filled" style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons
-                name="shield-checkmark"
-                size={32}
+              <IconBox
+                icon="shield-checkmark"
+                size="md"
+                variant="filled"
                 color={twoFactorStatus?.enabled ? colors.statusSuccess : colors.textTertiary}
               />
               <View style={styles.cardHeaderText}>
@@ -274,9 +276,10 @@ export default function SecuritySettingsScreen() {
           {biometricAvailable && (
             <Card variant="filled" style={styles.card}>
               <View style={styles.cardHeader}>
-                <MaterialIcons
-                  name="fingerprint"
-                  size={32}
+                <IconBox
+                  icon="finger-print"
+                  size="md"
+                  variant="filled"
                   color={biometricEnabled ? colors.statusSuccess : colors.textTertiary}
                 />
                 <View style={styles.cardHeaderText}>
@@ -312,9 +315,10 @@ export default function SecuritySettingsScreen() {
               <View style={styles.devicesList}>
                 {twoFactorStatus.trustedDevices.map((device) => (
                   <View key={device.id} style={styles.deviceItem}>
-                    <Ionicons
-                      name={device.isCurrent ? 'phone-portrait' : 'laptop-outline'}
-                      size={24}
+                    <IconBox
+                      icon={device.isCurrent ? 'phone-portrait' : 'laptop-outline'}
+                      size="md"
+                      variant="filled"
                       color={colors.textSecondary}
                     />
                     <View style={styles.deviceInfo}>
@@ -340,9 +344,14 @@ export default function SecuritySettingsScreen() {
           )}
 
           {/* Security Tips Card */}
-          <Card variant="outlined" style={styles.card}>
+          <Card variant="elevated" style={styles.card}>
             <View style={styles.tipsHeader}>
-              <Ionicons name="information-circle" size={24} color={colors.statusInfo} />
+              <IconBox
+                icon="information-circle"
+                size="sm"
+                variant="filled"
+                color={colors.statusInfo}
+              />
               <Text style={[styles.tipsTitle, { color: colors.textPrimary }]}>
                 Security Tips
               </Text>

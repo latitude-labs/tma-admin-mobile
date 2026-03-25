@@ -704,7 +704,7 @@ export default function KitOrdersScreen() {
                     key={index}
                     entering={FadeInDown.delay(index * 50).springify()}
                   >
-                    <Card variant="outlined" style={styles.cartItemCard}>
+                    <Card variant="elevated" style={styles.cartItemCard}>
                       <View style={styles.cartItemContent}>
                         <View style={styles.cartItemInfo}>
                           <Text style={[styles.cartItemName, { color: palette.text }]}>
@@ -804,7 +804,7 @@ export default function KitOrdersScreen() {
             key={order.id}
             entering={FadeInDown.delay(index * 50).springify()}
           >
-            <Card variant="outlined" style={styles.orderCard}>
+            <Card variant="elevated" style={styles.orderCard}>
               <View style={styles.orderHeader}>
                 <View>
                   <Text style={[styles.orderStudent, { color: palette.text }]}>
@@ -1342,5 +1342,121 @@ const createStyles = (palette: any) => StyleSheet.create({
     fontFamily: Theme.typography.fonts.regular,
     fontStyle: 'italic',
     marginTop: 8,
+  },
+  batchModalContent: {
+    backgroundColor: palette.background,
+    borderTopLeftRadius: Theme.borderRadius.xl,
+    borderTopRightRadius: Theme.borderRadius.xl,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  batchItemsScroll: {
+    maxHeight: 400,
+  },
+  batchItemContainer: {
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.borderLight,
+  },
+  batchItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  batchItemName: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.medium,
+  },
+  batchItemPrice: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+  },
+  selectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: palette.backgroundSecondary,
+  },
+  selectionHeaderText: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.medium,
+  },
+  selectionHeaderAction: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.semibold,
+  },
+  catalogHeader: {
+    padding: 16,
+  },
+  selectMultipleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: Theme.borderRadius.lg,
+    gap: 8,
+  },
+  selectMultipleText: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: Theme.typography.fonts.medium,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 32,
+    left: 32,
+    right: 32,
+    alignItems: 'center',
+  },
+  fabTouchable: {
+    backgroundColor: Theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 32,
+    gap: 12,
+    shadowColor: Theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    fontSize: Theme.typography.sizes.lg,
+    fontFamily: Theme.typography.fonts.bold,
+  },
+  tabWithBadge: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tabBadge: {
+    backgroundColor: Theme.colors.status.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  tabBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: Theme.typography.fonts.bold,
+  },
+  checkboxContainer: {
+    marginLeft: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
