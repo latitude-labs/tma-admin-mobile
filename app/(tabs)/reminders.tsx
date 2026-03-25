@@ -13,7 +13,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isPast, isToday, isTomorrow, formatDistanceToNow } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -533,28 +533,10 @@ export default function RemindersScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => setShowAddModal(true)}
-              style={styles.headerButton}
-            >
-              <Ionicons name="add-circle" size={28} color={Theme.colors.primary} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
 
       <View style={styles.container}>
         <LinearGradient
-          colors={[
-            palette.backgroundSecondary,
-            palette.background,
-            palette.backgroundSecondary,
-          ]}
-          locations={[0, 0.5, 1]}
+          colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
           style={StyleSheet.absoluteFillObject}
         />
 
@@ -572,6 +554,12 @@ export default function RemindersScreen() {
                   </View>
                 )}
               </View>
+              <TouchableOpacity
+                onPress={() => setShowAddModal(true)}
+                style={styles.addButton}
+              >
+                <Ionicons name="add" size={28} color={palette.tint} />
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </View>
@@ -611,8 +599,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerButton: {
-    marginRight: 8,
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     marginBottom: Theme.spacing.md,

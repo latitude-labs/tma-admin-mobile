@@ -74,7 +74,7 @@ const ClubItem = React.memo(({
       <AnimatedCard
         variant="elevated"
         style={styles.clubCard}
-        entering={FadeInDown.delay(index * 100).duration(400).springify()}
+        entering={FadeInDown.delay(index * 60).duration(300).withInitialValues({ transform: [{ translateY: 8 }] })}
         layout={Layout.springify()}
       >
         <View style={styles.clubHeader}>
@@ -308,12 +308,7 @@ export default function ClubsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <ScrollView
@@ -514,7 +509,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingBottom: Theme.spacing.xl,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    shadowColor: '#000',
+    shadowColor: palette.textPrimary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 8,

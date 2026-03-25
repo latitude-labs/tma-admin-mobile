@@ -694,12 +694,7 @@ export default function TrialsScreen() {
     <>
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
     <ScrollView
@@ -731,15 +726,15 @@ export default function TrialsScreen() {
                 <Text style={styles.countText}>{pagination.totalItems}</Text>
               </View>
             </View>
-            {isOffline && (
+            {isOffline ? (
               <Animated.View
                 entering={FadeIn.duration(300)}
                 style={styles.offlineBadge}
               >
-                <Ionicons name="cloud-offline" size={14} color="#FFF" />
+                <Ionicons name="cloud-offline" size={14} color={palette.textInverse} />
                 <Text style={styles.offlineText}>Offline Mode</Text>
               </Animated.View>
-            )}
+            ) : null}
           </View>
           <AnimatedPressable
             onPress={() => {
@@ -1730,7 +1725,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     shadowOpacity: 0.08,
     shadowRadius: 10,
     elevation: 4,
-    backgroundColor: palette.isDark ? '#2A2A2A' : palette.card,
+    backgroundColor: palette.card,
   },
   trialHeader: {
     flexDirection: 'row',
