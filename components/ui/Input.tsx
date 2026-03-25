@@ -33,10 +33,22 @@ export const Input: React.FC<InputProps> = ({
   const [focused, setFocused] = useState(false);
   const palette = useThemeColors();
 
+  const translucentBg = palette.isDark
+    ? 'rgba(30, 28, 26, 0.9)'
+    : 'rgba(255, 255, 255, 0.9)';
+
+  const focusGlowStyle = focused ? {
+    shadowColor: Theme.colors.primary,
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 0 },
+  } : {};
+
   const dynamicStyles = useMemo(() => StyleSheet.create({
     label: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System',
+      fontWeight: '500',
       color: palette.textPrimary,
       marginBottom: Theme.spacing.xs,
     },
@@ -46,7 +58,7 @@ export const Input: React.FC<InputProps> = ({
       borderWidth: 1,
       borderColor: palette.borderDefault,
       borderRadius: Theme.borderRadius.md,
-      backgroundColor: palette.background,
+      backgroundColor: translucentBg,
       paddingHorizontal: Theme.spacing.md,
       minHeight: 48,
     },
@@ -59,67 +71,72 @@ export const Input: React.FC<InputProps> = ({
     input: {
       flex: 1,
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System',
+      fontWeight: '400',
       color: palette.textPrimary,
       paddingVertical: Theme.spacing.sm,
     },
     errorText: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System',
+      fontWeight: '400',
       color: palette.statusError,
       marginTop: Theme.spacing.xs,
     },
     helperText: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System',
+      fontWeight: '400',
       color: palette.textSecondary,
       marginTop: Theme.spacing.xs,
     },
-  }), [palette]);
+  }), [palette, translucentBg]);
 
   return (
     <View style={styles.container}>
-      {label && <Text style={dynamicStyles.label}>{label}</Text>}
-      <View
-        style={[
-          dynamicStyles.inputContainer,
-          focused && dynamicStyles.focused,
-          error && dynamicStyles.error,
-        ]}
-      >
-        {leftIcon && (
-          <Ionicons
-            name={leftIcon}
-            size={20}
-            color={palette.textSecondary}
-            style={styles.leftIcon}
-          />
-        )}
-        <TextInput
-          style={[dynamicStyles.input, style]}
-          placeholderTextColor={palette.textTertiary}
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          {...props}
-        />
-        {rightIcon && (
-          <TouchableOpacity
-            onPress={onRightIconPress}
-            disabled={!onRightIconPress}
-          >
+      {label ? <Text style={dynamicStyles.label}>{label}</Text> : null}
+      <View style={focusGlowStyle}>
+        <View
+          style={[
+            dynamicStyles.inputContainer,
+            focused ? dynamicStyles.focused : null,
+            error ? dynamicStyles.error : null,
+          ]}
+        >
+          {leftIcon ? (
             <Ionicons
-              name={rightIcon}
+              name={leftIcon}
               size={20}
               color={palette.textSecondary}
-              style={styles.rightIcon}
+              style={styles.leftIcon}
             />
-          </TouchableOpacity>
-        )}
+          ) : null}
+          <TextInput
+            style={[dynamicStyles.input, style]}
+            placeholderTextColor={palette.textTertiary}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            {...props}
+          />
+          {rightIcon ? (
+            <TouchableOpacity
+              onPress={onRightIconPress}
+              disabled={!onRightIconPress}
+            >
+              <Ionicons
+                name={rightIcon}
+                size={20}
+                color={palette.textSecondary}
+                style={styles.rightIcon}
+              />
+            </TouchableOpacity>
+          ) : null}
+        </View>
       </View>
-      {error && <Text style={dynamicStyles.errorText}>{error}</Text>}
-      {helperText && !error && (
+      {error ? <Text style={dynamicStyles.errorText}>{error}</Text> : null}
+      {helperText && !error ? (
         <Text style={dynamicStyles.helperText}>{helperText}</Text>
-      )}
+      ) : null}
     </View>
   );
 };
