@@ -268,7 +268,7 @@ const createStyles = (palette: ThemeColors) =>
       backgroundColor: palette.background,
       borderRadius: Theme.borderRadius.lg,
       marginBottom: Theme.spacing.md,
-      ...Theme.shadows.sm,
+      ...Theme.shadows.subtle,
       overflow: 'hidden',
     },
     colorStrip: {

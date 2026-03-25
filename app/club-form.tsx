@@ -659,7 +659,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.lg,
     borderRadius: Theme.borderRadius.xl,
     gap: Theme.spacing.sm,
-    ...Theme.shadows.lg,
+    ...Theme.shadows.elevated,
   },
   saveButtonText: {
     color: palette.textInverse,

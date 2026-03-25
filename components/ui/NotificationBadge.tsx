@@ -91,7 +91,7 @@ const styles = StyleSheet.create({
     right: -8,
   },
   text: {
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: 'System', fontWeight: '700',
     textAlign: 'center',
   },
 });

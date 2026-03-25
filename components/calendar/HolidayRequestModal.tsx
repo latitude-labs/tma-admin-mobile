@@ -483,7 +483,7 @@ const createStyles = (palette: ThemeColors) =>
       borderTopLeftRadius: Theme.borderRadius.xl,
       borderTopRightRadius: Theme.borderRadius.xl,
       maxHeight: '90%',
-      ...Theme.shadows.lg,
+      ...Theme.shadows.elevated,
     },
     header: {
       flexDirection: 'row',

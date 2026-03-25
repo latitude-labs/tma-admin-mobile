@@ -135,7 +135,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
               style={[
                 styles.modalContent,
                 { backgroundColor: colors.background },
-                shadows.lg,
+                shadows.elevated,
               ]}
             >
               <ScrollView style={styles.modalScroll}>

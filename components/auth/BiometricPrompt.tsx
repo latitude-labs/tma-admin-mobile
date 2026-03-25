@@ -214,7 +214,7 @@ export const BiometricPrompt: React.FC<BiometricPromptProps> = ({
             styles.container,
             {
               backgroundColor: colors.background,
-              ...Theme.shadows.xl,
+              ...Theme.shadows.elevated,
             },
           ]}
         >

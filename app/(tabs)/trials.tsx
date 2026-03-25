@@ -629,7 +629,7 @@ export default function TrialsScreen() {
     // Auto-populate kit items based on selected package
     const newKitItems: KitItem[] = [];
 
-    // All packages get T-shirt, Trousers and Boxing gloves
+    // All packages get T-shirt, Trousers and Boxing Gloves
     newKitItems.push({ type: 'tshirt', size: '' });
     newKitItems.push({ type: 'trousers', size: '' });
     newKitItems.push({ type: 'gloves', size: '' });
@@ -1132,7 +1132,7 @@ export default function TrialsScreen() {
                     >
                       <View style={styles.packageOptionContent}>
                         <Text style={styles.packageOptionLabel}>Basic</Text>
-                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers & Boxing gloves</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers & Boxing Gloves</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
                     </Pressable>
@@ -1146,7 +1146,7 @@ export default function TrialsScreen() {
                     >
                       <View style={styles.packageOptionContent}>
                         <Text style={styles.packageOptionLabel}>Silver</Text>
-                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers, Boxing gloves & Shinpads</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers, Boxing Gloves & Shin Pads</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
                     </Pressable>
@@ -1160,7 +1160,7 @@ export default function TrialsScreen() {
                     >
                       <View style={styles.packageOptionContent}>
                         <Text style={styles.packageOptionLabel}>Gold</Text>
-                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers, Boxing gloves, Shinpads & Kit bag</Text>
+                        <Text style={styles.packageOptionDescription}>T-shirt, Trousers, Boxing Gloves, Shin Pads & Kit Bag</Text>
                       </View>
                       <Ionicons name="chevron-forward" size={20} color={palette.textTertiary} />
                     </Pressable>
@@ -1542,7 +1542,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing['2xl'],
     backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -1555,7 +1555,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing['2xl'],
     backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
     maxWidth: 320,
   },
   errorIconContainer: {
@@ -1583,7 +1583,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   retryButtonText: {
     color: palette.textInverse,
@@ -1651,7 +1651,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.xs,
     marginTop: Theme.spacing.sm,
     alignSelf: 'flex-start',
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   offlineText: {
     color: palette.textInverse,
@@ -1898,7 +1898,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     backgroundColor: palette.background,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   paginationButtonDisabled: {
     opacity: 0.5,
@@ -2010,7 +2010,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     maxHeight: '80%',
-    ...Theme.shadows.lg,
+    ...Theme.shadows.elevated,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -2137,7 +2137,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
     backgroundColor: palette.tint,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   modalPrimaryButtonText: {
     fontSize: Theme.typography.sizes.md,
@@ -2164,7 +2164,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginBottom: Theme.spacing.md,
     borderWidth: 1,
     borderColor: palette.borderLight,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   kitItemHeader: {
     flexDirection: 'row',
@@ -2245,7 +2245,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     backgroundColor: palette.background,
     borderWidth: 1.5,
     borderColor: palette.borderDefault,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   dateTimeButtonText: {
     fontSize: Theme.typography.sizes.md,

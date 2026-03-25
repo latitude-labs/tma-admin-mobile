@@ -1,5 +1,6 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { IconBox } from '@/components/ui/IconBox';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
@@ -108,9 +109,10 @@ export default function NotificationSettingsScreen() {
         {/* Permission Status Card */}
         <Card variant="elevated" style={styles.card}>
           <View style={styles.statusContainer}>
-            <Ionicons
-              name={hasPermission ? 'checkmark-circle' : 'close-circle'}
-              size={32}
+            <IconBox
+              icon={hasPermission ? 'checkmark-circle' : 'close-circle'}
+              size="md"
+              variant="filled"
               color={hasPermission ? Theme.colors.status.success : Theme.colors.status.error}
             />
             <View style={styles.statusText}>
@@ -256,13 +258,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statusTitle: {
     fontSize: 18,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: 4,
   },
   statusDescription: {
     fontSize: 14,
-    fontFamily: 'Manrope_400Regular',
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   enableButton: {
@@ -270,7 +272,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: 16,
   },
@@ -284,13 +286,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statValue: {
     fontSize: 24,
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: 4,
   },
   statLabel: {
     fontSize: 12,
-    fontFamily: 'Manrope_400Regular',
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   actionButtons: {
@@ -314,13 +316,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   preferenceTitle: {
     fontSize: 14,
-    fontFamily: 'Manrope_500Medium',
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
     marginBottom: 4,
   },
   preferenceDescription: {
     fontSize: 12,
-    fontFamily: 'Manrope_400Regular',
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   debugCard: {
@@ -328,7 +330,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   debugText: {
     fontSize: 12,
-    fontFamily: 'Manrope_400Regular',
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginBottom: 8,
   },

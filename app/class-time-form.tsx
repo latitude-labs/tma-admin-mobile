@@ -559,7 +559,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
     marginBottom: Theme.spacing.xl,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   clubName: {
     marginLeft: Theme.spacing.sm,
@@ -647,7 +647,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: palette.background,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   errorText: {
     color: palette.statusError,
@@ -697,7 +697,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderRadius: Theme.borderRadius.xl,
     borderWidth: 2,
     borderColor: palette.border,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   classTypeButtonSelected: {
     backgroundColor: palette.tint,

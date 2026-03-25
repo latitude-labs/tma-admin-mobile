@@ -398,7 +398,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing['2xl'],
     backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -433,7 +433,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   createHeaderButtonPressed: {
     opacity: 0.8,
@@ -545,7 +545,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   todayText: {
     color: palette.textInverse,
@@ -637,7 +637,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   createButtonText: {
     color: palette.textInverse,

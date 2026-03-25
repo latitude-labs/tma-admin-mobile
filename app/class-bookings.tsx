@@ -1148,7 +1148,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing['2xl'],
     backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -1204,7 +1204,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderRadius: Theme.borderRadius.lg,
     paddingHorizontal: Theme.spacing.md,
     marginBottom: Theme.spacing.lg,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   searchIcon: {
     marginRight: Theme.spacing.sm,
@@ -1415,7 +1415,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     maxHeight: '80%',
-    ...Theme.shadows.lg,
+    ...Theme.shadows.elevated,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -1551,7 +1551,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
     backgroundColor: palette.tint,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   modalPrimaryButtonText: {
     fontSize: Theme.typography.sizes.md,
@@ -1578,7 +1578,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     marginBottom: Theme.spacing.md,
     borderWidth: 1,
     borderColor: palette.borderLight,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   kitItemHeader: {
     flexDirection: 'row',
@@ -1665,7 +1665,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     backgroundColor: palette.background,
     borderWidth: 1.5,
     borderColor: palette.borderDefault,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   dateTimeButtonText: {
     fontSize: Theme.typography.sizes.md,

@@ -729,7 +729,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   emptyScheduleButtonText: {
     color: palette.textInverse,
@@ -796,7 +796,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.lg,
     borderRadius: Theme.borderRadius.xl,
     gap: Theme.spacing.sm,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   editButtonText: {
     color: palette.textInverse,
@@ -812,7 +812,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.lg,
     borderRadius: Theme.borderRadius.xl,
     gap: Theme.spacing.sm,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   deleteButtonText: {
     color: palette.textInverse,

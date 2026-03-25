@@ -1111,7 +1111,7 @@ const createStyles = (palette: ThemeColors) =>
       borderTopRightRadius: Theme.borderRadius.xl,
       height: '95%',
       maxHeight: '95%',
-      ...Theme.shadows.lg,
+      ...Theme.shadows.elevated,
     },
     header: {
       flexDirection: 'row',

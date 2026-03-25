@@ -50,7 +50,7 @@ export const Toast: React.FC<ToastProps> = ({
   const palette = useThemeColors();
   const styles = React.useMemo(() => createStyles(palette), [palette]);
   const insets = useSafeAreaInsets();
-  const hideTimeoutRef = useRef<NodeJS.Timeout>();
+  const hideTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
     if (visible) {
@@ -226,7 +226,7 @@ const createStyles = (palette: ThemeColors) =>
       padding: Theme.spacing.md,
       borderRadius: Theme.borderRadius.lg,
       borderLeftWidth: 4,
-      ...Theme.shadows.lg,
+      ...Theme.shadows.elevated,
       minHeight: 64,
     },
     iconContainer: {

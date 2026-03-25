@@ -3,6 +3,7 @@ import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { useClubStore } from '@/store/clubStore';
+import { ClassTime } from '@/types/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -136,14 +137,14 @@ const ClubItem = React.memo(({
 
             <View style={styles.scheduleGrid}>
               {club.class_times
-                .sort((a, b) => {
+                .sort((a: ClassTime, b: ClassTime) => {
                   const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                   const dayA = dayOrder.indexOf(a.day.toLowerCase());
                   const dayB = dayOrder.indexOf(b.day.toLowerCase());
                   if (dayA !== dayB) return dayA - dayB;
                   return (a.start_time || '').localeCompare(b.start_time || '');
                 })
-                .map((cls, classIndex) => (
+                .map((cls: ClassTime, classIndex: number) => (
                   <Animated.View
                     key={cls.id}
                     style={styles.scheduleItem}
@@ -452,7 +453,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing['2xl'],
     backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -465,7 +466,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing['2xl'],
     backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
     maxWidth: 320,
   },
   errorIconContainer: {
@@ -493,7 +494,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   retryButtonText: {
     color: palette.textInverse,
@@ -553,7 +554,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.xs,
     marginTop: Theme.spacing.sm,
     alignSelf: 'flex-start',
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   offlineText: {
     color: palette.textInverse,
@@ -723,7 +724,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     backgroundColor: palette.tint,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Theme.shadows.lg,
+    ...Theme.shadows.elevated,
     elevation: 8,
   },
 });

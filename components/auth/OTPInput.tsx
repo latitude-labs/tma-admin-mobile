@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderRadius: Theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   digit: {
     fontFamily: Theme.typography.fonts.semibold,

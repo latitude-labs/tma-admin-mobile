@@ -1,7 +1,9 @@
 const tmaPrimary = '#FF8133';
+const tmaPrimaryDark = '#CC6728'; // Darker shade for 3D button lip
 
 export const Colors = {
   primary: tmaPrimary,
+  primaryDark: tmaPrimaryDark,
   secondary: {
     dark: '#2C2C2C',
     light: '#F5F5F5',
@@ -14,8 +16,12 @@ export const Colors = {
   },
   background: {
     primary: '#FFFFFF',
-    secondary: '#F5F5F5',
-    tertiary: '#E8E8E8',
+    secondary: '#FAFAFA',
+    tertiary: '#F0F0F0',
+  },
+  gradient: {
+    start: '#FFFFFF',
+    end: '#FFF8F2',
   },
   text: {
     primary: '#2C2C2C',
@@ -37,6 +43,7 @@ export const Colors = {
 
 export const DarkColors = {
   primary: tmaPrimary,
+  primaryDark: tmaPrimaryDark,
   secondary: {
     dark: '#E0E0E0',
     light: '#2A2A2A',
@@ -48,20 +55,24 @@ export const DarkColors = {
     info: '#42A5F5',
   },
   background: {
-    primary: '#1A1A1A',
-    secondary: '#252525',
-    tertiary: '#303030',
+    primary: '#141210',
+    secondary: '#1E1C1A',
+    tertiary: '#2A2826',
+  },
+  gradient: {
+    start: '#141210',
+    end: '#1A1510',
   },
   text: {
-    primary: '#FFFFFF',
-    secondary: '#B3B3B3',
-    tertiary: '#808080',
+    primary: '#F5F5F5',
+    secondary: '#A0A0A0',
+    tertiary: '#707070',
     inverse: '#2C2C2C',
   },
   border: {
-    default: '#404040',
-    light: '#333333',
-    dark: '#505050',
+    default: 'rgba(255, 255, 255, 0.08)',
+    light: 'rgba(255, 255, 255, 0.04)',
+    dark: 'rgba(255, 255, 255, 0.12)',
   },
   shadow: {
     default: 'rgba(0, 0, 0, 0.3)',
@@ -82,6 +93,8 @@ export default {
     backgroundTertiary: Colors.background.tertiary,
     tint: tmaPrimary,
     primary: tmaPrimary, // Alias for brand color (CLAUDE.md compliance)
+    primaryDark: Colors.primaryDark,
+    secondaryDark: '#E0E0E0', // For secondary button lip
     tabIconDefault: '#999999',
     tabIconSelected: tmaPrimary,
     textPrimary: Colors.text.primary,
@@ -101,6 +114,8 @@ export default {
     statusWarning: Colors.status.warning,
     statusError: Colors.status.error,
     statusInfo: Colors.status.info,
+    backgroundGradientStart: Colors.gradient.start,
+    backgroundGradientEnd: Colors.gradient.end,
     notificationUnread: '#FFF9F5',
     isDark: false, // Theme mode indicator
   },
@@ -111,6 +126,8 @@ export default {
     backgroundTertiary: DarkColors.background.tertiary,
     tint: tmaPrimary,
     primary: tmaPrimary, // Alias for brand color (CLAUDE.md compliance)
+    primaryDark: DarkColors.primaryDark,
+    secondaryDark: '#404040', // For secondary button lip
     tabIconDefault: '#666666',
     tabIconSelected: tmaPrimary,
     textPrimary: DarkColors.text.primary,
@@ -130,6 +147,8 @@ export default {
     statusWarning: DarkColors.status.warning,
     statusError: DarkColors.status.error,
     statusInfo: DarkColors.status.info,
+    backgroundGradientStart: DarkColors.gradient.start,
+    backgroundGradientEnd: DarkColors.gradient.end,
     notificationUnread: DarkColors.notification.unread,
     isDark: true, // Theme mode indicator
   },
