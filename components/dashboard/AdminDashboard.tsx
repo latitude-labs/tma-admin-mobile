@@ -17,7 +17,10 @@ export default function AdminDashboardScreen() {
     stats, 
     trends, 
     handleRefresh, 
-    user 
+    user,
+    clubs,
+    selectedClubId,
+    setSelectedClubId
   } = useAdminDashboard();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -39,12 +42,7 @@ export default function AdminDashboardScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          colors.backgroundSecondary,
-          colors.background,
-          colors.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[colors.backgroundGradientStart, colors.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
@@ -65,6 +63,9 @@ export default function AdminDashboardScreen() {
             stats={stats}
             trends={trends}
             loading={isLoading}
+            clubs={clubs}
+            selectedClubId={selectedClubId}
+            onClubChange={setSelectedClubId}
           />
           
           <View style={{ height: 150 }} />

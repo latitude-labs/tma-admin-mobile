@@ -1,9 +1,10 @@
 import { Theme } from '@/constants/Theme';
 import { ThemeColors } from '@/hooks/useThemeColors';
+import { GlassView } from '@/components/ui/GlassView';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { IconBox } from '@/components/ui/IconBox';
 
 export interface StatCardProps {
   colors: ThemeColors;
@@ -41,20 +42,13 @@ export function StatCard({
 }: StatCardProps) {
   const styles = StyleSheet.create({
     statCard: {
-      borderRadius: 20,
-      marginBottom: Theme.spacing.md,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.08,
-      shadowRadius: 12,
-      elevation: 4,
+      borderRadius: Theme.borderRadius.xl,
+      marginBottom: Theme.spacing.xs,
       overflow: 'hidden',
     },
-    statCardGradient: {
+    statCardGlass: {
       padding: Theme.spacing.lg,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: colors.borderLight + '40',
+      borderRadius: Theme.borderRadius.xl,
     },
     statCardContent: {
       flexDirection: 'row',
@@ -67,35 +61,20 @@ export function StatCard({
       flex: 1,
       gap: Theme.spacing.md,
     },
-    statIconContainer: {
-      width: 48,
-      height: 48,
-      borderRadius: 14,
-      alignItems: 'center',
-      justifyContent: 'center',
-      position: 'relative',
-      backgroundColor: color + '20',
-    },
-    iconGlow: {
-      position: 'absolute',
-      width: 48,
-      height: 48,
-      borderRadius: 14,
-      opacity: 0.4,
-      backgroundColor: color + '30',
-    },
     statCardInfo: {
       flex: 1,
     },
     statCardLabel: {
       fontSize: Theme.typography.sizes.md,
       fontFamily: Theme.typography.fonts.semibold,
+      fontWeight: Theme.typography.fontWeights.semibold,
       color: colors.textPrimary,
       marginBottom: 2,
     },
     statCardDescription: {
       fontSize: Theme.typography.sizes.xs,
       fontFamily: Theme.typography.fonts.regular,
+      fontWeight: Theme.typography.fontWeights.regular,
       color: colors.textTertiary,
     },
     statCardRight: {
@@ -105,6 +84,7 @@ export function StatCard({
     statCardValue: {
       fontSize: 32,
       fontFamily: Theme.typography.fonts.bold,
+      fontWeight: Theme.typography.fontWeights.bold,
       lineHeight: 36,
       color: color,
     },
@@ -116,6 +96,7 @@ export function StatCard({
     trendText: {
       fontSize: Theme.typography.sizes.xs,
       fontFamily: Theme.typography.fonts.semibold,
+      fontWeight: Theme.typography.fontWeights.semibold,
     },
   });
 
@@ -150,18 +131,19 @@ export function StatCard({
         onPressIn={onPressIn}
         onPressOut={onPressOut}
       >
-        <LinearGradient
-          colors={[color + '12', color + '05']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.statCardGradient}
+        <GlassView
+          style={styles.statCardGlass}
+          intensity="regular"
+          tintColor={color + '15'}
         >
           <View style={styles.statCardContent}>
             <View style={styles.statCardLeft}>
-              <View style={styles.statIconContainer}>
-                <View style={styles.iconGlow} />
-                <Ionicons name={icon} size={22} color={color} />
-              </View>
+              <IconBox
+                icon={icon}
+                size="md"
+                variant="filled"
+                color={color}
+              />
               <View style={styles.statCardInfo}>
                 <Text style={styles.statCardLabel}>{title}</Text>
                 <Text style={styles.statCardDescription}>{description}</Text>
@@ -171,7 +153,7 @@ export function StatCard({
               <Text style={styles.statCardValue}>
                 {loading ? '—' : value}
               </Text>
-              {!loading && trend && (
+              {!loading && trend ? (
                 <View style={styles.trendContainer}>
                   <Ionicons
                     name={getTrendIcon(trend.direction)}
@@ -182,10 +164,10 @@ export function StatCard({
                     {trend.percentage}%
                   </Text>
                 </View>
-              )}
+              ) : null}
             </View>
           </View>
-        </LinearGradient>
+        </GlassView>
       </TouchableOpacity>
     </Animated.View>
   );

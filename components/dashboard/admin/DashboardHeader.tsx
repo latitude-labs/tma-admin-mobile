@@ -1,8 +1,8 @@
 import { Theme } from '@/constants/Theme';
 import { ThemeColors } from '@/hooks/useThemeColors';
+import { GlassView } from '@/components/ui/GlassView';
 import { useSyncStore } from '@/store/syncStore';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { User } from '@/types/auth';
@@ -15,18 +15,18 @@ interface DashboardHeaderProps {
   onRefresh: () => void;
 }
 
-export function DashboardHeader({ 
-  user, 
-  colors, 
-  isOffline, 
+export function DashboardHeader({
+  user,
+  colors,
+  isOffline,
   isRefreshing,
-  onRefresh 
+  onRefresh
 }: DashboardHeaderProps) {
   const {
     lastSyncTime,
     isSyncing,
   } = useSyncStore();
-  
+
   const [currentTime, setCurrentTime] = useState(Date.now());
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -89,17 +89,12 @@ export function DashboardHeader({
       marginBottom: Theme.spacing.lg,
       overflow: 'hidden',
     },
-    headerGradient: {
+    headerGlass: {
       paddingHorizontal: Theme.spacing.lg,
       paddingTop: Theme.spacing.xl,
       paddingBottom: Theme.spacing.xl,
       borderBottomLeftRadius: 28,
       borderBottomRightRadius: 28,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.06,
-      shadowRadius: 8,
-      elevation: 3,
     },
     headerTop: {
       flexDirection: 'row',
@@ -117,31 +112,23 @@ export function DashboardHeader({
     greeting: {
       fontSize: 24,
       fontFamily: Theme.typography.fonts.bold,
+      fontWeight: Theme.typography.fontWeights.bold,
       color: colors.textPrimary,
     },
     greetingSubtext: {
       fontSize: Theme.typography.sizes.sm,
       fontFamily: Theme.typography.fonts.medium,
+      fontWeight: Theme.typography.fontWeights.medium,
       color: colors.textSecondary,
       marginTop: 2,
     },
-    syncBadge: {
-      backgroundColor: colors.tint + '15',
+    syncBadgeGlass: {
+      borderRadius: Theme.borderRadius.xl,
+      overflow: 'hidden',
+    },
+    syncBadgeInner: {
       paddingVertical: 10,
       paddingHorizontal: 14,
-      borderRadius: 24,
-      borderWidth: 1.5,
-      borderColor: colors.tint + '30',
-      shadowColor: colors.tint,
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.15,
-      shadowRadius: 4,
-      elevation: 2,
-    },
-    syncBadgeOffline: {
-      backgroundColor: colors.statusError + '15',
-      borderColor: colors.statusError + '30',
-      shadowColor: colors.statusError,
     },
     syncBadgeContent: {
       flexDirection: 'row',
@@ -151,6 +138,7 @@ export function DashboardHeader({
     syncTimeText: {
       fontSize: 12,
       fontFamily: Theme.typography.fonts.medium,
+      fontWeight: Theme.typography.fontWeights.medium,
       color: colors.tint,
     },
     syncTimeTextOffline: {
@@ -160,9 +148,9 @@ export function DashboardHeader({
 
   return (
     <View style={styles.header}>
-      <LinearGradient
-        colors={[colors.background, colors.background + 'F0']}
-        style={styles.headerGradient}
+      <GlassView
+        intensity="light"
+        style={styles.headerGlass}
       >
         <View style={styles.headerTop}>
           <View style={styles.greetingContainer}>
@@ -179,27 +167,34 @@ export function DashboardHeader({
             </View>
           </View>
           <TouchableOpacity
-            style={[styles.syncBadge, isOffline && styles.syncBadgeOffline]}
             onPress={onRefresh}
             disabled={isSyncing || isRefreshing}
           >
-            <View style={styles.syncBadgeContent}>
-              <Animated.View style={{ transform: [{ rotate: spin }] }}>
-                <Ionicons
-                  name={isOffline ? 'cloud-offline' : (isSyncing || isRefreshing) ? 'sync' : 'checkmark-circle'}
-                  size={20}
-                  color={isOffline ? colors.statusError : colors.tint}
-                />
-              </Animated.View>
-              {lastSyncTime && !isSyncing && !isRefreshing && (
-                <Text style={[styles.syncTimeText, isOffline && styles.syncTimeTextOffline]}>
-                  {getLastSyncText()}
-                </Text>
-              )}
-            </View>
+            <GlassView
+              intensity="light"
+              tintColor={isOffline ? colors.statusError + '15' : colors.tint + '15'}
+              style={styles.syncBadgeGlass}
+            >
+              <View style={styles.syncBadgeInner}>
+                <View style={styles.syncBadgeContent}>
+                  <Animated.View style={{ transform: [{ rotate: spin }] }}>
+                    <Ionicons
+                      name={isOffline ? 'cloud-offline' : (isSyncing || isRefreshing) ? 'sync' : 'checkmark-circle'}
+                      size={20}
+                      color={isOffline ? colors.statusError : colors.tint}
+                    />
+                  </Animated.View>
+                  {lastSyncTime && !isSyncing && !isRefreshing ? (
+                    <Text style={[styles.syncTimeText, isOffline ? styles.syncTimeTextOffline : null]}>
+                      {getLastSyncText()}
+                    </Text>
+                  ) : null}
+                </View>
+              </View>
+            </GlassView>
           </TouchableOpacity>
         </View>
-      </LinearGradient>
+      </GlassView>
     </View>
   );
 }
