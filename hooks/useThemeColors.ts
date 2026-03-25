@@ -3,7 +3,8 @@ import { useColorScheme } from '@/components/useColorScheme';
 
 export const useThemeColors = () => {
   const colorScheme = useColorScheme();
-  return ColorPalette[colorScheme ?? 'light'];
+  const scheme = colorScheme === 'dark' ? 'dark' : 'light';
+  return ColorPalette[scheme];
 };
 
 export type ThemeColors = ReturnType<typeof useThemeColors>;

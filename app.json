@@ -38,6 +38,8 @@
       "predictiveBackGestureEnabled": false,
       "permissions": [
         "android.permission.USE_BIOMETRIC",
+        "android.permission.USE_FINGERPRINT",
+        "android.permission.USE_BIOMETRIC",
         "android.permission.USE_FINGERPRINT"
       ]
     },
@@ -68,7 +70,10 @@
         {
           "RNMapboxMapsDownloadToken": "sk.eyJ1IjoicGVyaWhlbGlhc29mdHdvcmtzIiwiYSI6ImNtZzNyZGEyNjA5M3oydHNhYXUwYnVmMmwifQ._jd4pFyKjRkIEqbhqcE1uw"
         }
-      ]
+      ],
+      "expo-secure-store",
+      "expo-web-browser",
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
@@ -78,6 +83,12 @@
       "eas": {
         "projectId": "06bb124a-9bdc-4b40-a4a8-b451e3e95787"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/06bb124a-9bdc-4b40-a4a8-b451e3e95787"
     }
   }
 }
