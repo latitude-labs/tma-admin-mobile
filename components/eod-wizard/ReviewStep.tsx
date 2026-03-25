@@ -9,17 +9,15 @@ import {
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { useClubStore } from '@/store/clubStore';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Colors } from '@/constants/Colors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import { format } from 'date-fns';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 export const ReviewStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const currentTheme = useThemeColors();
   const { clubs } = useClubStore();
   const {
     wizardState,
@@ -123,7 +121,7 @@ export const ReviewStep: React.FC = () => {
         </>
       ))}
 
-      {totalTrials > 0 && renderSection('Trial Sessions', 'star', (
+      {totalTrials > 0 ? renderSection('Trial Sessions', 'star', (
         <>
           {renderRow('Kids 1 Trials', data.kids_1_trials)}
           {renderRow('Kids 2 Trials', data.kids_2_trials)}
@@ -131,9 +129,9 @@ export const ReviewStep: React.FC = () => {
           <View style={styles.divider} />
           {renderRow('Total Trials', totalTrials, true)}
         </>
-      ))}
+      )) : null}
 
-      {totalNewSignups > 0 && renderSection('New Sign-ups (Same Day)', 'checkmark-circle', (
+      {totalNewSignups > 0 ? renderSection('New Sign-ups (Same Day)', 'checkmark-circle', (
         <>
           {renderRow('Kids - Paid Kit + DD', data.new_kids_paid_kit_and_signed_dd_count)}
           {renderRow('Kids - DD Only', data.new_kids_signed_dd_no_kit_count)}
@@ -142,9 +140,9 @@ export const ReviewStep: React.FC = () => {
           <View style={styles.divider} />
           {renderRow('Total New Sign-ups', totalNewSignups, true)}
         </>
-      ))}
+      )) : null}
 
-      {totalReturningSignups > 0 && renderSection('Returning Sign-ups', 'refresh-circle', (
+      {totalReturningSignups > 0 ? renderSection('Returning Sign-ups', 'refresh-circle', (
         <>
           {renderRow('Kids - Paid Kit + DD', data.returning_kids_paid_kit_and_signed_dd_count)}
           {renderRow('Kids - DD Only', data.returning_kids_signed_dd_no_kit_count)}
@@ -153,15 +151,15 @@ export const ReviewStep: React.FC = () => {
           <View style={styles.divider} />
           {renderRow('Total Returning', totalReturningSignups, true)}
         </>
-      ))}
+      )) : null}
 
       {renderSection('Financial', 'cash', (
-        <Text style={[styles.cashAmount, { color: '#4CAF50' }]}>
+        <Text style={[styles.cashAmount, { color: currentTheme.statusSuccess }]}>
           £{(data.total_cash_taken || 0).toFixed(2)}
         </Text>
       ))}
 
-      {data.helper_attendance && data.helper_attendance.length > 0 &&
+      {data.helper_attendance && data.helper_attendance.length > 0 ? (
         renderSection('Helper Attendance', 'people', (
           <>
             {data.helper_attendance.map((helper, index) => (
@@ -178,17 +176,17 @@ export const ReviewStep: React.FC = () => {
                     }
                     size={16}
                     color={
-                      helper.status === 'on_time' ? '#4CAF50' :
-                      helper.status === 'late' ? '#FFC107' :
-                      '#F44336'
+                      helper.status === 'on_time' ? currentTheme.statusSuccess :
+                      helper.status === 'late' ? currentTheme.statusWarning :
+                      currentTheme.statusError
                     }
                   />
                   <Text style={[
                     styles.helperStatusText,
                     {
-                      color: helper.status === 'on_time' ? '#4CAF50' :
-                             helper.status === 'late' ? '#FFC107' :
-                             '#F44336'
+                      color: helper.status === 'on_time' ? currentTheme.statusSuccess :
+                             helper.status === 'late' ? currentTheme.statusWarning :
+                             currentTheme.statusError
                     }
                   ]}>
                     {helper.status === 'on_time' ? 'On Time' :
@@ -196,20 +194,21 @@ export const ReviewStep: React.FC = () => {
                      'No Show'}
                   </Text>
                 </View>
-                {helper.message && (
+                {helper.message ? (
                   <Text style={[styles.helperMessage, { color: currentTheme.text }]}>
                     {helper.message}
                   </Text>
-                )}
+                ) : null}
               </View>
             ))}
           </>
-        ))}
+        ))
+      ) : null}
 
-      {(data.signup_names || data.helper_names || data.incidents || data.general_notes) &&
+      {(data.signup_names || data.helper_names || data.incidents || data.general_notes) ? (
         renderSection('Additional Information', 'document-text', (
           <>
-            {data.signup_names && (
+            {data.signup_names ? (
               <View style={styles.noteSection}>
                 <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Sign-ups:
@@ -218,8 +217,8 @@ export const ReviewStep: React.FC = () => {
                   {data.signup_names}
                 </Text>
               </View>
-            )}
-            {data.helper_names && !data.helper_attendance && (
+            ) : null}
+            {data.helper_names && !data.helper_attendance ? (
               <View style={styles.noteSection}>
                 <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Helpers:
@@ -228,8 +227,8 @@ export const ReviewStep: React.FC = () => {
                   {data.helper_names}
                 </Text>
               </View>
-            )}
-            {data.incidents && (
+            ) : null}
+            {data.incidents ? (
               <View style={styles.noteSection}>
                 <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Incidents:
@@ -238,8 +237,8 @@ export const ReviewStep: React.FC = () => {
                   {data.incidents}
                 </Text>
               </View>
-            )}
-            {data.general_notes && (
+            ) : null}
+            {data.general_notes ? (
               <View style={styles.noteSection}>
                 <Text style={[styles.noteLabel, { color: currentTheme.text }]}>
                   Notes:
@@ -248,9 +247,10 @@ export const ReviewStep: React.FC = () => {
                   {data.general_notes}
                 </Text>
               </View>
-            )}
+            ) : null}
           </>
-        ))}
+        ))
+      ) : null}
 
       <View style={styles.footer}>
         <Button
@@ -328,8 +328,7 @@ const styles = StyleSheet.create({
     fontFamily: Theme.typography.fonts.semibold,
   },
   divider: {
-    height: 1,
-    backgroundColor: Colors.border.light,
+    height: StyleSheet.hairlineWidth,
     marginVertical: Theme.spacing.sm,
   },
   cashAmount: {
@@ -352,8 +351,7 @@ const styles = StyleSheet.create({
   },
   helperRow: {
     paddingVertical: Theme.spacing.sm,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   helperName: {
     fontSize: Theme.typography.sizes.sm,

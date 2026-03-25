@@ -1,8 +1,6 @@
 import { Dropdown, DropdownOption } from '@/components/ui';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Colors } from '@/constants/Colors';
 import { Theme } from '@/constants/Theme';
 import { classTimesService } from '@/services/api/classTimes.service';
 import { useClubStore } from '@/store/clubStore';
@@ -10,6 +8,7 @@ import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { ClassTime, Club } from '@/types/api';
 import { Ionicons } from '@expo/vector-icons';
 import { format } from 'date-fns';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,8 +19,7 @@ import {
 } from 'react-native';
 
 export const SelectClubStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const currentTheme = useThemeColors();
   const { clubs, fetchClubs, isLoading: clubsLoading } = useClubStore();
   const {
     wizardState,
@@ -186,7 +184,7 @@ export const SelectClubStep: React.FC = () => {
         </View>
       </Card>
 
-      {isLoading && (
+      {isLoading ? (
         <Card style={styles.selectionCard}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="small" color={currentTheme.tint} />
@@ -195,9 +193,9 @@ export const SelectClubStep: React.FC = () => {
             </Text>
           </View>
         </Card>
-      )}
+      ) : null}
 
-      {!isLoading && clubsWithClassesToday.length === 0 && (
+      {!isLoading && clubsWithClassesToday.length === 0 ? (
         <Card style={styles.selectionCard}>
           <View style={styles.emptyContainer}>
             <Ionicons name="calendar-outline" size={48} color={currentTheme.text + '60'} />
@@ -209,9 +207,9 @@ export const SelectClubStep: React.FC = () => {
             </Text>
           </View>
         </Card>
-      )}
+      ) : null}
 
-      {!isLoading && clubsWithClassesToday.length > 0 && (
+      {!isLoading && clubsWithClassesToday.length > 0 ? (
         <>
           <Card style={styles.selectionCard}>
             <View style={styles.cardHeader}>
@@ -229,7 +227,7 @@ export const SelectClubStep: React.FC = () => {
               label="Club with classes today"
             />
 
-            {selectedClub && (
+            {selectedClub ? (
               <View style={styles.selectedInfo}>
                 <View style={styles.infoRow}>
                   <Ionicons name="location-outline" size={16} color={currentTheme.text} />
@@ -237,22 +235,22 @@ export const SelectClubStep: React.FC = () => {
                     {selectedClub.address || 'No address available'}
                   </Text>
                 </View>
-                {selectedClub.postcode && (
+                {selectedClub.postcode ? (
                   <View style={styles.infoRow}>
                     <Ionicons name="map-outline" size={16} color={currentTheme.text} />
                     <Text style={[styles.infoText, { color: currentTheme.text }]}>
                       {selectedClub.postcode}
                     </Text>
                   </View>
-                )}
+                ) : null}
               </View>
-            )}
+            ) : null}
           </Card>
 
-          {selectedClub && selectedClubClasses.length > 0 && (
+          {selectedClub && selectedClubClasses.length > 0 ? (
             <Card style={styles.classesCard}>
               <View style={styles.cardHeader}>
-                <Ionicons name="time" size={24} color={'#2196F3'} />
+                <Ionicons name="time" size={24} color={currentTheme.statusInfo} />
                 <Text style={[styles.cardTitle, { color: currentTheme.text }]}>
                   Today's Classes at {selectedClub.name}
                 </Text>
@@ -266,7 +264,7 @@ export const SelectClubStep: React.FC = () => {
                   })
                   .map(classTime => (
                     <View key={classTime.id} style={styles.classItem}>
-                      <Ionicons name="checkmark-circle" size={20} color={'#4CAF50'} />
+                      <Ionicons name="checkmark-circle" size={20} color={currentTheme.statusSuccess} />
                       <Text style={[styles.classText, { color: currentTheme.text }]}>
                         {formatTime(classTime.start_time)} - {classTime.name || 'Class'}
                       </Text>
@@ -280,7 +278,7 @@ export const SelectClubStep: React.FC = () => {
                 </Text>
               </View>
             </Card>
-          )}
+          ) : null}
 
           <View style={styles.footer}>
             <Button
@@ -293,7 +291,7 @@ export const SelectClubStep: React.FC = () => {
             </Button>
           </View>
         </>
-      )}
+      ) : null}
     </ScrollView>
   );
 };
@@ -341,8 +339,7 @@ const styles = StyleSheet.create({
   selectedInfo: {
     marginTop: Theme.spacing.md,
     paddingTop: Theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   infoRow: {
     flexDirection: 'row',
@@ -376,8 +373,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: Theme.spacing.md,
     paddingTop: Theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    borderTopWidth: StyleSheet.hairlineWidth,
   },
   classNoteText: {
     fontSize: Theme.typography.sizes.sm,

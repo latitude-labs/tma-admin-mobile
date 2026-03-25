@@ -6,16 +6,14 @@ import {
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { NumberInput } from './NumberInput';
 
 export const TrialsStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const {
     wizardState,
     updateWizardData,
@@ -45,7 +43,7 @@ export const TrialsStep: React.FC = () => {
         <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
           <Ionicons name="star-outline" size={24} color={color} />
         </View>
-        <Text style={[styles.trialLabel, { color: currentTheme.text }]}>
+        <Text style={[styles.trialLabel, { color: palette.text }]}>
           {label}
         </Text>
       </View>
@@ -63,50 +61,50 @@ export const TrialsStep: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.description, { color: currentTheme.text }]}>
+      <Text style={[styles.description, { color: palette.text }]}>
         How many students tried a class for the first time today?
       </Text>
 
-      <View style={styles.info}>
-        <Ionicons name="information-circle" size={20} color={'#2196F3'} />
-        <Text style={[styles.infoText, { color: '#2196F3' }]}>
+      <View style={[styles.info, { backgroundColor: palette.statusInfo + '10' }]}>
+        <Ionicons name="information-circle" size={20} color={palette.statusInfo} />
+        <Text style={[styles.infoText, { color: palette.statusInfo }]}>
           Only count people who haven't trained before
         </Text>
       </View>
 
       <View style={styles.counters}>
-        {hasKids1Class && renderTrialCounter(
+        {hasKids1Class ? renderTrialCounter(
           'Kids Class 1 Trials',
           'kids_1_trials',
           kids_1_trials,
-          '#2196F3'
-        )}
+          palette.statusInfo
+        ) : null}
 
-        {hasKids2Class && renderTrialCounter(
+        {hasKids2Class ? renderTrialCounter(
           'Kids Class 2 Trials',
           'kids_2_trials',
           kids_2_trials,
-          '#FFC107'
-        )}
+          palette.statusWarning
+        ) : null}
 
-        {hasAdultsClass && renderTrialCounter(
+        {hasAdultsClass ? renderTrialCounter(
           'Adults Class Trials',
           'adults_trials',
           adults_trials,
-          '#4CAF50'
-        )}
+          palette.statusSuccess
+        ) : null}
       </View>
 
-      {totalTrials > 0 && (
-        <Card style={styles.summaryCard}>
-          <Text style={[styles.summaryLabel, { color: currentTheme.text }]}>
+      {totalTrials > 0 ? (
+        <Card style={[styles.summaryCard, { backgroundColor: palette.tint + '10' }]}>
+          <Text style={[styles.summaryLabel, { color: palette.text }]}>
             Total Trials Today
           </Text>
-          <Text style={[styles.summaryValue, { color: currentTheme.tint }]}>
+          <Text style={[styles.summaryValue, { color: palette.tint }]}>
             {totalTrials} new {totalTrials === 1 ? 'student' : 'students'}
           </Text>
         </Card>
-      )}
+      ) : null}
 
       <View style={styles.footer}>
         <Button
@@ -135,13 +133,13 @@ const styles = StyleSheet.create({
   description: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginBottom: Theme.spacing.md,
     lineHeight: Theme.typography.sizes.md * 1.5,
   },
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2196F3' + '10',
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.md,
     marginBottom: Theme.spacing.lg,
@@ -149,6 +147,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
     marginLeft: Theme.spacing.sm,
     flex: 1,
   },
@@ -174,20 +173,22 @@ const styles = StyleSheet.create({
   trialLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
   },
   summaryCard: {
-    backgroundColor: Theme.colors.primary + '10',
     alignItems: 'center',
     marginBottom: Theme.spacing.lg,
   },
   summaryLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
     marginBottom: Theme.spacing.xs,
   },
   summaryValue: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
   },
   footer: {
     flexDirection: 'row',

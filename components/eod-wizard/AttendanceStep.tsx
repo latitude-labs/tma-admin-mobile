@@ -6,16 +6,14 @@ import {
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { NumberInput } from './NumberInput';
 
 export const AttendanceStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const {
     wizardState,
     updateWizardData,
@@ -42,7 +40,7 @@ export const AttendanceStep: React.FC = () => {
         <View style={[styles.iconContainer, { backgroundColor: color + '20' }]}>
           <Ionicons name={icon as any} size={24} color={color} />
         </View>
-        <Text style={[styles.counterLabel, { color: currentTheme.text }]}>
+        <Text style={[styles.counterLabel, { color: palette.text }]}>
           {label}
         </Text>
       </View>
@@ -60,45 +58,45 @@ export const AttendanceStep: React.FC = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.description, { color: currentTheme.text }]}>
+      <Text style={[styles.description, { color: palette.text }]}>
         How many students attended each class today?
       </Text>
 
       <View style={styles.counters}>
-        {hasKids1Class && renderCounter(
+        {hasKids1Class ? renderCounter(
           'Kids Class 1',
           'kids_1_count',
           kids_1_count,
           'people',
-          '#2196F3'
-        )}
+          palette.statusInfo
+        ) : null}
 
-        {hasKids2Class && renderCounter(
+        {hasKids2Class ? renderCounter(
           'Kids Class 2',
           'kids_2_count',
           kids_2_count,
           'people',
-          '#FFC107'
-        )}
+          palette.statusWarning
+        ) : null}
 
-        {hasAdultsClass && renderCounter(
+        {hasAdultsClass ? renderCounter(
           'Adults Class',
           'adults_count',
           adults_count,
           'person',
-          '#4CAF50'
-        )}
+          palette.statusSuccess
+        ) : null}
       </View>
 
       <Card style={[styles.totalCard, {
-        backgroundColor: currentTheme.tint + '10',
-        borderColor: currentTheme.tint,
+        backgroundColor: palette.tint + '10',
+        borderColor: palette.tint,
       }]}>
         <View style={styles.totalContent}>
-          <Text style={[styles.totalLabel, { color: currentTheme.text }]}>
+          <Text style={[styles.totalLabel, { color: palette.text }]}>
             Total Attendance
           </Text>
-          <Text style={[styles.totalValue, { color: currentTheme.text }]}>
+          <Text style={[styles.totalValue, { color: palette.text }]}>
             {totalAttendance}
           </Text>
         </View>
@@ -131,6 +129,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginBottom: Theme.spacing.lg,
     lineHeight: Theme.typography.sizes.md * 1.5,
   },
@@ -156,6 +155,7 @@ const styles = StyleSheet.create({
   counterLabel: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
   },
   totalCard: {
     borderWidth: 1,
@@ -168,10 +168,12 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
   },
   totalValue: {
     fontSize: Theme.typography.sizes.xxl,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
   },
   footer: {
     flexDirection: 'row',

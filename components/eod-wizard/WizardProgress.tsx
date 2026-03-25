@@ -2,8 +2,7 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { EoDWizardStep } from '@/types/endOfDay';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface WizardProgressProps {
   currentStep: EoDWizardStep;
@@ -22,20 +21,19 @@ const STEPS = [
 ];
 
 export const WizardProgress: React.FC<WizardProgressProps> = ({ currentStep }) => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const currentIndex = STEPS.indexOf(currentStep);
   const progress = ((currentIndex + 1) / STEPS.length) * 100;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.progressBar, { backgroundColor: currentTheme.card }]}>
+      <View style={[styles.progressBar, { backgroundColor: palette.card }]}>
         <View
           style={[
             styles.progressFill,
             {
               width: `${progress}%`,
-              backgroundColor: currentTheme.tint,
+              backgroundColor: palette.tint,
             },
           ]}
         />

@@ -7,16 +7,14 @@ import {
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 import { NumberInput } from './NumberInput';
 
 export const ReturningSignupsStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const {
     wizardState,
     updateWizardData,
@@ -45,12 +43,12 @@ export const ReturningSignupsStep: React.FC = () => {
   ) => (
     <Card style={styles.signupCard}>
       <View style={styles.signupHeader}>
-        <Ionicons name={icon as any} size={24} color={'#FFC107'} />
+        <Ionicons name={icon as any} size={24} color={palette.statusWarning} />
         <View style={styles.signupText}>
-          <Text style={[styles.signupLabel, { color: currentTheme.text }]}>
+          <Text style={[styles.signupLabel, { color: palette.text }]}>
             {label}
           </Text>
-          <Text style={[styles.signupDescription, { color: currentTheme.text }]}>
+          <Text style={[styles.signupDescription, { color: palette.textSecondary }]}>
             {description}
           </Text>
         </View>
@@ -59,7 +57,7 @@ export const ReturningSignupsStep: React.FC = () => {
       <NumberInput
         value={value}
         onChange={handleCountChange(field)}
-        color={'#FFC107'}
+        color={palette.statusWarning}
       />
     </Card>
   );
@@ -73,16 +71,16 @@ export const ReturningSignupsStep: React.FC = () => {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-      <Text style={[styles.title, { color: currentTheme.text }]}>
+      <Text style={[styles.title, { color: palette.text }]}>
         Returning Sign-ups
       </Text>
-      <Text style={[styles.description, { color: currentTheme.text }]}>
+      <Text style={[styles.description, { color: palette.textSecondary }]}>
         Students who trialed before and came back today to sign up
       </Text>
 
-      {hasKidsClasses && (
+      {hasKidsClasses ? (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+          <Text style={[styles.sectionTitle, { color: palette.text }]}>
             Returning Kids
           </Text>
           {renderSignupOption(
@@ -100,11 +98,11 @@ export const ReturningSignupsStep: React.FC = () => {
             'Signed Direct Debit, kit to be paid later'
           )}
         </View>
-      )}
+      ) : null}
 
-      {hasAdultsClass && (
+      {hasAdultsClass ? (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: currentTheme.text }]}>
+          <Text style={[styles.sectionTitle, { color: palette.text }]}>
             Returning Adults
           </Text>
           {renderSignupOption(
@@ -122,15 +120,15 @@ export const ReturningSignupsStep: React.FC = () => {
             'Signed Direct Debit, kit to be paid later'
           )}
         </View>
-      )}
+      ) : null}
 
-      {totalReturningSignups > 0 && (
-        <Card style={styles.summaryCard}>
-          <Text style={[styles.summaryValue, { color: '#FFC107' }]}>
+      {totalReturningSignups > 0 ? (
+        <Card style={[styles.summaryCard, { backgroundColor: palette.statusWarning + '10' }]}>
+          <Text style={[styles.summaryValue, { color: palette.statusWarning }]}>
             {totalReturningSignups} returning {totalReturningSignups === 1 ? 'member' : 'members'} today!
           </Text>
         </Card>
-      )}
+      ) : null}
 
       <View style={styles.footer}>
         <Button
@@ -159,11 +157,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
     marginBottom: Theme.spacing.xs,
   },
   description: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginBottom: Theme.spacing.lg,
     lineHeight: Theme.typography.sizes.md * 1.5,
   },
@@ -173,6 +173,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
     marginBottom: Theme.spacing.md,
   },
   signupCard: {
@@ -190,20 +191,22 @@ const styles = StyleSheet.create({
   signupLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
   },
   signupDescription: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginTop: 2,
   },
   summaryCard: {
-    backgroundColor: '#FFC107' + '10',
     alignItems: 'center',
     marginBottom: Theme.spacing.lg,
   },
   summaryValue: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
   },
   footer: {
     flexDirection: 'row',
