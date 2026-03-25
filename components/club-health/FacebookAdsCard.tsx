@@ -26,9 +26,9 @@ export const FacebookAdsCard: React.FC<FacebookAdsCardProps> = ({ metrics }) => 
 
   const getROASColor = (roas?: number) => {
     if (!roas) return palette.textSecondary;
-    if (roas >= 3) return Theme.colors.status.success;
-    if (roas >= 1.5) return Theme.colors.status.warning;
-    return Theme.colors.status.error;
+    if (roas >= 3) return palette.statusSuccess;
+    if (roas >= 1.5) return palette.statusWarning;
+    return palette.statusError;
   };
 
   return (
@@ -50,7 +50,7 @@ export const FacebookAdsCard: React.FC<FacebookAdsCardProps> = ({ metrics }) => 
           <Text style={styles.metricLabel}>Cost per Booking</Text>
           <Text style={[
             styles.primaryValue,
-            metrics.cost_per_booking > 50 && { color: Theme.colors.status.warning }
+            metrics.cost_per_booking > 50 ? { color: palette.statusWarning } : null
           ]}>
             {metrics.cost_per_booking > 0 ? `£${metrics.cost_per_booking.toFixed(2)}` : '—'}
           </Text>
@@ -101,17 +101,17 @@ export const FacebookAdsCard: React.FC<FacebookAdsCardProps> = ({ metrics }) => 
           </View>
         </View>
 
-        {metrics.roas && (
+        {metrics.roas ? (
           <View style={styles.roasContainer}>
             <Text style={styles.roasLabel}>ROAS</Text>
             <Text style={[styles.roasValue, { color: getROASColor(metrics.roas) }]}>
               {metrics.roas.toFixed(2)}x
             </Text>
           </View>
-        )}
+        ) : null}
       </View>
 
-      {metrics.campaigns && metrics.campaigns.length > 0 && (
+      {metrics.campaigns && metrics.campaigns.length > 0 ? (
         <>
           <View style={styles.divider} />
           <View style={styles.campaignsSection}>
@@ -125,14 +125,14 @@ export const FacebookAdsCard: React.FC<FacebookAdsCardProps> = ({ metrics }) => 
                   <View style={[
                     styles.campaignStatus,
                     { backgroundColor: campaign.status === 'active'
-                      ? `${Theme.colors.status.success}15`
+                      ? `${palette.statusSuccess}15`
                       : `${palette.textTertiary}15`
                     }
                   ]}>
                     <Text style={[
                       styles.campaignStatusText,
                       { color: campaign.status === 'active'
-                        ? Theme.colors.status.success
+                        ? palette.statusSuccess
                         : palette.textTertiary
                       }
                     ]}>
@@ -149,7 +149,7 @@ export const FacebookAdsCard: React.FC<FacebookAdsCardProps> = ({ metrics }) => 
             ))}
           </View>
         </>
-      )}
+      ) : null}
     </View>
   );
 };
@@ -161,11 +161,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: 20,
     marginHorizontal: 16,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
     borderWidth: 1,
     borderColor: palette.borderLight,
   },

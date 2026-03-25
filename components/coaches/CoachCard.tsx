@@ -95,11 +95,6 @@ const createStyles = (palette: ThemeColors) =>
       padding: 16,
       marginHorizontal: 16,
       marginBottom: 12,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 4,
-      elevation: 2,
     },
     content: {
       flexDirection: 'row',

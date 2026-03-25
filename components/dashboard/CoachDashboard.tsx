@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, ScrollView, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useCoachDashboard } from '@/hooks/useCoachDashboard';
@@ -47,11 +46,7 @@ export default function CoachDashboardScreen() {
   const classCount = todayData?.classes?.length || 0;
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
-      <LinearGradient
-        colors={[colors.backgroundGradientStart, colors.backgroundGradientEnd]}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}

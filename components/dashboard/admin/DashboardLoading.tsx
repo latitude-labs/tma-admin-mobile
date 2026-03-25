@@ -19,6 +19,7 @@ export function DashboardLoading({ colors }: DashboardLoadingProps) {
       fontSize: Theme.typography.sizes.md,
       color: colors.textSecondary,
       fontFamily: Theme.typography.fonts.medium,
+      fontWeight: Theme.typography.fontWeights.medium,
       marginTop: Theme.spacing.md,
     },
   });

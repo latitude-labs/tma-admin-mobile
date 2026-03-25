@@ -1,7 +1,7 @@
 import { Theme } from '@/constants/Theme';
-import { ThemeColors } from '@/hooks/useThemeColors';
+import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { User } from '@/types/auth';
 
@@ -18,7 +18,7 @@ interface CoachHeaderProps {
 
 export function CoachHeader({
   user,
-  colors,
+  colors: _colors,
   isOffline,
   isSyncing,
   isRefreshing,
@@ -26,6 +26,8 @@ export function CoachHeader({
   classCount,
   onRefresh
 }: CoachHeaderProps) {
+  const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
@@ -79,71 +81,6 @@ export function CoachHeader({
     return `${days}d ago`;
   };
 
-  const styles = StyleSheet.create({
-    header: {
-      paddingHorizontal: Theme.spacing.lg,
-      paddingTop: Theme.spacing.xl,
-      paddingBottom: Theme.spacing.lg,
-      backgroundColor: colors.background,
-      borderBottomLeftRadius: 24,
-      borderBottomRightRadius: 24,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.03,
-      shadowRadius: 6,
-      elevation: 2,
-      marginBottom: Theme.spacing.md,
-    },
-    headerTop: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
-    },
-    greetingContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: Theme.spacing.md,
-    },
-    greetingEmoji: {
-      fontSize: 32,
-    },
-    greeting: {
-      fontSize: 24,
-      fontFamily: Theme.typography.fonts.bold,
-      color: colors.textPrimary,
-    },
-    greetingSubtext: {
-      fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
-      color: colors.textSecondary,
-      marginTop: 2,
-    },
-    syncBadge: {
-      backgroundColor: colors.tint + '10',
-      paddingVertical: 8,
-      paddingHorizontal: 12,
-      borderRadius: 20,
-      borderWidth: 1,
-      borderColor: colors.tint + '20',
-    },
-    syncBadgeOffline: {
-      backgroundColor: colors.statusError + '10',
-      borderColor: colors.statusError + '20',
-    },
-    syncBadgeContent: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    syncTimeText: {
-      fontSize: 12,
-      fontFamily: Theme.typography.fonts.medium,
-      color: colors.tint,
-    },
-    syncTimeTextOffline: {
-      color: colors.statusError,
-    },
-  });
 
   return (
     <View style={styles.header}>
@@ -162,7 +99,7 @@ export function CoachHeader({
           </View>
         </View>
         <TouchableOpacity
-          style={[styles.syncBadge, isOffline && styles.syncBadgeOffline]}
+          style={[styles.syncBadge, isOffline ? styles.syncBadgeOffline : null]}
           onPress={onRefresh}
           disabled={isSyncing || isRefreshing}
         >
@@ -174,14 +111,78 @@ export function CoachHeader({
                 color={isOffline ? colors.statusError : colors.tint}
               />
             </Animated.View>
-            {lastSyncTime && !isSyncing && !isRefreshing && (
-              <Text style={[styles.syncTimeText, isOffline && styles.syncTimeTextOffline]}>
+            {lastSyncTime && !isSyncing && !isRefreshing ? (
+              <Text style={[styles.syncTimeText, isOffline ? styles.syncTimeTextOffline : null]}>
                 {getLastSyncText()}
               </Text>
-            )}
+            ) : null}
           </View>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
+
+const createStyles = (colors: ThemeColors) => StyleSheet.create({
+  header: {
+    paddingHorizontal: Theme.spacing.lg,
+    paddingTop: Theme.spacing.xl,
+    paddingBottom: Theme.spacing.lg,
+    backgroundColor: colors.background,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    marginBottom: Theme.spacing.md,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  greetingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Theme.spacing.md,
+  },
+  greetingEmoji: {
+    fontSize: 32,
+  },
+  greeting: {
+    fontSize: 24,
+    fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
+    color: colors.textPrimary,
+  },
+  greetingSubtext: {
+    fontSize: Theme.typography.sizes.sm,
+    fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
+    color: colors.textSecondary,
+    marginTop: 2,
+  },
+  syncBadge: {
+    backgroundColor: colors.tint + '10',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.tint + '20',
+  },
+  syncBadgeOffline: {
+    backgroundColor: colors.statusError + '10',
+    borderColor: colors.statusError + '20',
+  },
+  syncBadgeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  syncTimeText: {
+    fontSize: 12,
+    fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
+    color: colors.tint,
+  },
+  syncTimeTextOffline: {
+    color: colors.statusError,
+  },
+});
