@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   Dimensions,
-  Platform,
 } from 'react-native';
 import Animated, {
   SlideInUp,
@@ -14,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { GlassView } from '@/components/ui/GlassView';
 import * as Haptics from 'expo-haptics';
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -107,16 +107,16 @@ export const Toast: React.FC<ToastProps> = ({
         },
       ]}
     >
-      <Animated.View
+      <GlassView
+        intensity="regular"
         style={[
           styles.toast,
           {
-            backgroundColor: palette.background,
             borderLeftColor: toastColor,
           },
         ]}
       >
-        <View style={[styles.iconContainer, { backgroundColor: `${toastColor}15` }]}>
+        <View style={[styles.iconContainer, { backgroundColor: `${toastColor}20` }]}>
           <Ionicons name={ICONS[type]} size={24} color={toastColor} />
         </View>
 
@@ -124,7 +124,7 @@ export const Toast: React.FC<ToastProps> = ({
           {message}
         </Text>
 
-        {action && (
+        {action ? (
           <View style={styles.actionContainer}>
             <Text
               style={[styles.actionText, { color: toastColor }]}
@@ -133,8 +133,8 @@ export const Toast: React.FC<ToastProps> = ({
               {action.label}
             </Text>
           </View>
-        )}
-      </Animated.View>
+        ) : null}
+      </GlassView>
     </Animated.View>
   );
 };
@@ -200,13 +200,13 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   return (
     <>
       {children}
-      {toastProps && (
+      {toastProps ? (
         <Toast
           {...toastProps}
           visible={visible}
           onHide={handleHide}
         />
-      )}
+      ) : null}
     </>
   );
 };
@@ -226,7 +226,6 @@ const createStyles = (palette: ThemeColors) =>
       padding: Theme.spacing.md,
       borderRadius: Theme.borderRadius.lg,
       borderLeftWidth: 4,
-      ...Theme.shadows.elevated,
       minHeight: 64,
     },
     iconContainer: {
@@ -240,7 +239,8 @@ const createStyles = (palette: ThemeColors) =>
     message: {
       flex: 1,
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System',
+      fontWeight: '500',
       color: palette.textPrimary,
       lineHeight: 20,
     },
@@ -249,7 +249,8 @@ const createStyles = (palette: ThemeColors) =>
     },
     actionText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System',
+      fontWeight: '600',
       textTransform: 'uppercase',
     },
   });
