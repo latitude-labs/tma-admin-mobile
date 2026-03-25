@@ -1,15 +1,4 @@
-import {
-  Manrope_200ExtraLight,
-  Manrope_300Light,
-  Manrope_400Regular,
-  Manrope_500Medium,
-  Manrope_600SemiBold,
-  Manrope_700Bold,
-  Manrope_800ExtraBold,
-} from '@expo-google-fonts/manrope';
-import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { useFonts } from 'expo-font';
 import { Stack, router } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -39,31 +28,9 @@ export const unstable_settings = {
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    Manrope_200ExtraLight,
-    Manrope_300Light,
-    Manrope_400Regular,
-    Manrope_500Medium,
-    Manrope_600SemiBold,
-    Manrope_700Bold,
-    Manrope_800ExtraBold,
-    ...FontAwesome.font,
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
   useEffect(() => {
-    if (error) throw error;
-  }, [error]);
-
-  useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
-    }
-  }, [loaded]);
-
-  if (!loaded) {
-    return null;
-  }
+    SplashScreen.hideAsync();
+  }, []);
 
   return <RootLayoutNav />;
 }
@@ -76,12 +43,16 @@ function RootLayoutNav() {
     // Register logout callback with API client
     apiClient.setLogoutCallback(forceLogout);
 
-    // Initialize centralized app state manager
-    appStateManager.initialize();
-
     // Check authentication status on app start
     checkAuth();
   }, []);
+
+  // Initialize app state manager only after auth is confirmed
+  useEffect(() => {
+    if (isInitialized && isAuthenticated) {
+      appStateManager.initialize();
+    }
+  }, [isInitialized, isAuthenticated]);
 
   useEffect(() => {
     // Only redirect after initialization is complete
