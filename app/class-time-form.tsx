@@ -24,7 +24,8 @@ import Animated, {
   FadeInDown,
   useAnimatedStyle,
   useSharedValue,
-  withSpring
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -193,6 +194,51 @@ const TimePickerField = React.memo(({
     </View>
   );
 });
+
+// Extracted toggle component so hooks aren't called inside render/Controller
+interface AnimatedToggleProps {
+  value: boolean;
+  onPress: () => void;
+  label: string;
+  toggleRowStyle: object;
+  toggleLabelStyle: object;
+  toggleStyle: object;
+  toggleActiveStyle: object;
+  toggleThumbStyle: object;
+}
+
+function AnimatedToggle({
+  value,
+  onPress,
+  label,
+  toggleRowStyle,
+  toggleLabelStyle,
+  toggleStyle,
+  toggleActiveStyle,
+  toggleThumbStyle,
+}: AnimatedToggleProps) {
+  const thumbPosition = useSharedValue(value ? 20 : 0);
+
+  useEffect(() => {
+    thumbPosition.value = withTiming(value ? 20 : 0, { duration: 250 });
+  }, [value, thumbPosition]);
+
+  const thumbAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: thumbPosition.value }],
+  }));
+
+  return (
+    <Pressable
+      style={toggleRowStyle}
+      onPress={onPress}
+    >
+      <Text style={toggleLabelStyle}>{label}</Text>
+      <View style={[toggleStyle, value ? toggleActiveStyle : null]}>
+        <Animated.View style={[toggleThumbStyle, thumbAnimatedStyle]} />
+      </View>
+    </Pressable>
+  );
+}
 
 export default function ClassTimeFormScreen() {
   const palette = useThemeColors();
@@ -459,27 +505,16 @@ export default function ClassTimeFormScreen() {
                   control={control}
                   name="is_accepting_bookings"
                   render={({ field: { value, onChange } }) => (
-                    <Pressable
-                      style={styles.toggleRow}
+                    <AnimatedToggle
+                      value={value}
                       onPress={() => onChange(!value)}
-                    >
-                      <Text style={styles.toggleLabel}>Accepting Bookings</Text>
-                      <View style={[
-                        styles.toggle,
-                        value && styles.toggleActive
-                      ]}>
-                        <Animated.View
-                          style={[
-                            styles.toggleThumb,
-                            {
-                              transform: [{
-                                translateX: value ? 20 : 0
-                              }]
-                            }
-                          ]}
-                        />
-                      </View>
-                    </Pressable>
+                      label="Accepting Bookings"
+                      toggleRowStyle={styles.toggleRow}
+                      toggleLabelStyle={styles.toggleLabel}
+                      toggleStyle={styles.toggle}
+                      toggleActiveStyle={styles.toggleActive}
+                      toggleThumbStyle={styles.toggleThumb}
+                    />
                   )}
                 />
               </View>
