@@ -1,6 +1,7 @@
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useBiometricAuth } from '@/hooks/useBiometricAuth';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import {
@@ -79,6 +80,10 @@ export default function LoginScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}

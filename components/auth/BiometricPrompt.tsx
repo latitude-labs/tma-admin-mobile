@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -21,7 +21,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { biometricService, BiometricCapabilities } from '@/services/biometric.service';
 import { Button } from '../ui/Button';
 import * as Haptics from 'expo-haptics';
@@ -50,6 +50,7 @@ export const BiometricPrompt: React.FC<BiometricPromptProps> = ({
   cancelButtonText = 'Cancel',
 }) => {
   const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const [isAuthenticating, setIsAuthenticating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [capabilities, setCapabilities] = useState<BiometricCapabilities | null>(null);
@@ -210,13 +211,7 @@ export const BiometricPrompt: React.FC<BiometricPromptProps> = ({
         <Animated.View
           entering={SlideInDown.springify().damping(20).stiffness(150)}
           exiting={SlideOutDown.duration(200)}
-          style={[
-            styles.container,
-            {
-              backgroundColor: colors.background,
-              ...Theme.shadows.elevated,
-            },
-          ]}
+          style={styles.container}
         >
           <View style={styles.iconContainer}>
             {/* Pulse effect */}
@@ -234,11 +229,11 @@ export const BiometricPrompt: React.FC<BiometricPromptProps> = ({
             </Animated.View>
           </View>
 
-          <Text style={[styles.title, { color: colors.textPrimary }]}>
+          <Text style={styles.title}>
             {title}
           </Text>
 
-          <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          <Text style={styles.subtitle}>
             {subtitle}
           </Text>
 
@@ -304,76 +299,83 @@ export const BiometricPrompt: React.FC<BiometricPromptProps> = ({
   );
 };
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: Theme.spacing.lg,
-  },
-  container: {
-    width: '100%',
-    maxWidth: 400,
-    borderRadius: Theme.borderRadius.xl,
-    padding: Theme.spacing.xl,
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 120,
-    height: 120,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Theme.spacing.xl,
-    position: 'relative',
-  },
-  pulse: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-  },
-  title: {
-    fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
-    marginBottom: Theme.spacing.sm,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
-    textAlign: 'center',
-    marginBottom: Theme.spacing.xl,
-  },
-  errorContainer: {
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-    paddingHorizontal: Theme.spacing.md,
-    paddingVertical: Theme.spacing.sm,
-    borderRadius: Theme.borderRadius.md,
-    marginBottom: Theme.spacing.md,
-    width: '100%',
-  },
-  errorText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    textAlign: 'center',
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: Theme.spacing.xl,
-  },
-  loadingText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
-    marginTop: Theme.spacing.md,
-  },
-  authButton: {
-    marginBottom: Theme.spacing.md,
-  },
-  buttonContainer: {
-    width: '100%',
-    gap: Theme.spacing.sm,
-  },
-  fallbackButton: {
-    marginBottom: Theme.spacing.sm,
-  },
-});
+const createStyles = (palette: ThemeColors) =>
+  StyleSheet.create({
+    overlay: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      paddingHorizontal: Theme.spacing.lg,
+    },
+    container: {
+      width: '100%',
+      maxWidth: 400,
+      borderRadius: Theme.borderRadius.xl,
+      padding: Theme.spacing.xl,
+      alignItems: 'center',
+      backgroundColor: palette.background,
+      ...Theme.shadows.elevated,
+    },
+    iconContainer: {
+      width: 120,
+      height: 120,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: Theme.spacing.xl,
+      position: 'relative',
+    },
+    pulse: {
+      position: 'absolute',
+      width: 120,
+      height: 120,
+      borderRadius: 60,
+    },
+    title: {
+      fontSize: Theme.typography.sizes.xl,
+      fontWeight: '700',
+      color: palette.textPrimary,
+      marginBottom: Theme.spacing.sm,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: Theme.typography.sizes.md,
+      fontWeight: '400',
+      color: palette.textSecondary,
+      textAlign: 'center',
+      marginBottom: Theme.spacing.xl,
+    },
+    errorContainer: {
+      backgroundColor: palette.statusError + '1A',
+      paddingHorizontal: Theme.spacing.md,
+      paddingVertical: Theme.spacing.sm,
+      borderRadius: Theme.borderRadius.md,
+      marginBottom: Theme.spacing.md,
+      width: '100%',
+    },
+    errorText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontWeight: '500',
+      color: palette.statusError,
+      textAlign: 'center',
+    },
+    loadingContainer: {
+      alignItems: 'center',
+      paddingVertical: Theme.spacing.xl,
+    },
+    loadingText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontWeight: '400',
+      color: palette.textSecondary,
+      marginTop: Theme.spacing.md,
+    },
+    authButton: {
+      marginBottom: Theme.spacing.md,
+    },
+    buttonContainer: {
+      width: '100%',
+      gap: Theme.spacing.sm,
+    },
+    fallbackButton: {
+      marginBottom: Theme.spacing.sm,
+    },
+  });
