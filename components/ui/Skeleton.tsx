@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
-import { StyleSheet, Animated, ViewStyle, useColorScheme } from 'react-native';
+import { StyleSheet, Animated, ViewStyle } from 'react-native';
 import { Theme } from '@/constants/Theme';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 
 interface SkeletonProps {
   width?: number | string;
@@ -17,8 +17,7 @@ export function Skeleton({
   style
 }: SkeletonProps) {
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const palette = useThemeColors();
 
   useEffect(() => {
     const animation = Animated.loop(
@@ -50,7 +49,7 @@ export function Skeleton({
       style={[
         styles.base,
         {
-          backgroundColor: colors.borderLight,
+          backgroundColor: palette.borderLight,
           width,
           height,
           borderRadius,

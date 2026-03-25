@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -11,9 +11,7 @@ import {
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme } from '@/components/useColorScheme';
-import ColorPalette from '@/constants/Colors';
-import { getThemeShadows } from '@/constants/Theme';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 export interface DropdownOption {
   label: string;
@@ -39,9 +37,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
   error,
   label,
 }) => {
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
-  const shadows = getThemeShadows(colorScheme);
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const [showModal, setShowModal] = useState(false);
 
   const handleSelect = (optionValue: string) => {
@@ -74,36 +71,24 @@ export const Dropdown: React.FC<DropdownProps> = ({
 
   return (
     <View style={styles.container}>
-      {label && (
-        <Text style={[styles.label, { color: colors.textPrimary }]}>
-          {label}
-        </Text>
-      )}
+      {label ? (
+        <Text style={styles.label}>{label}</Text>
+      ) : null}
 
       <TouchableOpacity
         onPress={showPicker}
         style={[
           styles.button,
-          {
-            backgroundColor: colors.background,
-            borderColor: error ? colors.statusError : colors.borderLight,
-          },
-          disabled && {
-            backgroundColor: colors.backgroundSecondary,
-            opacity: 0.6,
-          },
+          error ? styles.buttonError : null,
+          disabled ? styles.buttonDisabled : null,
         ]}
         disabled={disabled}
       >
         <Text
           style={[
             styles.buttonText,
-            {
-              color: selectedOption
-                ? colors.textPrimary
-                : colors.textSecondary,
-            },
-            disabled && { color: colors.textTertiary },
+            selectedOption ? null : styles.buttonTextPlaceholder,
+            disabled ? styles.buttonTextDisabled : null,
           ]}
         >
           {selectedOption ? selectedOption.label : placeholder}
@@ -111,15 +96,15 @@ export const Dropdown: React.FC<DropdownProps> = ({
         <Ionicons
           name="chevron-down"
           size={20}
-          color={disabled ? colors.textTertiary : colors.textSecondary}
+          color={disabled ? palette.textTertiary : palette.textSecondary}
         />
       </TouchableOpacity>
 
-      {error && (
-        <Text style={[styles.errorText, { color: colors.statusError }]}>{error}</Text>
-      )}
+      {error ? (
+        <Text style={styles.errorText}>{error}</Text>
+      ) : null}
 
-      {Platform.OS === 'android' && (
+      {Platform.OS === 'android' ? (
         <Modal
           visible={showModal}
           transparent={true}
@@ -127,40 +112,25 @@ export const Dropdown: React.FC<DropdownProps> = ({
           onRequestClose={() => setShowModal(false)}
         >
           <TouchableOpacity
-            style={[styles.modalOverlay, { backgroundColor: colors.overlay }]}
+            style={styles.modalOverlay}
             activeOpacity={1}
             onPress={() => setShowModal(false)}
           >
-            <View
-              style={[
-                styles.modalContent,
-                { backgroundColor: colors.background },
-                shadows.elevated,
-              ]}
-            >
+            <View style={styles.modalContent}>
               <ScrollView style={styles.modalScroll}>
                 {options.map((option) => (
                   <TouchableOpacity
                     key={option.value}
                     style={[
                       styles.option,
-                      {
-                        borderBottomColor: colors.borderLight,
-                      },
-                      value === option.value && {
-                        backgroundColor: colors.tint + '10',
-                      },
+                      value === option.value ? styles.optionSelected : null,
                     ]}
                     onPress={() => handleSelect(option.value)}
                   >
                     <Text
                       style={[
                         styles.optionText,
-                        { color: colors.textPrimary },
-                        value === option.value && {
-                          fontFamily: Theme.typography.fonts.semibold,
-                          color: colors.tint,
-                        },
+                        value === option.value ? styles.optionTextSelected : null,
                       ]}
                     >
                       {option.label}
@@ -171,18 +141,20 @@ export const Dropdown: React.FC<DropdownProps> = ({
             </View>
           </TouchableOpacity>
         </Modal>
-      )}
+      ) : null}
     </View>
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     marginBottom: Theme.spacing.md,
   },
   label: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System',
+    fontWeight: '500',
+    color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   button: {
@@ -191,30 +163,54 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: Theme.borderRadius.md,
     borderWidth: 1,
+    borderColor: palette.borderLight,
+    backgroundColor: palette.background,
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.md,
     minHeight: 48,
   },
+  buttonError: {
+    borderColor: palette.statusError,
+  },
+  buttonDisabled: {
+    backgroundColor: palette.backgroundSecondary,
+    opacity: 0.6,
+  },
   buttonText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: palette.textPrimary,
     flex: 1,
+  },
+  buttonTextPlaceholder: {
+    color: palette.textSecondary,
+  },
+  buttonTextDisabled: {
+    color: palette.textTertiary,
   },
   errorText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: palette.statusError,
     marginTop: Theme.spacing.xs,
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: palette.overlay,
   },
   modalContent: {
     borderRadius: Theme.borderRadius.lg,
+    borderWidth: 1,
+    borderColor: palette.borderLight,
     width: '80%',
     maxHeight: '60%',
     padding: Theme.spacing.sm,
+    backgroundColor: palette.background,
+    ...palette.softShadow,
   },
   modalScroll: {
     maxHeight: 300,
@@ -223,9 +219,19 @@ const styles = StyleSheet.create({
     paddingVertical: Theme.spacing.md,
     paddingHorizontal: Theme.spacing.lg,
     borderBottomWidth: 1,
+    borderBottomColor: palette.borderLight,
+  },
+  optionSelected: {
+    backgroundColor: palette.tint + '10',
   },
   optionText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System',
+    fontWeight: '400',
+    color: palette.textPrimary,
+  },
+  optionTextSelected: {
+    fontWeight: '600',
+    color: palette.tint,
   },
 });
