@@ -1,15 +1,14 @@
 import { Logo } from '@/components/Logo';
+import { GlassView } from '@/components/ui/GlassView';
 import { NotificationBadge } from '@/components/ui/NotificationBadge';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
 import { Theme } from '@/constants/Theme';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { useNotificationStore } from '@/store/notificationStore';
 import { Ionicons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Tabs, useRouter } from 'expo-router';
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
 import Animated, {
   useAnimatedStyle,
@@ -19,8 +18,7 @@ import Animated, {
 
 // Tab Icon Component - separated to avoid hooks in render
 function TabIcon({ route, isFocused, index, descriptors, navigation, animatedStyle, tabAnimation, unreadCount }: any) {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
 
   const handleTabPress = () => {
     if (!isFocused) {
@@ -29,11 +27,11 @@ function TabIcon({ route, isFocused, index, descriptors, navigation, animatedSty
 
       // Animate the tab
       tabAnimation.scale.value = withSpring(0.9, {
-        damping: 15,
-        stiffness: 200,
+        damping: 20,
+        stiffness: 150,
       }, () => {
         tabAnimation.scale.value = withSpring(1, {
-          damping: 10,
+          damping: 20,
           stiffness: 150,
         });
       });
@@ -85,15 +83,13 @@ function TabIcon({ route, isFocused, index, descriptors, navigation, animatedSty
       onPress={handleTabPress}
       style={[
         styles.tabButton,
-        isCenter && styles.centerTabButton,
-        isCenter && {
-          backgroundColor: isFocused ? Theme.colors.primary : currentTheme.card,
-          shadowColor: Theme.colors.primary,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: isFocused ? 0.2 : 0.1,
-          shadowRadius: 8,
-          elevation: isFocused ? 8 : 4,
-        },
+        isCenter ? styles.centerTabButton : null,
+        isCenter ? {
+          backgroundColor: isFocused
+            ? Theme.colors.primary
+            : palette.card,
+          overflow: 'hidden' as const,
+        } : null,
       ]}
     >
       <View style={styles.iconWrapper}>
@@ -104,17 +100,17 @@ function TabIcon({ route, isFocused, index, descriptors, navigation, animatedSty
               size={isCenter ? 28 : 24}
               color={
                 isCenter && isFocused
-                  ? '#FFFFFF'
+                  ? palette.textInverse
                   : isFocused
                   ? Theme.colors.primary
-                  : currentTheme.tabIconDefault
+                  : palette.tabIconDefault
               }
             />
-            {showBadge && (
+            {showBadge ? (
               <View style={styles.badgeContainer}>
                 <NotificationBadge count={unreadCount} size="small" />
               </View>
-            )}
+            ) : null}
           </View>
         </Animated.View>
       </View>
@@ -124,9 +120,8 @@ function TabIcon({ route, isFocused, index, descriptors, navigation, animatedSty
 
 // Custom Tab Bar Component with center highlight
 function CustomTabBar({ state, descriptors, navigation }: any) {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const palette = useThemeColors();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   // Create fixed number of animation values (max 5 tabs)
   const scale1 = useSharedValue(1);
@@ -193,46 +188,28 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     animatedStyle5,
   ];
 
-
   return (
-    <View style={[styles.container, { backgroundColor: currentTheme.background }]}>
-      {Platform.OS === 'ios' ? (
-        <BlurView intensity={95} tint={colorScheme ?? 'light'} style={styles.blurContainer}>
-          <View style={styles.tabBar}>
-            {state.routes.map((route: any, index: number) => (
-              <TabIcon
-                key={route.key}
-                route={route}
-                isFocused={state.index === index}
-                index={index}
-                descriptors={descriptors}
-                navigation={navigation}
-                animatedStyle={animatedStyles[index]}
-                tabAnimation={tabAnimations[index]}
-                unreadCount={unreadCount}
-              />
-            ))}
-          </View>
-        </BlurView>
-      ) : (
-        <View style={[styles.androidContainer, { backgroundColor: currentTheme.card }]}>
-          <View style={styles.tabBar}>
-            {state.routes.map((route: any, index: number) => (
-              <TabIcon
-                key={route.key}
-                route={route}
-                isFocused={state.index === index}
-                index={index}
-                descriptors={descriptors}
-                navigation={navigation}
-                animatedStyle={animatedStyles[index]}
-                tabAnimation={tabAnimations[index]}
-                unreadCount={unreadCount}
-              />
-            ))}
-          </View>
+    <View style={[styles.container, { backgroundColor: palette.background }]}>
+      <GlassView
+        intensity="regular"
+        style={styles.glassContainer}
+      >
+        <View style={styles.tabBar}>
+          {state.routes.map((route: any, index: number) => (
+            <TabIcon
+              key={route.key}
+              route={route}
+              isFocused={state.index === index}
+              index={index}
+              descriptors={descriptors}
+              navigation={navigation}
+              animatedStyle={animatedStyles[index]}
+              tabAnimation={tabAnimations[index]}
+              unreadCount={unreadCount}
+            />
+          ))}
         </View>
-      )}
+      </GlassView>
     </View>
   );
 }
@@ -240,9 +217,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 // Notification button component - moved outside to avoid hooks issues
 function NotificationButton() {
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
-  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const palette = useThemeColors();
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   return (
     <TouchableOpacity
@@ -252,7 +228,7 @@ function NotificationButton() {
       <Ionicons
         name="notifications-outline"
         size={24}
-        color={currentTheme.text}
+        color={palette.text}
       />
       <NotificationBadge count={unreadCount} size="small" />
     </TouchableOpacity>
@@ -262,8 +238,22 @@ function NotificationButton() {
 export default function TabsLayout() {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
+
+  const headerStyles = useMemo(() => ({
+    headerStyle: {
+      backgroundColor: palette.background,
+      elevation: 0,
+      shadowOpacity: 0,
+      borderBottomWidth: 1,
+      borderBottomColor: palette.border,
+    },
+    headerTitleStyle: {
+      fontFamily: Theme.typography.fonts.semibold,
+      fontSize: Theme.typography.sizes.lg,
+      marginBottom: Theme.spacing.xl,
+    },
+  }), [palette]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -279,19 +269,8 @@ export default function TabsLayout() {
     <Tabs
       tabBar={(props) => <CustomTabBar {...props} />}
       screenOptions={{
-        headerStyle: {
-          backgroundColor: currentTheme.background,
-          elevation: 0,
-          shadowOpacity: 0,
-          borderBottomWidth: 1,
-          borderBottomColor: currentTheme.border,
-        },
+        ...headerStyles,
         headerTitleAlign: 'center',
-        headerTitleStyle: {
-          fontFamily: Theme.typography.fonts.semibold,
-          fontSize: Theme.typography.sizes.lg,
-          marginBottom: Theme.spacing.xl,
-        },
         headerTitle: () => <Logo width={80} height={72} variant="auto" />,
         headerRight: () => <NotificationButton />,
       }}
@@ -343,16 +322,9 @@ const styles = StyleSheet.create({
     right: 0,
     paddingBottom: Platform.OS === 'ios' ? 20 : 0,
   },
-  blurContainer: {
+  glassContainer: {
     borderTopWidth: StyleSheet.hairlineWidth,
     borderTopColor: 'rgba(0,0,0,0.1)',
-  },
-  androidContainer: {
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
   },
   tabBar: {
     flexDirection: 'row',
