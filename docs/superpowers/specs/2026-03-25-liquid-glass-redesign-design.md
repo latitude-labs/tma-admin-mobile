@@ -8,11 +8,12 @@ A comprehensive visual redesign of the TMA Admin Mobile app to adopt Apple's iOS
 
 - **iOS 26+ only** — no fallback paths needed
 - **Expo SDK 55 upgrade** — automatic glass on native tabs, nav bars, form sheets, toolbars
-- **`expo-glass-effect`** for custom glass surfaces (cards, badges, overlays)
+- **Glass package** — `expo-glass-effect` (Expo official) or `@callstack/liquid-glass` as fallback. If neither is available at implementation time, build a minimal native module wrapping `UIVisualEffectView` + `UIGlassEffect` via Expo Modules API.
 - **TMA Orange (`#FF8133`) retained** as brand accent
 - **SF Pro replaces Manrope** — system font, native feel, eliminates font loading
 - **3D buttons evolved** — lighter lip (2px), semi-translucent face, same spring animation DNA
 - **Unified visual language** — admin section shares the same glass treatment, just with denser layouts
+- **iOS-first, Android deferred** — this spec targets iOS 26. Android will continue to use the current design until a separate Android spec is created. No Android code should be broken — glass components must render as plain `View` on Android.
 
 ## Section 1: Foundation — SDK, Font, and Theme Overhaul
 
@@ -28,7 +29,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 
 ### Typography — SF Pro Migration
 
-- Remove Manrope entirely (all 8 weights, remove from assets/fonts)
+- Remove Manrope entirely — uninstall `@expo-google-fonts/manrope` npm package, remove `expo-font` plugin config for Manrope, and delete any font loading logic from `app/_layout.tsx`
 - Switch to system font (`System` / `-apple-system`) which resolves to SF Pro on iOS 26
 - Simplify weight scale to four: Regular (400), Medium (500), Semibold (600), Bold (700)
 - Some sizes may need +/-1px adjustment due to SF Pro's different metrics vs Manrope
@@ -39,7 +40,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 **Retained:**
 - Primary brand: `#FF8133` (TMA Orange)
 - Primary dark: `#CC6728` (button lip)
-- Status colors: success `#4CAF50`, warning `#FFC107`, error `#F44336`, info `#2196F3`
+- Status colors: keep existing per-theme values (light: `#4CAF50`/`#FFC107`/`#F44336`/`#2196F3`; dark: `#66BB6A`/`#FFD54F`/`#EF5350`/`#42A5F5` as currently defined in Colors.ts)
 
 **Changed:**
 - Light backgrounds: secondary shifts from `#F5F5F5` to `#FAFAFA` (cleaner canvas for glass)
@@ -48,7 +49,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 
 ### Spacing & Radius
 
-- Card border radius increases from 16px to 20px
+- Cards currently use `Theme.borderRadius.lg` (16px). After redesign, cards use a new `xl` token at 20px. The existing `xl` token (24px) is reduced to 20px — this is intentional; 24px felt too rounded for glass panels.
 - Base padding (16px) and gap spacing (12px) unchanged
 - Button radius stays at 12px
 
@@ -74,7 +75,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 |---------|--------|-------|
 | Elevated (default) | White bg + box shadow | `GlassView` with light frosted treatment, no shadow |
 | Filled | Solid `#F5F5F5` | Slightly more opaque glass — for data tables, form sections |
-| Outlined | 1px border, white bg | **Removed** — glass edges replace explicit borders |
+| Outlined | 1px border, white bg | **Removed** — glass edges replace explicit borders. Existing `variant="outlined"` usages migrate to `"elevated"` (now glass-backed). |
 | Gradient | Tinted gradient | Tinted gradient behind glass — coloured frosted panel |
 
 - Padding stays at 16px, radius increases to 20px
@@ -83,7 +84,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 
 - Border: 2px to 1px
 - Background: solid white to white at ~90% opacity (slightly translucent)
-- Focus state: subtle outer glow (1-2px spread, low opacity orange) instead of just color change
+- Focus state: border transitions to primary color + an additional wrapping `View` with a soft shadow (`shadowColor: '#FF8133', shadowOpacity: 0.25, shadowRadius: 4, shadowOffset: {0, 0}`) to create a glow effect. This avoids CSS box-shadow spread which React Native doesn't support.
 - Error state: unchanged (red border + red helper text — no ambiguity)
 - Radius stays at 12px
 
@@ -112,7 +113,7 @@ Upgrade from Expo SDK 54 to SDK 55 with React Native 0.82+. Compile against Xcod
 
 - Glass panels with subtle color tint instead of gradient background (color at 12% to 5%)
 - Value text (32px bold) stays prominent — high contrast against glass
-- `GlassContainer` groups the stat grid — adjacent cards merge/morph at edges
+- `GlassContainer` groups the stat grid — this renders a single glass background behind all stat cards with hairline dividers between cells (like iOS Settings grouped rows), not individual glass cards whose borders overlap
 - Trend indicators unchanged
 
 ### IconBox
@@ -193,9 +194,10 @@ Backgrounds become a first-class design element — glass surfaces sample from w
 
 | Context | Before | After |
 |---------|--------|-------|
-| General UI | damping 10, stiffness 200 | damping 20, stiffness 150 |
+| General UI (new default) | varies | damping 20, stiffness 150 |
 | Button press | damping 10, stiffness 200, mass 0.5 | damping 15, stiffness 180 |
-| Tab press | damping 15, stiffness 200 | damping 20, stiffness 150 |
+| Tab press-in | damping 15, stiffness 200 | damping 20, stiffness 150 |
+| Tab release | damping 10, stiffness 150 | damping 20, stiffness 150 |
 
 Smoother, more fluid — matches the "liquid" in liquid glass.
 
@@ -209,7 +211,7 @@ Smoother, more fluid — matches the "liquid" in liquid glass.
 
 - Glass nav bar gains content scrolling underneath (automatic with SDK 55 native navigation)
 - Large titles collapse to inline on scroll (standard iOS 26 behavior)
-- `UIScrollEdgeEffect` on scrollable lists
+- Scroll edge effects: if SDK 55 exposes `UIScrollEdgeEffect` configuration, enable it. Otherwise, this is an iOS-level automatic behavior that may just work with native scroll views. Verify during implementation — not a blocker if unavailable.
 
 ### Transitions
 
@@ -257,7 +259,7 @@ Glass auto-adapts — `UIGlassEffect` reads `userInterfaceStyle` and adjusts aut
 
 - TMA orange stays as-is — vibrant enough against dark glass
 - Glass-tinted buttons: orange at ~80% opacity over dark glass creates a glowing effect
-- Status colors unchanged
+- Status colors: keep existing per-theme dark mode variants (already defined in Colors.ts)
 
 ### Theme System Changes
 
@@ -265,7 +267,7 @@ Glass auto-adapts — `UIGlassEffect` reads `userInterfaceStyle` and adjusts aut
 - Add `palette.backgroundGradientStart` / `palette.backgroundGradientEnd`
 - Remove per-level shadow tokens
 - Keep single `palette.softShadow` for non-glass elements
-- Add `palette.glass: true` flag
+- Remove `palette.glass` flag (unnecessary — iOS 26 only, glass is always available)
 
 **`Theme.shadows` simplified:**
 - Drop `sm`/`md`/`lg`/`xl`
@@ -310,7 +312,7 @@ Glass auto-adapts — `UIGlassEffect` reads `userInterfaceStyle` and adjusts aut
 - `components/ui/Chip.tsx` — glass selected state
 - `components/ui/IconBox.tsx` — glow default, glass filled variant
 - `components/ui/ScreenHeader.tsx` — may be replaced by native nav bar
-- `components/ui/Skeleton.tsx` — adjust shimmer colors for glass context
+- `components/ui/Skeleton.tsx` — adjust shimmer colors for glass context; also fix existing theme violation (uses `useColorScheme` + `ColorPalette` directly instead of `useThemeColors`)
 
 ### Feature Components
 - `components/dashboard/AdminDashboard.tsx` — gradient background, glass layout
@@ -323,9 +325,28 @@ Glass auto-adapts — `UIGlassEffect` reads `userInterfaceStyle` and adjusts aut
 - `app/_layout.tsx` — SDK 55 navigation setup
 - `app/(tabs)/_layout.tsx` — native tab bar, remove custom BlurView tab bar
 - `app/(tabs)/*.tsx` — gradient backgrounds, updated card usage
-- `app/more.tsx` — grouped glass panels (structural change)
+- `app/(tabs)/more.tsx` — grouped glass panels (structural change)
 - All modal/detail screens — native sheet presentation
 
 ### Configuration
 - `app.json` — SDK 55 config
 - `package.json` — dependency upgrades
+
+## Accessibility
+
+- **Reduce Transparency:** When the iOS "Reduce Transparency" accessibility setting is enabled, `UIGlassEffect` automatically falls back to a more opaque material. No custom handling needed, but verify during implementation that text remains readable in this mode.
+- **Contrast ratios:** All text over glass surfaces must meet WCAG 2.1 AA minimum contrast (4.5:1 for body text, 3:1 for large text). Test with both light and dark backgrounds showing through glass. If contrast is insufficient, increase the glass material opacity or add a subtle solid backing.
+- **Touch targets:** Unchanged — existing 44px+ minimum touch targets are retained.
+
+## Performance
+
+- **Glass surface budget:** Limit to ~6-8 simultaneous glass surfaces visible on screen. For scrollable lists (clubs, admin tables), individual list items should NOT each be a `GlassView`. Instead, use a single `GlassContainer` or `GlassView` as the list background, with items rendered as rows within it.
+- **FlatList optimization:** Items in FlatList/FlashList should use simple `View` backgrounds, not individual glass effects. Glass is for the containing panel, not each cell.
+- **Skeleton/Shimmer on glass:** Keep the shimmer animation but tint it to match glass material color — `rgba(255, 255, 255, 0.15)` pulsing to `rgba(255, 255, 255, 0.3)` in light mode.
+
+## Loading, Empty, and Error States
+
+- **Loading screens:** Skeleton placeholders render inside glass panels. The glass panel itself appears immediately; only the content shimmers.
+- **Empty states:** A centered message with icon inside a glass panel. Use secondary text color, keep it minimal.
+- **API error screens:** Glass panel with error icon, message, and a retry button. No special treatment beyond using the standard glass card style.
+- **Connection lost:** Toast notification (glass-backed) with error styling. No full-screen overlay.
