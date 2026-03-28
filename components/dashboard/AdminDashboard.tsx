@@ -7,6 +7,7 @@ import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { DashboardHeader } from './admin/DashboardHeader';
 import { StatsGrid } from './admin/StatsGrid';
 import { DashboardLoading } from './admin/DashboardLoading';
+import { TrialsBanner } from '@/components/features/TrialsBanner';
 
 export default function AdminDashboardScreen() {
   const { isOffline } = useOffline();
@@ -57,6 +58,8 @@ export default function AdminDashboardScreen() {
             isRefreshing={isRefreshing}
             onRefresh={handleRefresh}
           />
+
+          <TrialsBanner />
 
           <StatsGrid 
             colors={colors}
