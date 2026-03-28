@@ -1,5 +1,5 @@
 import apiClient from './client';
-import { Booking, PaginatedResponse, BookingStatistics, KitOrder, Reminder } from '@/types/api';
+import { Booking, BookingStatus, PackageName, LicenceDetails, PaginatedResponse, BookingStatistics, KitOrder, Reminder } from '@/types/api';
 import { offlineStorage } from '@/services/offline/storage';
 import { CommandFactory, queueCommand } from '@/services/offline/commandFactory';
 
@@ -8,7 +8,7 @@ interface BookingsParams {
   end_date?: string;
   club_id?: number;
   class_time_id?: number;
-  status?: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
+  status?: BookingStatus;
   per_page?: number;
   page?: number;
   modified_since?: string;
@@ -33,9 +33,11 @@ interface SyncResponse {
 }
 
 interface UpdateBookingStatusParams {
-  status: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
+  status: BookingStatus;
   kit_items?: Array<{ type: string; size: string; }>;
-  package_name?: 'basic' | 'silver' | 'gold';
+  package_name?: PackageName;
+  enroller_id?: number;
+  licence_details?: LicenceDetails;
   reminder_time?: string;
 }
 

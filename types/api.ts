@@ -44,13 +44,33 @@ export interface ClassTime {
   club?: Club;
 }
 
+export type BookingStatus =
+  | 'pending'
+  | 'fully_paid'
+  | 'paid_dd'           // legacy — map to fully_paid for display
+  | 'paid_awaiting_dd'
+  | 'deposit_and_dd'
+  | 'deposit_only'
+  | 'unpaid_dd'
+  | 'unpaid'
+  | 'unpaid_coach_call'  // legacy — keep for backwards compat
+  | 'not_joining';
+
+export interface LicenceDetails {
+  name: string;
+  date_of_birth: string;
+  address: string;
+}
+
+export type PackageName = 'licence' | 'basic' | 'silver' | 'gold';
+
 export interface Booking {
   id: number;
   uuid: string;
   names: string;
   email?: string;
   phone?: string;
-  status?: 'pending' | 'paid_dd' | 'paid_awaiting_dd' | 'unpaid_dd' | 'unpaid_coach_call' | 'not_joining';
+  status?: BookingStatus;
   attendance_status?: 'scheduled' | 'completed' | 'no-show' | 'cancelled';
   start_time: string;
   cancelled_at?: string | null;
@@ -62,6 +82,8 @@ export interface Booking {
   source?: string;
   class_time?: ClassTime;
   club?: Club;
+  enroller_id?: number;
+  licence_details?: LicenceDetails;
   created_at?: string;
   updated_at?: string;
 }
