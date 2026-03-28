@@ -3,11 +3,11 @@ import { StyleSheet, Text, TouchableOpacity, View, ScrollView } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
-import { coachesService } from '@/services/api/coaches.service';
 import { Coach } from '@/types/coaches';
 import { Theme } from '@/constants/Theme';
 
 interface EnrollerStepProps {
+  coaches: Coach[];
   selectedCoachId: number | null;
   onSelect: (coachId: number) => void;
   onNext: () => void;
@@ -15,16 +15,11 @@ interface EnrollerStepProps {
   bookingDetail: string;
 }
 
-export function EnrollerStep({ selectedCoachId, onSelect, onNext, bookingName, bookingDetail }: EnrollerStepProps) {
+export function EnrollerStep({ coaches, selectedCoachId, onSelect, onNext, bookingName, bookingDetail }: EnrollerStepProps) {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
   const currentUser = useAuthStore(s => s.user);
-  const [coaches, setCoaches] = useState<Coach[]>([]);
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  useEffect(() => {
-    coachesService.getAllCoaches().then(setCoaches).catch(() => {});
-  }, []);
 
   // Auto-fill to current user on mount
   useEffect(() => {
@@ -37,7 +32,7 @@ export function EnrollerStep({ selectedCoachId, onSelect, onNext, bookingName, b
 
   return (
     <View style={styles.container}>
-      <Text style={styles.stepLabel}>Step 1 of 2</Text>
+      <Text style={styles.stepLabel}>Step 1</Text>
       <Text style={styles.title}>Enroller</Text>
       <Text style={styles.detail}>{bookingName} · {bookingDetail}</Text>
 

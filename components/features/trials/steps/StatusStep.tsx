@@ -22,19 +22,18 @@ const STATUS_OPTIONS: StatusOption[] = [
 ];
 
 interface StatusStepProps {
-  totalSteps: number;
   onSelect: (status: BookingStatus) => void;
   bookingName: string;
   enrollerName: string;
 }
 
-export function StatusStep({ totalSteps, onSelect, bookingName, enrollerName }: StatusStepProps) {
+export function StatusStep({ onSelect, bookingName, enrollerName }: StatusStepProps) {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
 
   return (
     <View style={styles.container}>
-      <Text style={styles.stepLabel}>Step 2 of {totalSteps}</Text>
+      <Text style={styles.stepLabel}>Step 2</Text>
       <Text style={styles.title}>Booking Status</Text>
       <Text style={styles.detail}>{bookingName} · Enroller: {enrollerName}</Text>
 

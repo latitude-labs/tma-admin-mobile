@@ -38,7 +38,7 @@ export function TrialsBanner() {
         <Ionicons
           name="chevron-forward"
           size={16}
-          color={hasOutstanding ? '#FFFFFF' : palette.textTertiary}
+          color={hasOutstanding ? Theme.colors.text.inverse : palette.textTertiary}
         />
       </View>
     </TouchableOpacity>
@@ -55,7 +55,7 @@ const createStyles = (palette: ThemeColors, hasOutstanding: boolean) =>
       borderRadius: 12,
       marginHorizontal: 16,
       marginBottom: 12,
-      backgroundColor: hasOutstanding ? '#FFF3E8' : palette.backgroundSecondary,
+      backgroundColor: hasOutstanding ? palette.notificationUnread : palette.backgroundSecondary,
       borderWidth: hasOutstanding ? 2 : 1,
       borderColor: hasOutstanding ? Theme.colors.primary : palette.borderDefault,
     },
@@ -90,6 +90,6 @@ const createStyles = (palette: ThemeColors, hasOutstanding: boolean) =>
     actionText: {
       fontSize: 12,
       fontWeight: '600',
-      color: hasOutstanding ? '#FFFFFF' : palette.textTertiary,
+      color: hasOutstanding ? Theme.colors.text.inverse : palette.textTertiary,
     },
   });

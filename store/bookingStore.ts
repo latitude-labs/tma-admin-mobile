@@ -547,6 +547,9 @@ export const useBookingStore = create<BookingState>((set, get) => ({
   ) => {
     const { allBookings } = get();
 
+    // Save previous state for rollback
+    const previousBookings = allBookings;
+
     // Optimistically update the UI
     const updatedBookings = allBookings.map(booking => {
       if (booking.id === bookingId) {
@@ -564,12 +567,19 @@ export const useBookingStore = create<BookingState>((set, get) => ({
     get().applyFiltersAndPagination();
 
     // Send to API
-    await bookingsService.updateBookingConversionStatus(bookingId, {
-      status,
-      enroller_id: enrollerId,
-      licence_details: licenceDetails,
-      package_name: packageName,
-      kit_items: kitItems,
-    });
+    try {
+      await bookingsService.updateBookingConversionStatus(bookingId, {
+        status,
+        enroller_id: enrollerId,
+        licence_details: licenceDetails,
+        package_name: packageName,
+        kit_items: kitItems,
+      });
+    } catch (error) {
+      // Rollback optimistic update
+      set({ allBookings: previousBookings });
+      get().applyFiltersAndPagination();
+      throw error;
+    }
   },
 }))
