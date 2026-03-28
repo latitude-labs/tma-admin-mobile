@@ -56,11 +56,6 @@ export function ClassCard({ classWithBookings, dayDate, colors }: ClassCardProps
       borderRadius: 12,
       padding: Theme.spacing.md,
       borderLeftWidth: 3,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.03,
-      shadowRadius: 3,
-      elevation: 1,
       borderWidth: 1,
       borderColor: colors.borderLight,
       borderLeftColor: statusColor,
@@ -167,7 +162,7 @@ export function ClassCard({ classWithBookings, dayDate, colors }: ClassCardProps
             </Text>
           </View>
 
-          {classWithBookings.bookings.length > 0 && (
+          {classWithBookings.bookings.length > 0 ? (
             <View style={styles.progressContainer}>
               <View style={styles.progressBar}>
                 <View
@@ -181,7 +176,7 @@ export function ClassCard({ classWithBookings, dayDate, colors }: ClassCardProps
                 </View>
               </View>
             </View>
-          )}
+          ) : null}
         </View>
       </View>
     </TouchableOpacity>

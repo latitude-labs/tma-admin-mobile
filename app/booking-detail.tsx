@@ -144,12 +144,7 @@ export default function BookingDetailScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <ScreenHeader title="Booking Details" />
@@ -381,7 +376,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   errorText: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginTop: Theme.spacing.md,
     marginBottom: Theme.spacing.xl,
@@ -391,12 +386,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   backButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   headerCard: {
     marginBottom: Theme.spacing.md,
@@ -428,7 +423,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   avatarText: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.tint,
   },
   nameSection: {
@@ -436,7 +431,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   name: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
@@ -457,7 +452,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statusText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   badgeContainer: {
     flexDirection: 'row',
@@ -483,7 +478,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.lg,
   },
@@ -511,18 +506,18 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   infoLabel: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginBottom: Theme.spacing.xs,
   },
   infoValue: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   infoSubvalue: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: Theme.spacing.xs,
   },
@@ -545,7 +540,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   contactValue: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.tint,
     textDecorationLine: 'underline',
   },
@@ -556,7 +551,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   emptyText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textTertiary,
     fontStyle: 'italic',
   },
@@ -582,13 +577,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   activityTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
   activityTime: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   bottomSpacer: {

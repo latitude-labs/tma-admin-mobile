@@ -124,12 +124,12 @@ export const HealthScoreBadge: React.FC<HealthScoreBadgeProps> = ({
           <Text style={styles.scoreMax}>/100</Text>
         </View>
 
-        {showLabel && (
+        {showLabel ? (
           <View style={styles.labelContainer}>
             <Ionicons name={getStatusIcon()} size={iconSize} color={statusColor} />
             <Text style={[styles.label, { color: statusColor }]}>{getStatusLabel()}</Text>
           </View>
-        )}
+        ) : null}
       </View>
 
       <View style={styles.progressBar}>
@@ -151,11 +151,6 @@ const createStyles = (palette: ThemeColors, size: 'small' | 'medium' | 'large') 
       paddingVertical: size === 'large' ? 16 : size === 'medium' ? 12 : 8,
       borderWidth: 2,
       alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-      elevation: 3,
     },
     scoreContainer: {
       flexDirection: 'row',

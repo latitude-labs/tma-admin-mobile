@@ -26,6 +26,7 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 
@@ -285,6 +286,7 @@ export default function ClubFormScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title={isEdit ? 'Edit Club' : 'Create Club'}
           rightAction={
@@ -509,7 +511,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   headerSaveText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.tint,
   },
   card: {
@@ -532,7 +534,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   cardTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   inputContainer: {
@@ -548,7 +550,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   label: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   required: {
@@ -571,7 +573,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   input: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textPrimary,
   },
   textArea: {
@@ -581,14 +583,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   errorText: {
     color: palette.statusError,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: -Theme.spacing.sm,
     marginBottom: Theme.spacing.sm,
     marginLeft: Theme.spacing.xs,
   },
   mapHelpText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginBottom: Theme.spacing.md,
     textAlign: 'center',
@@ -606,7 +608,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   coordinatesText: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   switchContainer: {
@@ -638,12 +640,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   switchLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   switchDescription: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -659,11 +661,11 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingVertical: Theme.spacing.lg,
     borderRadius: Theme.borderRadius.xl,
     gap: Theme.spacing.sm,
-    ...Theme.shadows.lg,
+    ...Theme.shadows.elevated,
   },
   saveButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
 });

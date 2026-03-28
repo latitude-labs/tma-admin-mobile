@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
-import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 interface TrendIndicatorProps {
   value: number;
@@ -79,30 +79,30 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
         {formatValue(value)}
       </Text>
 
-      {previousValue !== undefined && trend.change !== 0 && (
+      {previousValue !== undefined && trend.change !== 0 ? (
         <View style={styles.trendContainer}>
-          {showIcon && (
+          {showIcon ? (
             <Ionicons
               name={trend.type === 'up' ? 'arrow-up' : 'arrow-down'}
               size={sizeStyles.iconSize}
               color={
                 isPositive
-                  ? Theme.colors.status.success
+                  ? palette.statusSuccess
                   : isNegative
-                  ? Theme.colors.status.error
+                  ? palette.statusError
                   : palette.textTertiary
               }
             />
-          )}
+          ) : null}
           <Text
             style={[
               styles.change,
               {
                 fontSize: sizeStyles.changeSize,
                 color: isPositive
-                  ? Theme.colors.status.success
+                  ? palette.statusSuccess
                   : isNegative
-                  ? Theme.colors.status.error
+                  ? palette.statusError
                   : palette.textTertiary,
               },
             ]}
@@ -110,7 +110,7 @@ export const TrendIndicator: React.FC<TrendIndicatorProps> = ({
             {Math.abs(trend.change).toFixed(1)}%
           </Text>
         </View>
-      )}
+      ) : null}
     </View>
   );
 };

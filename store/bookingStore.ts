@@ -1,10 +1,27 @@
 import { create } from 'zustand';
-import { Booking } from '@/types/api';
+import { Booking, BookingStatus, LicenceDetails, PackageName, Club } from '@/types/api';
 import { bookingsService } from '@/services/api/bookings.service';
 import { offlineStorage } from '@/services/offline/storage';
 import { useAuthStore } from './authStore';
 import { requestManager } from '@/services/api/requestManager';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+
+/** Map legacy API status values to current display values */
+const normaliseStatus = (status: BookingStatus | undefined): BookingStatus | undefined => {
+  if (status === 'paid_dd') return 'fully_paid';
+  return status;
+};
+
+/** Check if a status is one of the "paid" statuses */
+const isPaidStatus = (status?: BookingStatus): boolean =>
+  status === 'fully_paid' || status === 'paid_dd' || status === 'paid_awaiting_dd';
+
+/** Check if a booking is fully marked (has both attendance and booking status) */
+const isBookingFullyMarked = (booking: Booking): boolean => {
+  const hasAttendance = booking.attendance_status === 'completed' || booking.attendance_status === 'no-show';
+  const hasStatus = !!booking.status && booking.status !== 'pending';
+  return hasAttendance && hasStatus;
+};
 
 interface BookingFilters {
   status?: 'scheduled' | 'completed' | 'no-show' | 'cancelled';
@@ -46,6 +63,18 @@ interface BookingState {
   updateBookingStatus: (bookingId: number, status: 'completed' | 'no-show') => Promise<void>;
   setSearchQuery: (query: string) => void;
   applyFiltersAndPagination: () => void;
+  getBookingsByClub: () => Map<number, { club: Club; bookings: Booking[] }>;
+  getOutstandingCount: () => number;
+  getClubCompletionStatus: (clubId: number) => { complete: number; total: number };
+  isClubReportReady: (clubId: number) => boolean;
+  updateBookingConversionStatus: (
+    bookingId: number,
+    status: BookingStatus,
+    enrollerId: number,
+    licenceDetails?: LicenceDetails,
+    packageName?: PackageName,
+    kitItems?: Array<{ type: string; size: string }>
+  ) => Promise<void>;
 }
 
 export const useBookingStore = create<BookingState>((set, get) => ({
@@ -473,5 +502,84 @@ export const useBookingStore = create<BookingState>((set, get) => ({
 
     // Queue the operation for sync (handles both online and offline)
     await bookingsService.updateBookingAttendanceStatusOffline(bookingId, status);
+  },
+
+  getBookingsByClub: () => {
+    const todaysBookings = get().getTodaysBookings();
+    const clubMap = new Map<number, { club: Club; bookings: Booking[] }>();
+
+    for (const booking of todaysBookings) {
+      if (!booking.club) continue;
+      const clubId = booking.club.id;
+      if (!clubMap.has(clubId)) {
+        clubMap.set(clubId, { club: booking.club, bookings: [] });
+      }
+      clubMap.get(clubId)!.bookings.push(booking);
+    }
+
+    return clubMap;
+  },
+
+  getOutstandingCount: () => {
+    const todaysBookings = get().getTodaysBookings();
+    return todaysBookings.filter(b => !isBookingFullyMarked(b)).length;
+  },
+
+  getClubCompletionStatus: (clubId: number) => {
+    const todaysBookings = get().getTodaysBookings();
+    const clubBookings = todaysBookings.filter(b => b.club?.id === clubId);
+    const complete = clubBookings.filter(isBookingFullyMarked).length;
+    return { complete, total: clubBookings.length };
+  },
+
+  isClubReportReady: (clubId: number) => {
+    const { complete, total } = get().getClubCompletionStatus(clubId);
+    return total > 0 && complete === total;
+  },
+
+  updateBookingConversionStatus: async (
+    bookingId: number,
+    status: BookingStatus,
+    enrollerId: number,
+    licenceDetails?: LicenceDetails,
+    packageName?: PackageName,
+    kitItems?: Array<{ type: string; size: string }>
+  ) => {
+    const { allBookings } = get();
+
+    // Save previous state for rollback
+    const previousBookings = allBookings;
+
+    // Optimistically update the UI
+    const updatedBookings = allBookings.map(booking => {
+      if (booking.id === bookingId) {
+        return {
+          ...booking,
+          status,
+          enroller_id: enrollerId,
+          licence_details: licenceDetails,
+        };
+      }
+      return booking;
+    });
+
+    set({ allBookings: updatedBookings });
+    get().applyFiltersAndPagination();
+
+    // Send to API
+    try {
+      await bookingsService.updateBookingConversionStatus(bookingId, {
+        status,
+        enroller_id: enrollerId,
+        licence_details: licenceDetails,
+        package_name: packageName,
+        kit_items: kitItems,
+      });
+    } catch (error) {
+      // Rollback optimistic update
+      set({ allBookings: previousBookings });
+      get().applyFiltersAndPagination();
+      throw error;
+    }
   },
 }))

@@ -6,6 +6,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
+import { GlassView } from '@/components/ui/GlassView';
 import PagerView from 'react-native-pager-view';
 import { useRouter } from 'expo-router';
 import { Theme } from '@/constants/Theme';
@@ -18,6 +19,7 @@ import { DateRangePicker } from '@/components/club-health/DateRangePicker';
 import { DateRange } from '@/types/clubHealth';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ClubHealthScreen() {
   const router = useRouter();
@@ -99,19 +101,22 @@ export default function ClubHealthScreen() {
   if (isOffline) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="Club Health"
           onBackPress={() => router.back()}
         />
-        <View style={styles.offlineContainer}>
-          <Ionicons name="cloud-offline-outline" size={64} color={palette.textTertiary} />
-          <Text style={styles.offlineTitle}>You're Offline</Text>
-          <Text style={styles.offlineText}>
-            Club health data requires an internet connection.
-          </Text>
-          <Text style={styles.offlineSubtext}>
-            Please check your connection and try again.
-          </Text>
+        <View style={styles.centerContainer}>
+          <GlassView style={styles.stateGlass}>
+            <Ionicons name="cloud-offline-outline" size={64} color={palette.textTertiary} />
+            <Text style={styles.offlineTitle}>You're Offline</Text>
+            <Text style={styles.offlineText}>
+              Club health data requires an internet connection.
+            </Text>
+            <Text style={styles.offlineSubtext}>
+              Please check your connection and try again.
+            </Text>
+          </GlassView>
         </View>
       </View>
     );
@@ -121,13 +126,16 @@ export default function ClubHealthScreen() {
   if (isLoading && clubs.length === 0) {
     return (
       <View style={styles.container}>
+        <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="Club Health"
           onBackPress={() => router.back()}
         />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Theme.colors.primary} />
-          <Text style={styles.loadingText}>Loading clubs...</Text>
+        <View style={styles.centerContainer}>
+          <GlassView style={styles.stateGlass}>
+            <ActivityIndicator size="large" color={palette.tint} />
+            <Text style={styles.loadingText}>Loading clubs...</Text>
+          </GlassView>
         </View>
       </View>
     );
@@ -137,16 +145,19 @@ export default function ClubHealthScreen() {
   if (!isLoading && clubs.length === 0) {
     return (
       <View style={styles.container}>
+        <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="Club Health"
           onBackPress={() => router.back()}
         />
-        <View style={styles.emptyContainer}>
-          <Ionicons name="business-outline" size={64} color={palette.textTertiary} />
-          <Text style={styles.emptyTitle}>No Clubs Found</Text>
-          <Text style={styles.emptyText}>
-            There are no clubs available to display.
-          </Text>
+        <View style={styles.centerContainer}>
+          <GlassView style={styles.stateGlass}>
+            <Ionicons name="business-outline" size={64} color={palette.textTertiary} />
+            <Text style={styles.emptyTitle}>No Clubs Found</Text>
+            <Text style={styles.emptyText}>
+              There are no clubs available to display.
+            </Text>
+          </GlassView>
         </View>
       </View>
     );
@@ -223,25 +234,31 @@ const createStyles = (palette: ThemeColors) =>
       flex: 1,
       backgroundColor: palette.backgroundSecondary,
     },
-    offlineContainer: {
+    centerContainer: {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      paddingHorizontal: 40,
+      paddingHorizontal: Theme.spacing.xl,
+    },
+    stateGlass: {
+      alignItems: 'center',
+      padding: Theme.spacing['2xl'],
+      borderRadius: Theme.borderRadius.xl,
+      overflow: 'hidden',
+      gap: Theme.spacing.sm,
     },
     offlineTitle: {
       fontSize: Theme.typography.sizes.xl,
       fontFamily: Theme.typography.fonts.semibold,
       color: palette.textPrimary,
-      marginTop: 16,
-      marginBottom: 8,
+      marginTop: Theme.spacing.sm,
+      marginBottom: Theme.spacing.xs,
     },
     offlineText: {
       fontSize: Theme.typography.sizes.md,
       fontFamily: Theme.typography.fonts.regular,
       color: palette.textSecondary,
       textAlign: 'center',
-      marginBottom: 4,
     },
     offlineSubtext: {
       fontSize: Theme.typography.sizes.sm,
@@ -249,29 +266,18 @@ const createStyles = (palette: ThemeColors) =>
       color: palette.textTertiary,
       textAlign: 'center',
     },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 12,
-    },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
       fontFamily: Theme.typography.fonts.regular,
       color: palette.textSecondary,
-    },
-    emptyContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 40,
+      marginTop: Theme.spacing.sm,
     },
     emptyTitle: {
       fontSize: Theme.typography.sizes.xl,
       fontFamily: Theme.typography.fonts.semibold,
       color: palette.textPrimary,
-      marginTop: 16,
-      marginBottom: 8,
+      marginTop: Theme.spacing.sm,
+      marginBottom: Theme.spacing.xs,
     },
     emptyText: {
       fontSize: Theme.typography.sizes.md,
@@ -289,7 +295,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     clubIndicatorText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: 8,
     },
@@ -325,7 +331,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     swipeHintText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
     },
   });

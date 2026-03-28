@@ -170,12 +170,7 @@ export default function CoachDetailScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <ScreenHeader
@@ -202,7 +197,7 @@ export default function CoachDetailScreen() {
             style={styles.infoGradient}
           >
             <View style={styles.iconBadge}>
-              <Ionicons name="person" size={28} color="#FFFFFF" />
+              <Ionicons name="person" size={28} color={palette.textInverse} />
             </View>
             <View style={styles.infoContent}>
               <View style={styles.infoRow}>
@@ -277,7 +272,7 @@ export default function CoachDetailScreen() {
             style={[styles.actionButton, styles.editButton]}
             onPress={handleEdit}
           >
-            <Ionicons name="create-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="create-outline" size={20} color={palette.textInverse} />
             <Text style={styles.actionButtonText}>Edit Coach</Text>
           </TouchableOpacity>
 
@@ -285,7 +280,7 @@ export default function CoachDetailScreen() {
             style={[styles.actionButton, styles.deleteButton]}
             onPress={handleDelete}
           >
-            <Ionicons name="trash-outline" size={20} color="#FFFFFF" />
+            <Ionicons name="trash-outline" size={20} color={palette.textInverse} />
             <Text style={styles.actionButtonText}>Delete Coach</Text>
           </TouchableOpacity>
         </View>
@@ -300,7 +295,7 @@ const createStyles = (palette: ThemeColors) =>
   StyleSheet.create({
     container: {
       flex: 1,
-      backgroundColor: palette.backgroundSecondary,
+      backgroundColor: palette.backgroundGradientStart,
     },
     loadingContainer: {
       flex: 1,
@@ -310,7 +305,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     errorContainer: {
@@ -321,14 +316,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     errorTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     errorText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
       marginBottom: 20,
@@ -340,11 +335,11 @@ const createStyles = (palette: ThemeColors) =>
     },
     retryButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '600',
+      color: palette.textInverse,
     },
     infoSection: {
-      backgroundColor: palette.background,
+      backgroundColor: palette.backgroundGradientEnd,
       marginHorizontal: 16,
       marginTop: 16,
       borderRadius: 20,
@@ -392,13 +387,13 @@ const createStyles = (palette: ThemeColors) =>
     infoText: {
       flex: 1,
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textPrimary,
     },
     filterSection: {
       marginHorizontal: 16,
       marginTop: 24,
-      backgroundColor: palette.background,
+      backgroundColor: palette.backgroundGradientEnd,
       padding: 16,
       borderRadius: 16,
       shadowColor: '#000',
@@ -409,7 +404,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     filterLabel: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textSecondary,
       marginBottom: 8,
       textTransform: 'uppercase',
@@ -421,13 +416,13 @@ const createStyles = (palette: ThemeColors) =>
     },
     sectionTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
       marginBottom: 16,
       letterSpacing: -0.5,
     },
     statCard: {
-      backgroundColor: palette.background,
+      backgroundColor: palette.backgroundGradientEnd,
       borderRadius: 20,
       padding: 24,
       marginBottom: 16,
@@ -459,17 +454,17 @@ const createStyles = (palette: ThemeColors) =>
     statTitle: {
       flex: 1,
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
     },
     statValue: {
       fontSize: Theme.typography.sizes['2xl'],
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       marginBottom: 8,
     },
     statSubtitle: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     additionalStatsSection: {
@@ -480,7 +475,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     miniStatCard: {
       flex: 1,
-      backgroundColor: palette.background,
+      backgroundColor: palette.backgroundGradientEnd,
       borderRadius: 16,
       padding: 20,
       alignItems: 'center',
@@ -492,7 +487,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     miniStatLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textSecondary,
       marginBottom: 12,
       textAlign: 'center',
@@ -501,7 +496,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     miniStatValue: {
       fontSize: Theme.typography.sizes['2xl'],
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
     },
     actionsSection: {
       marginHorizontal: 16,
@@ -530,8 +525,8 @@ const createStyles = (palette: ThemeColors) =>
     },
     actionButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.bold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '700',
+      color: palette.textInverse,
       letterSpacing: 0.3,
     },
     bottomPadding: {

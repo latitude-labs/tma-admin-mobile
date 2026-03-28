@@ -54,6 +54,10 @@ class KitOrdersService {
     const response = await apiClient.get(`/bookings/${bookingId}/kit-orders`);
     return response.data;
   }
+
+  async deleteBookingKitOrders(bookingId: number): Promise<void> {
+    await apiClient.delete(`/bookings/${bookingId}/kit-orders`);
+  }
 }
 
 export default new KitOrdersService();

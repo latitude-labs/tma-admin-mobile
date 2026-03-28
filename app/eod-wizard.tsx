@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,13 +6,12 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
-  ScrollView,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { EoDWizardStep } from '@/types/endOfDay';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { Stack, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -29,8 +28,8 @@ import { ReviewStep } from '@/components/eod-wizard/ReviewStep';
 import { WizardProgress } from '@/components/eod-wizard/WizardProgress';
 
 export default function EoDWizardScreen() {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
+  const styles = useMemo(() => createStyles(palette), [palette]);
   const { wizardState, resetWizard } = useEndOfDayStore();
 
   const handleBack = () => {
@@ -108,37 +107,44 @@ export default function EoDWizardScreen() {
           headerShown: true,
           title: 'End of Day Report',
           headerStyle: {
-            backgroundColor: currentTheme.background,
+            backgroundColor: palette.backgroundGradientStart,
           },
-          headerTintColor: currentTheme.text,
+          headerTintColor: palette.text,
           headerLeft: () => (
             <TouchableOpacity onPress={handleBack} style={styles.headerButton}>
-              <Ionicons name="close" size={24} color={currentTheme.text} />
+              <Ionicons name="close" size={24} color={palette.text} />
             </TouchableOpacity>
           ),
         }}
       />
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: currentTheme.background }]}
-      >
-        <WizardProgress currentStep={wizardState.currentStep} />
+      <SafeAreaView style={styles.safeArea}>
+        <LinearGradient
+          colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
+          style={styles.gradient}
+        >
+          <WizardProgress currentStep={wizardState.currentStep} />
 
-        <View style={styles.header}>
-          <Text style={[styles.stepTitle, { color: currentTheme.text }]}>
-            {getStepTitle()}
-          </Text>
-        </View>
+          <View style={styles.header}>
+            <Text style={[styles.stepTitle, { color: palette.text }]}>
+              {getStepTitle()}
+            </Text>
+          </View>
 
-        <View style={styles.content}>
-          {renderStepContent()}
-        </View>
+          <View style={styles.content}>
+            {renderStepContent()}
+          </View>
+        </LinearGradient>
       </SafeAreaView>
     </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
+const createStyles = (palette: ThemeColors) => StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: palette.backgroundGradientStart,
+  },
+  gradient: {
     flex: 1,
   },
   headerButton: {
@@ -151,6 +157,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: Theme.typography.sizes.xxl,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
   },
   content: {
     flex: 1,

@@ -5,11 +5,9 @@ import {
   TextInput,
   StyleSheet,
   TouchableOpacity,
-  Platform,
 } from 'react-native';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Ionicons } from '@expo/vector-icons';
 
 interface NumberInputProps {
@@ -33,8 +31,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
   unit,
   showButtons = true,
 }) => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const inputRef = useRef<TextInput>(null);
   const [inputValue, setInputValue] = useState(value.toString());
   const [isFocused, setIsFocused] = useState(false);
@@ -94,14 +91,14 @@ export const NumberInput: React.FC<NumberInputProps> = ({
 
   return (
     <View style={styles.container}>
-      {label && (
-        <Text style={[styles.label, { color: currentTheme.text }]}>
+      {label ? (
+        <Text style={[styles.label, { color: palette.text }]}>
           {label}
         </Text>
-      )}
+      ) : null}
 
       <View style={styles.inputContainer}>
-        {showButtons && (
+        {showButtons ? (
           <TouchableOpacity
             onPress={decrementValue}
             disabled={value <= min}
@@ -109,18 +106,18 @@ export const NumberInput: React.FC<NumberInputProps> = ({
               styles.button,
               {
                 backgroundColor: value > min
-                  ? currentTheme.card
-                  : currentTheme.card + '40',
+                  ? palette.card
+                  : palette.card + '40',
               }
             ]}
           >
             <Ionicons
               name="remove"
               size={24}
-              color={value > min ? currentTheme.text : currentTheme.text + '60'}
+              color={value > min ? palette.text : palette.text + '60'}
             />
           </TouchableOpacity>
-        )}
+        ) : null}
 
         <View style={styles.inputWrapper}>
           <TextInput
@@ -128,9 +125,9 @@ export const NumberInput: React.FC<NumberInputProps> = ({
             style={[
               styles.input,
               {
-                color: currentTheme.text,
-                borderColor: isFocused ? color : currentTheme.border,
-                backgroundColor: isFocused ? currentTheme.background : currentTheme.card,
+                color: palette.text,
+                borderColor: isFocused ? color : palette.border,
+                backgroundColor: isFocused ? palette.background : palette.card,
               }
             ]}
             value={inputValue}
@@ -143,14 +140,14 @@ export const NumberInput: React.FC<NumberInputProps> = ({
             maxLength={4}
             textAlign="center"
           />
-          {unit && !isFocused && (
-            <Text style={[styles.unit, { color: currentTheme.text }]}>
+          {unit && !isFocused ? (
+            <Text style={[styles.unit, { color: palette.text }]}>
               {unit}
             </Text>
-          )}
+          ) : null}
         </View>
 
-        {showButtons && (
+        {showButtons ? (
           <TouchableOpacity
             onPress={incrementValue}
             disabled={value >= max}
@@ -169,7 +166,7 @@ export const NumberInput: React.FC<NumberInputProps> = ({
               color={'#FFFFFF'}
             />
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -182,6 +179,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
     marginBottom: Theme.spacing.xs,
   },
   inputContainer: {
@@ -204,6 +202,7 @@ const styles = StyleSheet.create({
   input: {
     fontSize: Theme.typography.sizes.xxl,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
     minWidth: 80,
     paddingVertical: Theme.spacing.sm,
     paddingHorizontal: Theme.spacing.md,
@@ -213,6 +212,7 @@ const styles = StyleSheet.create({
   unit: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginLeft: Theme.spacing.xs,
   },
 });

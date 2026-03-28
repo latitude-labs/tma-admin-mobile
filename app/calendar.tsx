@@ -23,6 +23,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function CalendarScreen() {
   const palette = useThemeColors();
@@ -90,6 +91,7 @@ export default function CalendarScreen() {
       <Stack.Screen options={{ headerShown: false }} />
 
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="Calendar"
           rightAction={
@@ -242,7 +244,7 @@ const createStyles = (palette: any) =>
     },
     primaryButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textInverse,
     },
     outlineButton: {
@@ -252,7 +254,7 @@ const createStyles = (palette: any) =>
     },
     outlineButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.tint,
     },
     fab: {

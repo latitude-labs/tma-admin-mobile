@@ -81,7 +81,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics }) => {
               metrics.enrollment_change
             )}
             format="percentage"
-            color={Theme.colors.status.success}
+            color={palette.statusSuccess}
           />
         </View>
 
@@ -95,7 +95,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics }) => {
               metrics.attendance_change
             )}
             format="percentage"
-            color={Theme.colors.status.info}
+            color={palette.statusInfo}
           />
         </View>
 
@@ -111,7 +111,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics }) => {
               )}
               format="percentage"
               inverse={true}
-              color={Theme.colors.status.warning}
+              color={palette.statusWarning}
             />
           </View>
 
@@ -127,7 +127,7 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics }) => {
           </View>
         </View>
 
-        {metrics.total_revenue && (
+        {metrics.total_revenue ? (
           <View style={styles.revenueSection}>
             <View style={styles.dividerHorizontal} />
             <MetricItem
@@ -135,19 +135,19 @@ export const MetricsCard: React.FC<MetricsCardProps> = ({ metrics }) => {
               label="Total Revenue"
               value={metrics.total_revenue}
               format="currency"
-              color={Theme.colors.primary}
+              color={palette.tint}
             />
           </View>
-        )}
+        ) : null}
 
-        {metrics.average_class_size && (
+        {metrics.average_class_size ? (
           <View style={styles.additionalMetric}>
             <Text style={styles.additionalLabel}>Avg. Class Size</Text>
             <Text style={styles.additionalValue}>
               {metrics.average_class_size || 0} students
             </Text>
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );
@@ -160,11 +160,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: 20,
     marginHorizontal: 16,
     marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
     borderWidth: 1,
     borderColor: palette.borderLight,
   },

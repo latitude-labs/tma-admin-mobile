@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GlassView } from '@/components/ui/GlassView';
 
 interface ScreenHeaderProps {
   title: string;
@@ -20,7 +22,8 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
 }) => {
   const router = useRouter();
   const palette = useThemeColors();
-  const styles = useMemo(() => createStyles(palette), [palette]);
+  const insets = useSafeAreaInsets();
+  const styles = useMemo(() => createStyles(palette, insets.top), [palette, insets.top]);
 
   const handleBackPress = () => {
     if (onBackPress) {
@@ -31,7 +34,7 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
   };
 
   return (
-    <View style={[styles.header, style]}>
+    <GlassView intensity="light" style={[styles.header, style]}>
       <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
         <Ionicons name="arrow-back" size={24} color={palette.text} />
       </TouchableOpacity>
@@ -43,17 +46,17 @@ export const ScreenHeader: React.FC<ScreenHeaderProps> = ({
       ) : (
         <View style={styles.placeholder} />
       )}
-    </View>
+    </GlassView>
   );
 };
 
-const createStyles = (palette: ThemeColors) => StyleSheet.create({
+const createStyles = (palette: ThemeColors, topInset: number) => StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
-    paddingTop: 60,
+    paddingTop: Math.max(topInset, 20) + 10, // Dynamic safe area + breathing room
     paddingBottom: 16,
   },
   backButton: {
@@ -61,7 +64,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   headerTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System',
+    fontWeight: '600',
     flex: 1,
     textAlign: 'center',
     marginHorizontal: 16,

@@ -13,7 +13,7 @@ import {
   KeyboardAvoidingView,
   ScrollView,
 } from 'react-native';
-import { Stack, router } from 'expo-router';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { format, isPast, isToday, isTomorrow, formatDistanceToNow } from 'date-fns';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -21,6 +21,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { GlassView } from '@/components/ui/GlassView';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { remindersService } from '@/services/api/reminders.service';
@@ -533,28 +534,10 @@ export default function RemindersScreen() {
 
   return (
     <>
-      <Stack.Screen
-        options={{
-          headerShown: true,
-          headerRight: () => (
-            <TouchableOpacity
-              onPress={() => setShowAddModal(true)}
-              style={styles.headerButton}
-            >
-              <Ionicons name="add-circle" size={28} color={Theme.colors.primary} />
-            </TouchableOpacity>
-          ),
-        }}
-      />
 
       <View style={styles.container}>
         <LinearGradient
-          colors={[
-            palette.backgroundSecondary,
-            palette.background,
-            palette.backgroundSecondary,
-          ]}
-          locations={[0, 0.5, 1]}
+          colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
           style={StyleSheet.absoluteFillObject}
         />
 
@@ -572,6 +555,12 @@ export default function RemindersScreen() {
                   </View>
                 )}
               </View>
+              <TouchableOpacity
+                onPress={() => setShowAddModal(true)}
+                style={styles.addButton}
+              >
+                <Ionicons name="add" size={28} color={palette.tint} />
+              </TouchableOpacity>
             </View>
           </LinearGradient>
         </View>
@@ -590,13 +579,15 @@ export default function RemindersScreen() {
           }
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <View style={[styles.emptyIconContainer, { backgroundColor: `${palette.textTertiary}10` }]}>
-                <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
-              </View>
-              <Text style={styles.emptyText}>No reminders yet</Text>
-              <Text style={styles.emptySubtext}>
-                Tap + to create your first reminder
-              </Text>
+              <GlassView style={styles.emptyGlass}>
+                <View style={[styles.emptyIconContainer, { backgroundColor: `${palette.textTertiary}10` }]}>
+                  <Ionicons name="notifications-off" size={48} color={palette.textTertiary} />
+                </View>
+                <Text style={styles.emptyText}>No reminders yet</Text>
+                <Text style={styles.emptySubtext}>
+                  Tap + to create your first reminder
+                </Text>
+              </GlassView>
             </View>
           }
         />
@@ -611,8 +602,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
   },
-  headerButton: {
-    marginRight: 8,
+  addButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   header: {
     marginBottom: Theme.spacing.md,
@@ -815,6 +810,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Theme.spacing.xxl * 2,
+    paddingHorizontal: Theme.spacing.lg,
+  },
+  emptyGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    width: '100%',
   },
   emptyIconContainer: {
     width: 96,

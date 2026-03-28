@@ -1,4 +1,5 @@
 import { ClubHealthCard } from '@/components/club-health/ClubHealthCard';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Chip } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
@@ -300,6 +301,7 @@ export default function ClubHealthOverviewScreen() {
   if (isLoading && clubsData.length === 0) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader title="Club Health" onBackPress={() => router.back()} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={Theme.colors.primary} />
@@ -385,7 +387,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     loadingText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     listContent: {
@@ -411,7 +413,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     summaryTitle: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: 12,
     },
@@ -424,12 +426,12 @@ const createStyles = (palette: ThemeColors) =>
     },
     summaryStatValue: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
     },
     summaryStatLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
       marginTop: 4,
     },
@@ -453,12 +455,12 @@ const createStyles = (palette: ThemeColors) =>
     },
     statusCount: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
     },
     statusLabel: {
       fontSize: Theme.typography.sizes.xs,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     emptyContainer: {
@@ -469,14 +471,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     emptyTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     emptyText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
     },
@@ -487,7 +489,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     clearFilterText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
     },
     errorContainer: {
       flex: 1,
@@ -497,14 +499,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     errorTitle: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginTop: 16,
       marginBottom: 8,
     },
     errorText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
       marginBottom: 20,
@@ -516,8 +518,8 @@ const createStyles = (palette: ThemeColors) =>
     },
     retryButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '600',
+      color: palette.textInverse,
     },
     modalContainer: {
       flex: 1,
@@ -541,7 +543,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     modalTitle: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
     },
     filterSection: {
@@ -550,7 +552,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     filterLabel: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textSecondary,
       marginBottom: 12,
       textTransform: 'uppercase',
@@ -572,7 +574,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     applyButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
-      color: '#FFFFFF',
+      fontFamily: 'System', fontWeight: '600',
+      color: palette.textInverse,
     },
   });

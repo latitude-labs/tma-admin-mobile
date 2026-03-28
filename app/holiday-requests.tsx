@@ -1,4 +1,5 @@
 import { Badge, Button, Card, Chip, ScreenHeader } from '@/components/ui';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { calendarService } from '@/services/api/calendar.service';
@@ -35,8 +36,8 @@ export default function HolidayRequestsScreen() {
   const [selectedStatus, setSelectedStatus] = useState<HolidayStatus | 'all'>('all');
   const [selectedRequest, setSelectedRequest] = useState<HolidayRequest | null>(null);
 
-  const isAdmin = user?.role === 'Admin';
-  const isHeadCoach = user?.role === 'Head Coach';
+  const isAdmin = user?.is_admin ?? false;
+  const isHeadCoach = false; // user?.role === 'Head Coach'; // Role property removed from User type
   const canApprove = isAdmin || isHeadCoach;
 
   useEffect(() => {
@@ -298,6 +299,7 @@ export default function HolidayRequestsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="Holiday Requests"
           rightAction={
@@ -397,7 +399,7 @@ const createStyles = (palette: any) =>
     },
     title: {
       fontSize: Theme.typography.sizes.xl,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
     },
     headerButton: {
@@ -441,17 +443,17 @@ const createStyles = (palette: any) =>
     },
     avatarText: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textInverse,
     },
     userName: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
     },
     requestDate: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       marginTop: 2,
     },
@@ -469,7 +471,7 @@ const createStyles = (palette: any) =>
     },
     dateText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textPrimary,
     },
     reasonSection: {
@@ -485,12 +487,12 @@ const createStyles = (palette: any) =>
     },
     label: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
     },
     notes: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textPrimary,
       marginTop: Theme.spacing.xs,
     },
@@ -502,13 +504,13 @@ const createStyles = (palette: any) =>
     },
     rejectionLabel: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.statusError,
       marginBottom: Theme.spacing.xs,
     },
     rejectionText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textPrimary,
     },
     approvalSection: {
@@ -519,7 +521,7 @@ const createStyles = (palette: any) =>
     },
     approvalText: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.statusSuccess,
     },
     actions: {
@@ -539,7 +541,7 @@ const createStyles = (palette: any) =>
     },
     emptyText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textTertiary,
       marginTop: Theme.spacing.md,
     },

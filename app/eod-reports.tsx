@@ -1,4 +1,5 @@
 import { Card } from '@/components/ui/Card';
+import { GlassView } from '@/components/ui/GlassView';
 import { Chip } from '@/components/ui/Chip';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
@@ -36,6 +37,7 @@ import Animated, {
   withSpring,
   withTiming
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const AnimatedCard = Animated.createAnimatedComponent(Card);
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
@@ -287,26 +289,28 @@ export default function EoDReportsScreen() {
       entering={FadeIn.duration(400)}
       style={styles.emptyState}
     >
-      <View style={styles.emptyIconContainer}>
-        <Ionicons name="document-text-outline" size={64} color={palette.textTertiary} />
-      </View>
-      <Text style={styles.emptyTitle}>No Reports Yet</Text>
-      <Text style={styles.emptyText}>
-        {isAdmin
-          ? 'No end of day reports have been submitted yet.'
-          : selectedClub
-          ? 'No reports found for this club.'
-          : 'Select a club and create your first report.'}
-      </Text>
-      {!isAdmin && canCreateReport && selectedClub && (
-        <Pressable
-          style={styles.createButton}
-          onPress={handleCreateReport}
-        >
-          <Ionicons name="add" size={20} color={palette.textInverse} />
-          <Text style={styles.createButtonText}>Create Today's Report</Text>
-        </Pressable>
-      )}
+      <GlassView style={styles.emptyGlass}>
+        <View style={styles.emptyIconContainer}>
+          <Ionicons name="document-text-outline" size={64} color={palette.textTertiary} />
+        </View>
+        <Text style={styles.emptyTitle}>No Reports Yet</Text>
+        <Text style={styles.emptyText}>
+          {isAdmin
+            ? 'No end of day reports have been submitted yet.'
+            : selectedClub
+            ? 'No reports found for this club.'
+            : 'Select a club and create your first report.'}
+        </Text>
+        {!isAdmin && canCreateReport && selectedClub ? (
+          <Pressable
+            style={styles.createButton}
+            onPress={handleCreateReport}
+          >
+            <Ionicons name="add" size={20} color={palette.textInverse} />
+            <Text style={styles.createButtonText}>Create Today's Report</Text>
+          </Pressable>
+        ) : null}
+      </GlassView>
     </Animated.View>
   );
 
@@ -327,11 +331,12 @@ export default function EoDReportsScreen() {
   if (loading && reports.length === 0) {
     return (
       <View style={[styles.container, styles.centerContent]}>
+        <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <Animated.View style={loadingAnimatedStyle}>
-          <View style={styles.loadingContainer}>
+          <GlassView style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading reports...</Text>
-          </View>
+          </GlassView>
         </Animated.View>
       </View>
     );
@@ -341,6 +346,7 @@ export default function EoDReportsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader
           title="End of Day Reports"
           rightAction={
@@ -396,15 +402,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    overflow: 'hidden',
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   header: {
     flexDirection: 'row',
@@ -416,12 +421,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   headerTitle: {
     fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   headerSubtitle: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -433,7 +438,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   createHeaderButtonPressed: {
     opacity: 0.8,
@@ -441,7 +446,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   createHeaderButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   filterContainer: {
     paddingVertical: Theme.spacing.md,
@@ -492,12 +497,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   reportDate: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   reportYear: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
   },
   clubInfo: {
@@ -516,7 +521,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   clubName: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   coachInfo: {
@@ -534,7 +539,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   coachName: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textTertiary,
   },
   todayBadge: {
@@ -545,12 +550,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.md,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   todayText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -565,13 +570,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   metricValue: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginTop: Theme.spacing.xs,
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
     marginTop: 2,
   },
@@ -594,12 +599,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   cashLabel: {
     flex: 1,
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   cashValue: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.statusSuccess,
   },
   emptyState: {
@@ -607,6 +612,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: Theme.spacing.xl,
+  },
+  emptyGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,
@@ -616,13 +627,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   emptyTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.sm,
   },
   emptyText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     textAlign: 'center',
     maxWidth: 280,
@@ -637,11 +648,11 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   createButtonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
 });

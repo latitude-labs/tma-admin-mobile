@@ -12,10 +12,12 @@ import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { ScreenHeader, Input, Button } from '@/components/ui';
+import { GlassView } from '@/components/ui/GlassView';
 import { useForm, Controller } from 'react-hook-form';
 import { CreateCoachData, UpdateCoachData } from '@/types/coaches';
 import { coachesService } from '@/services/api/coaches.service';
 import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface CoachFormData {
   name: string;
@@ -133,13 +135,16 @@ export default function CoachFormScreen() {
   if (isLoadingCoach) {
     return (
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <Stack.Screen options={{ headerShown: false }} />
         <ScreenHeader
           title={isEditMode ? 'Edit Coach' : 'New Coach'}
           onBackPress={() => router.back()}
         />
-        <View style={styles.loadingContainer}>
-          <Text style={styles.loadingText}>Loading...</Text>
+        <View style={styles.loadingWrapper}>
+          <GlassView style={styles.loadingContainer}>
+            <Text style={styles.loadingText}>Loading...</Text>
+          </GlassView>
         </View>
       </View>
     );
@@ -291,9 +296,16 @@ const createStyles = (palette: ThemeColors) =>
       flex: 1,
       backgroundColor: palette.backgroundSecondary,
     },
-    loadingContainer: {
+    loadingWrapper: {
       flex: 1,
       justifyContent: 'center',
+      alignItems: 'center',
+      padding: Theme.spacing.xl,
+    },
+    loadingContainer: {
+      padding: Theme.spacing['2xl'],
+      borderRadius: Theme.borderRadius.xl,
+      overflow: 'hidden',
       alignItems: 'center',
     },
     loadingText: {
@@ -315,7 +327,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     sectionTitle: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: 16,
     },

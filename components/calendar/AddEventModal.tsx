@@ -413,16 +413,16 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
           }}
         >
           <View style={[styles.checkbox, formData.isAllDay && styles.checkboxChecked]}>
-            {formData.isAllDay && (
+            {formData.isAllDay ? (
               <Ionicons name="checkmark" size={16} color={palette.textInverse} />
-            )}
+            ) : null}
           </View>
           <Text style={styles.checkboxLabel}>All-day event</Text>
         </TouchableOpacity>
       </View>
 
       {/* Time Selection */}
-      {!formData.isAllDay && (
+      {!formData.isAllDay ? (
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Time</Text>
           <View style={styles.timeRow}>
@@ -453,7 +453,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
             </TouchableOpacity>
           </View>
         </View>
-      )}
+      ) : null}
 
       {/* Location */}
       <View style={styles.inputGroup}>
@@ -524,7 +524,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
       </View>
 
       {/* Recurrence End Date */}
-      {formData.recurrence !== 'none' && (
+      {formData.recurrence !== 'none' ? (
         <View style={styles.inputGroup}>
           <Text style={styles.inputLabel}>Repeat Until *</Text>
           <TouchableOpacity
@@ -542,7 +542,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
-      )}
+      ) : null}
 
       {/* Visibility */}
       <View style={styles.inputGroup}>
@@ -590,9 +590,9 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
           }}
         >
           <View style={[styles.checkbox, formData.sendNotification && styles.checkboxChecked]}>
-            {formData.sendNotification && (
+            {formData.sendNotification ? (
               <Ionicons name="checkmark" size={16} color={palette.textInverse} />
-            )}
+            ) : null}
           </View>
           <Text style={styles.checkboxLabel}>Send notification to attendees</Text>
         </TouchableOpacity>
@@ -629,7 +629,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
               <Text style={styles.reviewValue}>{format(formData.date, 'MMMM d, yyyy')}</Text>
             </View>
 
-            {!formData.isAllDay && (
+            {!formData.isAllDay ? (
               <View style={styles.reviewRow}>
                 <Ionicons name="time-outline" size={18} color={palette.textSecondary} />
                 <Text style={styles.reviewLabel}>Time:</Text>
@@ -637,23 +637,23 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
                   {format(formData.startTime, 'h:mm a')} - {format(formData.endTime, 'h:mm a')}
                 </Text>
               </View>
-            )}
+            ) : null}
 
-            {formData.isAllDay && (
+            {formData.isAllDay ? (
               <View style={styles.reviewRow}>
                 <Ionicons name="sunny-outline" size={18} color={palette.textSecondary} />
                 <Text style={styles.reviewLabel}>Duration:</Text>
                 <Text style={styles.reviewValue}>All day</Text>
               </View>
-            )}
+            ) : null}
 
-            {formData.location && (
+            {formData.location ? (
               <View style={styles.reviewRow}>
                 <Ionicons name="location-outline" size={18} color={palette.textSecondary} />
                 <Text style={styles.reviewLabel}>Location:</Text>
                 <Text style={styles.reviewValue} numberOfLines={2}>{formData.location}</Text>
               </View>
-            )}
+            ) : null}
 
             <View style={styles.reviewRow}>
               <Ionicons name="refresh-outline" size={18} color={palette.textSecondary} />
@@ -674,22 +674,22 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
               </Text>
             </View>
 
-            {formData.sendNotification && (
+            {formData.sendNotification ? (
               <View style={styles.reviewRow}>
                 <Ionicons name="notifications-outline" size={18} color={palette.statusInfo} />
                 <Text style={[styles.reviewValue, { color: palette.statusInfo }]}>
                   Notification will be sent
                 </Text>
               </View>
-            )}
+            ) : null}
           </View>
 
-          {formData.description && (
+          {formData.description ? (
             <View style={styles.reviewDescription}>
               <Text style={styles.reviewDescLabel}>Description:</Text>
               <Text style={styles.reviewDescText}>{formData.description}</Text>
             </View>
-          )}
+          ) : null}
         </View>
 
         <View style={styles.infoContainer}>
@@ -807,7 +807,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
 
             {/* Actions */}
             <View style={styles.actions}>
-              {currentStep > 0 && (
+              {currentStep > 0 ? (
                 <Button
                   variant="outline"
                   onPress={handlePrevious}
@@ -815,7 +815,7 @@ export const AddEventModal: React.FC<AddEventModalProps> = ({
                 >
                   Previous
                 </Button>
-              )}
+              ) : null}
               {currentStep < STEPS.length - 1 ? (
                 <Button
                   variant="primary"
@@ -1111,7 +1111,7 @@ const createStyles = (palette: ThemeColors) =>
       borderTopRightRadius: Theme.borderRadius.xl,
       height: '95%',
       maxHeight: '95%',
-      ...Theme.shadows.lg,
+      ...Theme.shadows.elevated,
     },
     header: {
       flexDirection: 'row',

@@ -447,15 +447,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
 
     return (
       <>
-        {holidayEvents.length > 0 && (
+        {holidayEvents.length > 0 ? (
           <View style={styles.holidayOverlay} pointerEvents="none">
             <View style={styles.holidayBanner}>
               <Ionicons name="airplane" size={18} color={palette.statusWarning} />
               <Text style={styles.holidayText}>
                 {holidayEvents[0].coach?.name || 'User'} is unavailable - {holidayEvents[0].title || 'Holiday'}
-                {holidayEvents[0].metadata?.total_days > 1 &&
-                  ` (Day ${holidayEvents[0].metadata.day_of_period} of ${holidayEvents[0].metadata.total_days})`
-                }
+                {holidayEvents[0].metadata?.total_days > 1
+                  ? ` (Day ${holidayEvents[0].metadata.day_of_period} of ${holidayEvents[0].metadata.total_days})`
+                  : null}
               </Text>
             </View>
             <View style={styles.holidayStripesContainer}>
@@ -473,7 +473,7 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
               ))}
             </View>
           </View>
-        )}
+        ) : null}
 
         {eventPositions.map(({ event, top, height, left, width }) => (
           <TouchableOpacity
@@ -493,17 +493,17 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
             onPress={() => onEventSelect?.(event)}
             activeOpacity={0.8}
           >
-            <Text style={[styles.timelineEventTitle, hasHoliday && styles.unavailableText]} numberOfLines={1}>
+            <Text style={[styles.timelineEventTitle, hasHoliday ? styles.unavailableText : null]} numberOfLines={1}>
               {getCleanEventTitle(event)}
             </Text>
-            <Text style={[styles.timelineEventTime, hasHoliday && styles.unavailableText]}>
+            <Text style={[styles.timelineEventTime, hasHoliday ? styles.unavailableText : null]}>
               {event.start_date ? format(new Date(event.start_date), 'h:mm a') : ''}
             </Text>
-            {event.club && (
-              <Text style={[styles.timelineEventLocation, hasHoliday && styles.unavailableText]} numberOfLines={1}>
+            {event.club ? (
+              <Text style={[styles.timelineEventLocation, hasHoliday ? styles.unavailableText : null]} numberOfLines={1}>
                 {event.club.name}
               </Text>
-            )}
+            ) : null}
           </TouchableOpacity>
         ))}
       </>
@@ -513,12 +513,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
   const renderDayView = () => (
     <GestureDetector gesture={pan}>
       <Animated.View style={[styles.dayView, animatedCalendarStyle]}>
-        {isLoadingMonth && (
+        {isLoadingMonth ? (
           <View style={styles.loadingBanner}>
             <ActivityIndicator size="small" color={palette.tint} />
             <Text style={styles.loadingBannerText}>Loading calendar data...</Text>
           </View>
-        )}
+        ) : null}
         <ScrollView
           ref={scrollViewRef}
           showsVerticalScrollIndicator={false}
@@ -549,12 +549,12 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.dayTitle}>{getDayLabel()}</Text>
-          {!isCurrentDateToday && (
+          {!isCurrentDateToday ? (
             <TouchableOpacity onPress={handleToday} style={styles.todayButton}>
               <Ionicons name="calendar" size={14} color={palette.tint} style={styles.todayButtonIcon} />
               <Text style={styles.todayButtonText}>Go to Today</Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         </View>
         <TouchableOpacity onPress={handleNextDay} style={styles.navButton}>
           <Ionicons name="chevron-forward" size={24} color={palette.textPrimary} />
@@ -587,14 +587,6 @@ const createStyles = (palette: ThemeColors) =>
       backgroundColor: palette.background,
       borderBottomWidth: 1,
       borderBottomColor: palette.borderLight,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.05,
-      shadowRadius: 3.84,
-      elevation: 5,
     },
     header: {
       flexDirection: 'row',
@@ -703,14 +695,6 @@ const createStyles = (palette: ThemeColors) =>
       padding: Theme.spacing.md,
       marginBottom: Theme.spacing.sm,
       borderLeftWidth: 4,
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 2,
-      },
-      shadowOpacity: 0.05,
-      shadowRadius: 3.84,
-      elevation: 2,
     },
     firstEventCard: {
       marginTop: 0,

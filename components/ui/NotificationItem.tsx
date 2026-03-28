@@ -244,7 +244,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     title: {
       fontSize: 15,
-      fontFamily: 'Manrope_600SemiBold',
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       flex: 1,
     },
@@ -253,7 +253,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     message: {
       fontSize: 14,
-      fontFamily: 'Manrope_400Regular',
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       lineHeight: 20,
       marginBottom: 8,
@@ -265,7 +265,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     timestamp: {
       fontSize: 12,
-      fontFamily: 'Manrope_400Regular',
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textTertiary,
     },
     actionButton: {
@@ -276,7 +276,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     actionText: {
       fontSize: 12,
-      fontFamily: 'Manrope_600SemiBold',
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textInverse,
     },
     clearButton: {

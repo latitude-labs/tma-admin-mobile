@@ -1,10 +1,9 @@
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { useColorScheme } from '@/components/useColorScheme';
-import { Colors } from '@/constants/Colors';
 import { Theme } from '@/constants/Theme';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Ionicons } from '@expo/vector-icons';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import React, { useRef, useState } from 'react';
 import {
   Keyboard,
@@ -19,8 +18,7 @@ import {
 } from 'react-native';
 
 export const AdditionalInfoStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const currentTheme = useThemeColors();
   const {
     wizardState,
     updateWizardData,
@@ -162,7 +160,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setSignupNames,
         'Names of people who signed up today...',
         'person-add',
-        '#4CAF50',
+        currentTheme.statusSuccess,
         500,
         signupNamesRef,
         helperNamesRef,
@@ -175,7 +173,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setHelperNames,
         'Names of people who helped with the class...',
         'people',
-        '#2196F3',
+        currentTheme.statusInfo,
         500,
         helperNamesRef,
         incidentsRef,
@@ -188,7 +186,7 @@ export const AdditionalInfoStep: React.FC = () => {
         setIncidents,
         'Any injuries, issues, or incidents to report...',
         'warning',
-        '#F44336',
+        currentTheme.statusError,
         1000,
         incidentsRef,
         generalNotesRef,
@@ -208,9 +206,9 @@ export const AdditionalInfoStep: React.FC = () => {
         'notes'
       )}
 
-      <View style={styles.info}>
-        <Ionicons name="information-circle" size={20} color={'#2196F3'} />
-        <Text style={[styles.infoText, { color: '#2196F3' }]}>
+      <View style={[styles.info, { backgroundColor: currentTheme.statusInfo + '10' }]}>
+        <Ionicons name="information-circle" size={20} color={currentTheme.statusInfo} />
+        <Text style={[styles.infoText, { color: currentTheme.statusInfo }]}>
           All fields are optional. Skip this step if you have nothing to add.
         </Text>
       </View>
@@ -264,6 +262,7 @@ const styles = StyleSheet.create({
     borderColor: Theme.colors.primary,
     borderWidth: 1,
   },
+  // Note: borderColor is applied dynamically via inline styles on the Card
   inputHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -292,8 +291,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingTop: Theme.spacing.sm,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
+    borderTopWidth: StyleSheet.hairlineWidth,
     marginTop: Theme.spacing.sm,
   },
   toolbarButton: {
@@ -311,7 +309,6 @@ const styles = StyleSheet.create({
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2196F3' + '10',
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.md,
     marginBottom: Theme.spacing.lg,

@@ -9,15 +9,13 @@ import {
 } from 'react-native';
 import { useEndOfDayStore } from '@/store/endOfDayStore';
 import { Theme } from '@/constants/Theme';
-import { useColorScheme } from '@/components/useColorScheme';
-import Colors from '@/constants/Colors';
+import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Ionicons } from '@expo/vector-icons';
 
 export const FinancialStep: React.FC = () => {
-  const colorScheme = useColorScheme();
-  const currentTheme = Colors[colorScheme ?? 'light'];
+  const palette = useThemeColors();
   const {
     wizardState,
     updateWizardData,
@@ -64,24 +62,24 @@ export const FinancialStep: React.FC = () => {
       showsVerticalScrollIndicator={false}
       keyboardShouldPersistTaps="handled"
       contentContainerStyle={styles.scrollContent}>
-      <Text style={[styles.title, { color: currentTheme.text }]}>
+      <Text style={[styles.title, { color: palette.text }]}>
         Cash Collection
       </Text>
-      <Text style={[styles.description, { color: currentTheme.text }]}>
+      <Text style={[styles.description, { color: palette.textSecondary }]}>
         How much cash was collected today?
       </Text>
 
       <Card style={styles.inputCard}>
         <View style={styles.currencyInputContainer}>
-          <Text style={[styles.currencySymbol, { color: currentTheme.tint }]}>
+          <Text style={[styles.currencySymbol, { color: palette.tint }]}>
             £
           </Text>
           <TextInput
-            style={[styles.currencyInput, { color: currentTheme.text }]}
+            style={[styles.currencyInput, { color: palette.text }]}
             value={cashAmount}
             onChangeText={handleCashChange}
             placeholder="0.00"
-            placeholderTextColor={currentTheme.text + '80'}
+            placeholderTextColor={palette.text + '80'}
             keyboardType="decimal-pad"
             maxLength={10}
             returnKeyType="done"
@@ -91,7 +89,7 @@ export const FinancialStep: React.FC = () => {
       </Card>
 
       <View style={styles.quickAmounts}>
-        <Text style={[styles.quickAmountsLabel, { color: currentTheme.text }]}>
+        <Text style={[styles.quickAmountsLabel, { color: palette.textSecondary }]}>
           Quick add:
         </Text>
         <View style={styles.quickAmountsGrid}>
@@ -99,25 +97,25 @@ export const FinancialStep: React.FC = () => {
             <TouchableOpacity
               key={amount}
               onPress={() => handleQuickAmount(amount)}
-              style={[styles.quickAmountButton, { backgroundColor: currentTheme.card }]}
+              style={[styles.quickAmountButton, { backgroundColor: palette.card }]}
             >
-              <Text style={[styles.quickAmountText, { color: currentTheme.text }]}>+£{amount}</Text>
+              <Text style={[styles.quickAmountText, { color: palette.text }]}>+£{amount}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <Card style={[styles.summaryCard, { backgroundColor: currentTheme.card }]}>
+      <Card style={styles.summaryCard}>
         <View style={styles.summaryRow}>
           <View style={styles.summaryItem}>
-            <Text style={[styles.summaryLabel, { color: currentTheme.text }]}>
+            <Text style={[styles.summaryLabel, { color: palette.text }]}>
               Kit Sales Expected
             </Text>
-            <Text style={[styles.summaryHint, { color: currentTheme.text }]}>
+            <Text style={[styles.summaryHint, { color: palette.textSecondary }]}>
               (Approx. £40 per kit)
             </Text>
           </View>
-          <Text style={[styles.summaryValue, { color: currentTheme.text }]}>
+          <Text style={[styles.summaryValue, { color: palette.text }]}>
             £{((wizardState.data.new_kids_paid_kit_and_signed_dd_count || 0) * 40 +
               (wizardState.data.new_adults_paid_kit_and_signed_dd_count || 0) * 40 +
               (wizardState.data.returning_kids_paid_kit_and_signed_dd_count || 0) * 40 +
@@ -125,21 +123,21 @@ export const FinancialStep: React.FC = () => {
           </Text>
         </View>
 
-        <View style={[styles.divider, { backgroundColor: currentTheme.border }]} />
+        <View style={[styles.divider, { backgroundColor: palette.borderLight }]} />
 
         <View style={styles.summaryRow}>
-          <Text style={[styles.totalLabel, { color: currentTheme.text }]}>
+          <Text style={[styles.totalLabel, { color: palette.text }]}>
             Total Cash Collected
           </Text>
-          <Text style={[styles.totalValue, { color: '#4CAF50' }]}>
+          <Text style={[styles.totalValue, { color: palette.statusSuccess }]}>
             £{formatCurrency(cashAmount)}
           </Text>
         </View>
       </Card>
 
-      <View style={styles.info}>
-        <Ionicons name="information-circle" size={20} color={'#2196F3'} />
-        <Text style={[styles.infoText, { color: '#2196F3' }]}>
+      <View style={[styles.info, { backgroundColor: palette.statusInfo + '10' }]}>
+        <Ionicons name="information-circle" size={20} color={palette.statusInfo} />
+        <Text style={[styles.infoText, { color: palette.statusInfo }]}>
           Include all cash collected: kit sales, trial fees, and any other payments
         </Text>
       </View>
@@ -175,11 +173,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
     marginBottom: Theme.spacing.xs,
   },
   description: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginBottom: Theme.spacing.lg,
     lineHeight: Theme.typography.sizes.md * 1.5,
   },
@@ -193,12 +193,14 @@ const styles = StyleSheet.create({
   currencySymbol: {
     fontSize: Theme.typography.sizes.xxxl,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
     marginRight: Theme.spacing.sm,
   },
   currencyInput: {
     flex: 1,
     fontSize: Theme.typography.sizes.xxxl,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
   },
   quickAmounts: {
     marginBottom: Theme.spacing.lg,
@@ -206,6 +208,7 @@ const styles = StyleSheet.create({
   quickAmountsLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
     marginBottom: Theme.spacing.sm,
   },
   quickAmountsGrid: {
@@ -222,6 +225,7 @@ const styles = StyleSheet.create({
   quickAmountText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
   },
   summaryCard: {
     marginBottom: Theme.spacing.lg,
@@ -238,15 +242,18 @@ const styles = StyleSheet.create({
   summaryLabel: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.medium,
+    fontWeight: Theme.typography.fontWeights.medium,
   },
   summaryHint: {
     fontSize: Theme.typography.sizes.xs,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginTop: 2,
   },
   summaryValue: {
     fontSize: Theme.typography.sizes.lg,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
   },
   divider: {
     height: 1,
@@ -255,15 +262,16 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: Theme.typography.fontWeights.semibold,
   },
   totalValue: {
     fontSize: Theme.typography.sizes.xl,
     fontFamily: Theme.typography.fonts.bold,
+    fontWeight: Theme.typography.fontWeights.bold,
   },
   info: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2196F3' + '10',
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.md,
     marginBottom: Theme.spacing.lg,
@@ -271,6 +279,7 @@ const styles = StyleSheet.create({
   infoText: {
     fontSize: Theme.typography.sizes.sm,
     fontFamily: Theme.typography.fonts.regular,
+    fontWeight: Theme.typography.fontWeights.regular,
     marginLeft: Theme.spacing.sm,
     flex: 1,
   },

@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { GlassView } from '@/components/ui/GlassView';
 import { Input } from '@/components/ui/Input';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { Theme } from '@/constants/Theme';
@@ -686,7 +687,7 @@ export default function KitOrdersScreen() {
           </Text>
 
           {kitItems.length === 0 ? (
-            <View style={styles.emptyCart}>
+            <GlassView style={styles.emptyCart}>
               <Ionicons name="cart-outline" size={48} color={palette.textTertiary} />
               <Text style={[styles.emptyCartText, { color: palette.textSecondary }]}>
                 Your order is empty
@@ -694,7 +695,7 @@ export default function KitOrdersScreen() {
               <Text style={[styles.emptyCartHint, { color: palette.textTertiary }]}>
                 Go to the catalog to add items
               </Text>
-            </View>
+            </GlassView>
           ) : (
             <View style={styles.cartItems}>
               {kitItems.map((item, index) => {
@@ -704,7 +705,7 @@ export default function KitOrdersScreen() {
                     key={index}
                     entering={FadeInDown.delay(index * 50).springify()}
                   >
-                    <Card variant="outlined" style={styles.cartItemCard}>
+                    <Card variant="elevated" style={styles.cartItemCard}>
                       <View style={styles.cartItemContent}>
                         <View style={styles.cartItemInfo}>
                           <Text style={[styles.cartItemName, { color: palette.text }]}>
@@ -792,19 +793,19 @@ export default function KitOrdersScreen() {
       showsVerticalScrollIndicator={false}
     >
       {orders.length === 0 ? (
-        <View style={styles.emptyOrders}>
+        <GlassView style={styles.emptyOrders}>
           <Ionicons name="receipt-outline" size={48} color={palette.textTertiary} />
           <Text style={[styles.emptyOrdersText, { color: palette.textSecondary }]}>
             No orders yet
           </Text>
-        </View>
+        </GlassView>
       ) : (
         orders.map((order, index) => (
           <Animated.View
             key={order.id}
             entering={FadeInDown.delay(index * 50).springify()}
           >
-            <Card variant="outlined" style={styles.orderCard}>
+            <Card variant="elevated" style={styles.orderCard}>
               <View style={styles.orderHeader}>
                 <View>
                   <Text style={[styles.orderStudent, { color: palette.text }]}>
@@ -864,8 +865,11 @@ export default function KitOrdersScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: palette.background }]}>
-        <ActivityIndicator size="large" color={Theme.colors.primary} />
+      <View style={[styles.loadingScreen, { backgroundColor: palette.background }]}>
+        <GlassView style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={palette.tint} />
+          <Text style={styles.loadingText}>Loading...</Text>
+        </GlassView>
       </View>
     );
   }
@@ -1027,10 +1031,22 @@ const createStyles = (palette: any) => StyleSheet.create({
   container: {
     flex: 1,
   },
-  loadingContainer: {
+  loadingScreen: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    gap: Theme.spacing.md,
+  },
+  loadingText: {
+    fontSize: Theme.typography.sizes.md,
+    color: palette.textSecondary,
+    fontFamily: Theme.typography.fonts.medium,
   },
   cartBadge: {
     position: 'absolute',
@@ -1046,7 +1062,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   cartBadgeText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   tabs: {
     flexDirection: 'row',
@@ -1061,7 +1077,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   tabText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   tabIndicator: {
     position: 'absolute',
@@ -1108,12 +1124,12 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   catalogTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: 4,
   },
   catalogDescription: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 8,
     lineHeight: 18,
   },
@@ -1125,7 +1141,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   catalogPrice: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   modalOverlay: {
     flex: 1,
@@ -1163,18 +1179,18 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: 8,
   },
   modalDescription: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 16,
     lineHeight: 22,
   },
   modalPrice: {
     fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     marginBottom: 20,
   },
   sizeSelector: {
@@ -1182,7 +1198,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   sizeSelectorTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: 12,
   },
   sizeScrollView: {
@@ -1199,7 +1215,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   sizeOptionText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   modalActions: {
     flexDirection: 'row',
@@ -1220,7 +1236,7 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: 16,
   },
   input: {
@@ -1232,16 +1248,19 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   emptyCart: {
     alignItems: 'center',
-    paddingVertical: 40,
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    gap: Theme.spacing.sm,
   },
   emptyCartText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginTop: 12,
   },
   emptyCartHint: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: 4,
   },
   cartItems: {
@@ -1260,17 +1279,17 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   cartItemName: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: 4,
   },
   cartItemSize: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 4,
   },
   cartItemPrice: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   removeButton: {
     padding: 8,
@@ -1288,11 +1307,11 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   totalLabel: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   totalAmount: {
     fontSize: Theme.typography.sizes.xl,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   submitButton: {
     marginHorizontal: 16,
@@ -1303,12 +1322,17 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   emptyOrders: {
     alignItems: 'center',
-    paddingVertical: 60,
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    gap: Theme.spacing.sm,
+    marginHorizontal: Theme.spacing.md,
+    marginTop: Theme.spacing.xl,
   },
   emptyOrdersText: {
     fontSize: Theme.typography.sizes.md,
     fontFamily: Theme.typography.fonts.medium,
-    marginTop: 12,
+    color: palette.textSecondary,
   },
   orderCard: {
     marginBottom: 12,
@@ -1322,11 +1346,11 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   orderStudent: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   orderDate: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: 2,
   },
   orderItems: {
@@ -1334,13 +1358,129 @@ const createStyles = (palette: any) => StyleSheet.create({
   },
   orderItem: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: 2,
   },
   orderNotes: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     fontStyle: 'italic',
     marginTop: 8,
+  },
+  batchModalContent: {
+    backgroundColor: palette.background,
+    borderTopLeftRadius: Theme.borderRadius.xl,
+    borderTopRightRadius: Theme.borderRadius.xl,
+    padding: 20,
+    maxHeight: '80%',
+  },
+  batchItemsScroll: {
+    maxHeight: 400,
+  },
+  batchItemContainer: {
+    marginBottom: 20,
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: palette.borderLight,
+  },
+  batchItemHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  batchItemName: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: 'System', fontWeight: '500',
+  },
+  batchItemPrice: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: 'System', fontWeight: '600',
+  },
+  selectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: palette.backgroundSecondary,
+  },
+  selectionHeaderText: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: 'System', fontWeight: '500',
+  },
+  selectionHeaderAction: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: 'System', fontWeight: '600',
+  },
+  catalogHeader: {
+    padding: 16,
+  },
+  selectMultipleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: Theme.borderRadius.lg,
+    gap: 8,
+  },
+  selectMultipleText: {
+    fontSize: Theme.typography.sizes.md,
+    fontFamily: 'System', fontWeight: '500',
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 32,
+    left: 32,
+    right: 32,
+    alignItems: 'center',
+  },
+  fabTouchable: {
+    backgroundColor: Theme.colors.primary,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderRadius: 32,
+    gap: 12,
+    shadowColor: Theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  fabText: {
+    fontSize: Theme.typography.sizes.lg,
+    fontFamily: 'System', fontWeight: '700',
+  },
+  tabWithBadge: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  tabBadge: {
+    backgroundColor: Theme.colors.status.error,
+    borderRadius: 10,
+    minWidth: 20,
+    height: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  tabBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontFamily: 'System', fontWeight: '700',
+  },
+  checkboxContainer: {
+    marginLeft: 12,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    borderWidth: 2,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

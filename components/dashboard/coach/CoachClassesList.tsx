@@ -160,7 +160,7 @@ export function CoachClassesList({
     <View style={styles.classesSection}>
       <View style={styles.sectionHeaderWithAction}>
         <Text style={styles.sectionTitle}>Your Classes</Text>
-        {!showAllDays && (
+        {!showAllDays ? (
           <TouchableOpacity
             onPress={() => onToggleShowAllDays(true)}
             style={styles.viewMoreButton}
@@ -169,7 +169,7 @@ export function CoachClassesList({
             <Text style={styles.viewMoreText}>View week</Text>
             <Ionicons name="chevron-down" size={16} color={colors.tint} />
           </TouchableOpacity>
-        )}
+        ) : null}
       </View>
 
       {daysData.slice(0, showAllDays ? 7 : 3).map((day, dayIndex) => {
@@ -201,12 +201,12 @@ export function CoachClassesList({
                   <Text style={styles.dayDate}>
                     {day.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
                   </Text>
-                  {hasClasses && (
+                  {hasClasses ? (
                     <Text style={styles.daySummary}>
                       {day.classes.length} classes • {totalBookings} bookings
-                      {totalPending > 0 && <Text style={styles.pendingText}> • {totalPending} pending</Text>}
+                      {totalPending > 0 ? <Text style={styles.pendingText}> • {totalPending} pending</Text> : null}
                     </Text>
-                  )}
+                  ) : null}
                 </View>
               </View>
               <Ionicons
@@ -241,7 +241,7 @@ export function CoachClassesList({
         );
       })}
 
-      {showAllDays && daysData.length > 3 && (
+      {showAllDays && daysData.length > 3 ? (
         <TouchableOpacity
           onPress={() => {
             onToggleShowAllDays(false);
@@ -253,7 +253,7 @@ export function CoachClassesList({
           <Text style={styles.collapseText}>Show less</Text>
           <Ionicons name="chevron-up" size={16} color={colors.tint} />
         </TouchableOpacity>
-      )}
+      ) : null}
     </View>
   );
 }

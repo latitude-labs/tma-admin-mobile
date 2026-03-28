@@ -1,5 +1,6 @@
 import { Avatar } from '@/components/ui/Avatar';
-import { Card } from '@/components/ui/Card';
+import { GlassView } from '@/components/ui/GlassView';
+import { IconBox } from '@/components/ui/IconBox';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
@@ -17,7 +18,7 @@ import {
   View,
 } from 'react-native';
 import Animated, {
-  FadeInRight,
+  FadeIn,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
@@ -39,19 +40,19 @@ type MenuItem = {
 };
 
 /**
- * Menu item component with animation
- * Extracted outside parent to follow hooks rules (CLAUDE.md:267-300)
+ * Single menu row component — extracted to respect hooks rules (CLAUDE.md:267-300).
+ * Uses press scale animation via shared values.
  */
-const MenuItemComponent = React.memo(({
+const MenuRowComponent = React.memo(({
   item,
-  index,
+  isLast,
   palette,
   styles,
 }: {
   item: MenuItem;
-  index: number;
+  isLast: boolean;
   palette: ThemeColors;
-  styles: any;
+  styles: ReturnType<typeof createStyles>;
 }) => {
   const router = useRouter();
   const scale = useSharedValue(1);
@@ -74,52 +75,41 @@ const MenuItemComponent = React.memo(({
   };
 
   return (
-    <Animated.View
-      style={animatedStyle}
-      entering={FadeInRight.delay(index * 50).springify()}
-    >
-      <TouchableOpacity
-        style={styles.menuItem}
-        onPress={handlePress}
-        activeOpacity={0.7}
-      >
-        <View style={styles.menuItemLeft}>
-          <View
-            style={[
-              styles.iconContainer,
-              {
-                backgroundColor: item.color
-                  ? `${item.color}15`
-                  : `${Theme.colors.primary}15`,
-              },
-            ]}
-          >
-            <Ionicons
-              name={item.icon}
-              size={22}
+    <React.Fragment>
+      <Animated.View style={animatedStyle}>
+        <TouchableOpacity
+          style={styles.menuRow}
+          onPress={handlePress}
+          activeOpacity={0.7}
+        >
+          <View style={styles.menuRowLeft}>
+            <IconBox
+              icon={item.icon}
+              size="sm"
+              variant="filled"
               color={item.color || Theme.colors.primary}
+              style={{ marginRight: Theme.spacing.md }}
             />
+            <Text
+              style={[
+                styles.menuLabel,
+                { color: item.color || palette.textPrimary },
+              ]}
+            >
+              {item.title}
+            </Text>
           </View>
-          <Text
-            style={[
-              styles.menuItemText,
-              {
-                color: item.color || palette.textPrimary,
-              },
-            ]}
-          >
-            {item.title}
-          </Text>
-        </View>
-        {!item.action ? (
-          <Ionicons
-            name="chevron-forward"
-            size={20}
-            color={palette.textSecondary}
-          />
-        ) : null}
-      </TouchableOpacity>
-    </Animated.View>
+          {!item.action ? (
+            <Ionicons
+              name="chevron-forward"
+              size={16}
+              color={palette.textTertiary}
+            />
+          ) : null}
+        </TouchableOpacity>
+      </Animated.View>
+      {!isLast ? <View style={styles.divider} /> : null}
+    </React.Fragment>
   );
 });
 
@@ -218,24 +208,14 @@ export default function MoreScreen() {
   ];
 
   return (
-    <View style={styles.container}>
-      <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
-        style={StyleSheet.absoluteFillObject}
-      />
+    <LinearGradient
+      colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
+      style={styles.container}
+    >
       <ScrollView style={styles.scrollContainer}>
-        <Card variant="filled" style={styles.profileCard}>
-          <LinearGradient
-            colors={[`${Theme.colors.primary}08`, `${Theme.colors.primary}03`]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.profileCardGradient}
-          >
+        {/* Profile card as a glass panel */}
+        <Animated.View entering={FadeIn.duration(300)}>
+          <GlassView style={styles.profilePanel} intensity="prominent">
             <View style={styles.profileContent}>
               <View style={styles.avatarWrapper}>
                 <View style={[styles.avatarGlow, { backgroundColor: Theme.colors.primary }]} />
@@ -260,11 +240,16 @@ export default function MoreScreen() {
                 ) : null}
               </View>
             </View>
-          </LinearGradient>
-        </Card>
+          </GlassView>
+        </Animated.View>
 
+        {/* Menu sections as grouped glass panels */}
         {menuSections.map((section, sectionIndex) => (
-          <View key={section.title} style={styles.section}>
+          <Animated.View
+            key={section.title}
+            entering={FadeIn.delay(sectionIndex * 60).duration(300)}
+            style={styles.section}
+          >
             <View style={styles.sectionHeader}>
               <Text style={styles.sectionTitle}>
                 {section.title}
@@ -275,27 +260,25 @@ export default function MoreScreen() {
                 </View>
               ) : null}
             </View>
-            <Card
-              variant="outlined"
-              style={[
-                styles.sectionCard,
-                section.title === 'Admin' && {
-                  borderColor: Theme.colors.primary,
-                  borderWidth: 1,
-                }
-              ]}
+
+            <GlassView
+              style={section.title === 'Admin'
+                ? { ...styles.sectionPanel, ...styles.adminSectionPanel }
+                : styles.sectionPanel
+              }
+              intensity="regular"
             >
               {section.items.map((item, index) => (
-                <MenuItemComponent
+                <MenuRowComponent
                   key={item.title}
                   item={item}
-                  index={sectionIndex * 3 + index}
+                  isLast={index === section.items.length - 1}
                   palette={palette}
                   styles={styles}
                 />
               ))}
-            </Card>
-          </View>
+            </GlassView>
+          </Animated.View>
         ))}
 
         <View style={styles.footer}>
@@ -304,32 +287,24 @@ export default function MoreScreen() {
           </Text>
         </View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.background,
   },
   scrollContainer: {
     flex: 1,
   },
-  profileCard: {
+  // Profile panel
+  profilePanel: {
     margin: Theme.spacing.lg,
     marginBottom: Theme.spacing.md,
-    padding: 0,
-    overflow: 'hidden',
     borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    elevation: 4,
-  },
-  profileCardGradient: {
     padding: Theme.spacing.xl,
+    overflow: 'hidden',
   },
   profileContent: {
     flexDirection: 'row',
@@ -360,13 +335,15 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   profileName: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System',
+    fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: 4,
   },
   profileEmail: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System',
+    fontWeight: '400',
     color: palette.textSecondary,
     marginBottom: Theme.spacing.sm,
   },
@@ -387,8 +364,10 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   adminBadgeText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System',
+    fontWeight: '600',
   },
+  // Sections
   section: {
     marginBottom: Theme.spacing.xl,
     paddingHorizontal: Theme.spacing.lg,
@@ -396,15 +375,16 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Theme.spacing.md,
+    marginBottom: Theme.spacing.sm,
     marginLeft: 4,
   },
   sectionTitle: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
-    color: palette.textSecondary,
+    fontSize: Theme.typography.sizes.xs,
+    fontFamily: 'System',
+    fontWeight: '600',
+    color: palette.textTertiary,
     textTransform: 'uppercase',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   adminBadgeSmall: {
     backgroundColor: Theme.colors.primary,
@@ -420,48 +400,39 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  sectionCard: {
-    paddingVertical: 4,
-    borderRadius: 20,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 10,
-    elevation: 4,
+  sectionPanel: {
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  menuItem: {
+  adminSectionPanel: {
+    borderWidth: 1,
+    borderColor: Theme.colors.primary,
+  },
+  // Menu rows
+  menuRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 14,
-    paddingHorizontal: Theme.spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: palette.borderLight,
+    paddingVertical: 12,
+    paddingHorizontal: Theme.spacing.md,
   },
-  menuItemLeft: {
+  menuRowLeft: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
   },
-  iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: palette.backgroundSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: Theme.spacing.md,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  menuItemText: {
+  menuLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System',
+    fontWeight: '500',
     color: palette.textPrimary,
   },
+  divider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: palette.borderLight,
+    marginLeft: Theme.spacing.md + 32 + Theme.spacing.md, // align with text after icon
+  },
+  // Footer
   footer: {
     alignItems: 'center',
     paddingVertical: Theme.spacing['2xl'],
@@ -469,7 +440,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   versionText: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System',
+    fontWeight: '400',
     color: palette.textTertiary,
   },
 });

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   View,
   Text,
@@ -41,6 +42,7 @@ const InfoRow: React.FC<InfoRowProps> = ({ icon, label, value, color }) => {
 
   return (
     <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
       <View style={styles.labelContainer}>
         <Ionicons
           name={icon as any}
@@ -62,7 +64,7 @@ export default function EventDetailScreen() {
   const styles = useMemo(() => createStyles(palette, insets), [palette, insets]);
 
   const { user } = useAuthStore();
-  const { getEventById, refreshEvents, getCombinedEventsForDate } = useCalendarStore();
+  const { getEventById, getCombinedEventsForDate } = useCalendarStore();
 
   const [event, setEvent] = useState<CalendarEvent | null>(null);
   const [loading, setLoading] = useState(true);
@@ -130,7 +132,6 @@ export default function EventDetailScreen() {
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await refreshEvents();
     await loadEvent();
     setRefreshing(false);
   };
@@ -168,7 +169,6 @@ export default function EventDetailScreen() {
           onPress: async () => {
             try {
               await apiClient.delete(`/v1/rota/${eventId}`);
-              await refreshEvents();
               router.back();
             } catch (error) {
               Alert.alert('Error', 'Failed to delete event');
@@ -507,7 +507,7 @@ const createStyles = (palette: ThemeColors, insets: any) =>
     },
     errorText: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
       marginTop: Theme.spacing.md,
       marginBottom: Theme.spacing.xl,
@@ -520,7 +520,7 @@ const createStyles = (palette: ThemeColors, insets: any) =>
     },
     backButtonText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textInverse,
     },
     headerButtons: {
@@ -553,7 +553,7 @@ const createStyles = (palette: ThemeColors, insets: any) =>
     },
     eventTitle: {
       fontSize: Theme.typography.sizes['2xl'],
-      fontFamily: Theme.typography.fonts.bold,
+      fontFamily: 'System', fontWeight: '700',
       color: palette.textPrimary,
       textAlign: 'center',
       marginBottom: Theme.spacing.md,
@@ -578,7 +578,7 @@ const createStyles = (palette: ThemeColors, insets: any) =>
     },
     sectionTitle: {
       fontSize: Theme.typography.sizes.lg,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
     },
     descriptionContainer: {
@@ -586,13 +586,13 @@ const createStyles = (palette: ThemeColors, insets: any) =>
     },
     descriptionLabel: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.semibold,
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textSecondary,
       marginBottom: Theme.spacing.xs,
     },
     descriptionText: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textPrimary,
       lineHeight: 22,
     },
@@ -613,12 +613,12 @@ const createInfoRowStyles = (palette: ThemeColors) =>
     },
     label: {
       fontSize: Theme.typography.sizes.sm,
-      fontFamily: Theme.typography.fonts.medium,
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
     },
     value: {
       fontSize: Theme.typography.sizes.md,
-      fontFamily: Theme.typography.fonts.regular,
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textPrimary,
       marginLeft: 26,
       lineHeight: 20,

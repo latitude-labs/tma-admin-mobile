@@ -7,6 +7,7 @@ import { CoachHeader } from './coach/CoachHeader';
 import { CoachClassesList } from './coach/CoachClassesList';
 import { DashboardLoading } from './coach/DashboardLoading';
 import { RemindersSection } from '@/components/dashboard/RemindersSection';
+import { TrialsBanner } from '@/components/features/TrialsBanner';
 
 export default function CoachDashboardScreen() {
   const colors = useThemeColors();
@@ -46,7 +47,7 @@ export default function CoachDashboardScreen() {
   const classCount = todayData?.classes?.length || 0;
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.scrollContainer}
         showsVerticalScrollIndicator={false}
@@ -61,6 +62,8 @@ export default function CoachDashboardScreen() {
           classCount={classCount}
           onRefresh={handleRefresh}
         />
+
+        <TrialsBanner />
 
         <RemindersSection
           reminders={reminders}

@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
   },
   markerLabelText: {
     fontSize: 12,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'System', fontWeight: '600',
   },
 });
 
@@ -288,7 +288,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.lg,
     paddingVertical: Theme.spacing.sm,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.md,
+    ...Theme.shadows.subtle,
   },
   editHintText: {
     fontSize: Theme.typography.sizes.sm,

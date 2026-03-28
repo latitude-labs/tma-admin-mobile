@@ -1,12 +1,12 @@
 # Development Guidelines for TMA Admin Mobile
 
 ## Project Overview
-This is an Expo/React Native mobile application for TMA Admin using Expo SDK 54. The app follows modern best practices and incorporates a friendly, Duolingo-inspired UI design system.
+This is an Expo/React Native mobile application for TMA Admin using Expo SDK 55. The app follows modern best practices and incorporates a liquid glass design system with warm gradient backgrounds and iOS 26+ native glass effects.
 
 ## Current Stack & Dependencies
 
 ### Core Technologies
-- **Expo SDK**: 54.0.7 (React Native 0.81.4)
+- **Expo SDK**: 55.0.0 (React Native 0.81.4)
 - **React**: 19.1.0
 - **TypeScript**: 5.9.2
 - **Navigation**: Expo Router 6.0.4 with React Navigation (Drawer)
@@ -14,6 +14,7 @@ This is an Expo/React Native mobile application for TMA Admin using Expo SDK 54.
 - **Forms**: React Hook Form 7.62.0
 - **HTTP Client**: Axios 1.12.2
 - **Animations**: React Native Reanimated 4.1.0
+- **Glass Effects**: expo-glass-effect (iOS 26+ native glass; Android gets plain View fallback)
 - **Date Handling**: date-fns 4.1.0
 
 ### Project Configuration
@@ -55,21 +56,21 @@ services/            # API services and external integrations
 utils/               # Utility functions
 assets/
   images/            # App icons and images
-  fonts/             # Custom fonts (Manrope)
 ```
 
-## Duolingo-Inspired Design System
+## Liquid Glass Design System
 
 ### Core Design Principles
 
 #### 1. Friendly & Professional
 - Use warm, vibrant colors that feel approachable
-- Rounded corners and soft edges for visual comfort
+- Rounded corners (border radius xl = 20px) and soft edges for visual comfort
 - Smooth, delightful micro-animations
 - Clear, helpful feedback messages
 
 #### 2. Visual Clarity & Delight
-- Clean progress indicators for task tracking
+- Warm gradient backgrounds on all screens
+- Glass surfaces layered over gradients for depth
 - Status badges for quick information scanning
 - Subtle success animations (not game-like)
 - Visual feedback that's helpful, not playful
@@ -90,7 +91,7 @@ const colors = {
   // Neutrals
   background: {
     primary: '#FFFFFF',
-    secondary: '#F5F5F5',
+    secondary: '#FAFAFA',     // Slightly warm off-white
     tertiary: '#E8E8E8',
   },
   text: {
@@ -105,17 +106,30 @@ const colors = {
     dark: '#CCCCCC',
   },
 };
+
+// Gradient tokens (from useThemeColors)
+// palette.backgroundGradientStart  — warm gradient start colour
+// palette.backgroundGradientEnd    — warm gradient end colour
+// palette.softShadow               — two-tier shadow colour token
 ```
 
 #### 4. Typography
 ```typescript
-// Using Manrope font family (already installed)
+// SF Pro system font — no font loading required
 const typography = {
   fontFamily: {
-    regular: 'Manrope_400Regular',
-    medium: 'Manrope_500Medium',
-    semiBold: 'Manrope_600SemiBold',
-    bold: 'Manrope_700Bold',
+    // Use undefined (or omit fontFamily) to inherit the iOS system font (SF Pro)
+    // On Android this resolves to Roboto automatically
+    regular: undefined,
+    medium: undefined,
+    semiBold: undefined,
+    bold: undefined,
+  },
+  fontWeight: {
+    regular: '400' as const,
+    medium: '500' as const,
+    semiBold: '600' as const,
+    bold: '700' as const,
   },
   sizes: {
     xs: 12,
@@ -133,26 +147,60 @@ const typography = {
 **Buttons** (from components/ui/Button)
 - Large touch targets (min 48px height)
 - Rounded corners (12-16px radius)
+- Translucent face (glass treatment)
+- 2px raised lip (was 4px)
 - Clear visual states (primary, secondary, outline, text)
 - Loading and disabled states
 - Haptic feedback on press
+- Press spring: `{ damping: 15, stiffness: 180 }`
 
-**Cards** (from components/ui/Card)
-- Three variants: elevated, filled, outlined
-- Soft shadows for depth
+**Cards** (from components/ui/Card / GlassView)
+- Three variants: `elevated` (regular glass), `filled` (prominent glass), `gradient` (tinted glass)
+- No `outlined` variant — use `elevated` with a subtle border instead
+- Border radius: 20px
 - Consistent padding (16px)
-- Rounded corners for friendliness
+- Backed by GlassView — see Glass section below
 
 **Input Fields** (from components/ui/Input)
 - Clear labels and placeholders
+- 1px border (was 2px)
+- Translucent background
+- Focus glow via shadow wrapper
 - Error states with helpful messages
-- Focus animations
 - Icon support
 
 **Chips & Badges** (from components/ui/Chip, Badge)
 - Selectable chips for filters
 - Status badges with colors
 - Smooth selection animations
+
+### Shadow System
+
+Two-tier shadow model — **do not use sm/md/lg/xl** shadow tokens.
+
+| Tier | Usage |
+|------|-------|
+| `subtle` | Cards, inputs, most UI surfaces |
+| `elevated` | Modals, sheets, floating elements |
+
+```typescript
+// From palette (useThemeColors)
+const subtleShadow = {
+  shadowColor: palette.softShadow,
+  shadowOffset: { width: 0, height: 2 },
+  shadowOpacity: 0.08,
+  shadowRadius: 8,
+  elevation: 2,
+};
+
+const elevatedShadow = {
+  shadowColor: palette.softShadow,
+  shadowOffset: { width: 0, height: 8 },
+  shadowOpacity: 0.14,
+  shadowRadius: 20,
+  elevation: 8,
+};
+```
 
 ### Animation Guidelines
 
@@ -166,18 +214,51 @@ import Animated, {
   useSharedValue,
 } from 'react-native-reanimated';
 
-// Gentle scale animation for feedback
-const gentle = withSpring(value, {
+// Default spring — general UI transitions
+const defaultSpring = withSpring(value, {
   damping: 20,
-  stiffness: 100,
+  stiffness: 150,
 });
 
-// Smooth transitions for professional feel
+// Button press spring — snappier feedback
+const buttonSpring = withSpring(value, {
+  damping: 15,
+  stiffness: 180,
+});
+
+// Smooth timing transitions for professional feel
 const smooth = withTiming(value, {
   duration: 300,
   easing: Easing.inOut(Easing.ease),
 });
 ```
+
+### Glass Effect (GlassView)
+
+```typescript
+import { GlassView, GlassContainer } from '@/components/ui/GlassView';
+
+// Single surface
+<GlassView intensity="regular">
+  {/* content */}
+</GlassView>
+
+// Group of related items
+<GlassContainer intensity="light">
+  {/* multiple items sharing one glass surface */}
+</GlassContainer>
+```
+
+**Intensity levels:**
+- `light` — subtle frosting; use for backgrounds and secondary surfaces
+- `regular` — standard glass; use for cards (elevated variant)
+- `prominent` — strong frosting; use for modals and filled cards
+
+**Performance rules:**
+- Maximum ~6–8 glass surfaces per screen
+- FlatList items must NOT each be wrapped in GlassView — wrap the list container instead
+- Android receives a plain `View` fallback automatically; no conditional code needed
+- GlassView requires iOS 26+; the library handles the version check internally
 
 ### Navigation Pattern
 
@@ -391,6 +472,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
 5. **ALWAYS** use `useMemo` to optimize style recreation
 6. **Theme.colors** is OK for static theme constants (primary, success, error)
 7. **palette** should be used for colors that change with theme (background, text, borders)
+8. Use `palette.backgroundGradientStart` / `palette.backgroundGradientEnd` for warm screen gradients
+9. Use `palette.softShadow` for all shadow `shadowColor` values (two-tier system)
 
 ## Best Practices for 2025
 
@@ -435,6 +518,7 @@ Before pushing changes:
 - Xcode 16+ (for iOS 18 SDK)
 - iOS deployment target: 15.0+
 - Required from April 24, 2025: iOS 18 SDK
+- Glass effects require iOS 26+; devices below iOS 26 receive a plain View fallback automatically
 
 ### Android Build
 - Adaptive icon configured
@@ -517,7 +601,7 @@ Don't start the dev server yourself, leave this to the user.
 ## Active Technologies
 - TypeScript 5.9.2 / Node.js 20+ (audit tool implementation) + TypeScript Compiler API (ts-morph or @typescript-eslint/parser), Glob for file discovery, Markdown generation library (001-constitution-compliance-audit)
 - File system for audit reports (JSON + Markdown), historical data in specs/001-constitution-compliance-audit/audit-history/ (001-constitution-compliance-audit)
-- TypeScript 5.9.2 (strict mode enabled) / React Native 0.81.4 + Expo SDK 54.0.7, Expo Router 6.0.4, React 19.1.0, Zustand 5.0.8, React Hook Form 7.62.0, Axios 1.12.2, React Native Reanimated 4.1.0 (002-trial-bookings-management)
+- TypeScript 5.9.2 (strict mode enabled) / React Native 0.81.4 + Expo SDK 55.0.0, Expo Router 6.0.4, React 19.1.0, Zustand 5.0.8, React Hook Form 7.62.0, Axios 1.12.2, React Native Reanimated 4.1.0, expo-glass-effect (002-trial-bookings-management)
 - AsyncStorage (via Zustand persist middleware for offline bookings cache) (002-trial-bookings-management)
 
 ## Recent Changes

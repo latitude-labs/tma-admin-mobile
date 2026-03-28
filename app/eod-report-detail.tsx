@@ -86,12 +86,7 @@ export default function EoDReportDetailScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <Stack.Screen
@@ -279,7 +274,7 @@ export default function EoDReportDetailScreen() {
 const createStyles = (palette: ThemeColors) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: palette.background,
+    backgroundColor: palette.backgroundGradientEnd,
   },
   centerContent: {
     justifyContent: 'center',
@@ -324,14 +319,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   clubName: {
     fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
     textAlign: 'center',
   },
   date: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: Theme.spacing.sm,
     textAlign: 'center',
   },
@@ -343,7 +338,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   reportedBy: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   statsContainer: {
     marginBottom: Theme.spacing.lg,
@@ -359,7 +354,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: palette.backgroundSecondary,
+    backgroundColor: palette.backgroundGradientStart,
     padding: Theme.spacing.md,
     paddingHorizontal: Theme.spacing.lg,
     borderRadius: 14,
@@ -377,12 +372,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   statLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   statValue: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   section: {
@@ -404,7 +399,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
     marginLeft: Theme.spacing.sm,
   },
@@ -419,36 +414,36 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   metricLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   metricValue: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     color: palette.textPrimary,
   },
   cashAmount: {
     fontSize: Theme.typography.sizes['3xl'],
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     textAlign: 'center',
     paddingVertical: Theme.spacing.xl,
     letterSpacing: 1,
   },
   noteItem: {
     marginBottom: Theme.spacing.lg,
-    backgroundColor: palette.backgroundSecondary,
+    backgroundColor: palette.backgroundGradientStart,
     padding: Theme.spacing.md,
     borderRadius: 12,
   },
   noteLabel: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
     marginBottom: Theme.spacing.sm,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   noteText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textPrimary,
     lineHeight: Theme.typography.sizes.md * 1.6,
   },
@@ -462,7 +457,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   timestamp: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: Theme.spacing.sm,
     opacity: 0.7,
   },

@@ -243,10 +243,10 @@ const styles = StyleSheet.create({
     borderRadius: Theme.borderRadius.lg,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   digit: {
-    fontFamily: Theme.typography.fonts.semibold,
+    fontWeight: '600',
   },
   hiddenInput: {
     position: 'absolute',
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontWeight: '500',
     textAlign: 'center',
     marginTop: Theme.spacing.xs,
   },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontWeight: '400',
     textAlign: 'center',
   },
 });

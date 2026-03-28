@@ -21,6 +21,7 @@ import Animated, {
   FadeOutUp,
   Layout
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function NotificationsScreen() {
   const {
@@ -202,6 +203,7 @@ export default function NotificationsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
       <ScreenHeader
         title="Notifications"
         rightAction={headerRightAction}
@@ -318,7 +320,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     unreadBannerText: {
       fontSize: 14,
-      fontFamily: 'Manrope_400Regular',
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
     },
     filterContainer: {
@@ -342,7 +344,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     filterText: {
       fontSize: 14,
-      fontFamily: 'Manrope_500Medium',
+      fontFamily: 'System', fontWeight: '500',
       color: palette.textSecondary,
     },
     filterTextActive: {
@@ -358,7 +360,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     filterBadgeText: {
       fontSize: 12,
-      fontFamily: 'Manrope_600SemiBold',
+      fontFamily: 'System', fontWeight: '600',
       color: palette.tint,
     },
     listContent: {
@@ -373,7 +375,7 @@ const createStyles = (palette: ThemeColors) =>
     },
     sectionTitle: {
       fontSize: 13,
-      fontFamily: 'Manrope_600SemiBold',
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textTertiary,
       textTransform: 'uppercase',
     },
@@ -395,14 +397,14 @@ const createStyles = (palette: ThemeColors) =>
     },
     emptyTitle: {
       fontSize: 20,
-      fontFamily: 'Manrope_600SemiBold',
+      fontFamily: 'System', fontWeight: '600',
       color: palette.textPrimary,
       marginBottom: 8,
       textAlign: 'center',
     },
     emptySubtitle: {
       fontSize: 14,
-      fontFamily: 'Manrope_400Regular',
+      fontFamily: 'System', fontWeight: '400',
       color: palette.textSecondary,
       textAlign: 'center',
       lineHeight: 20,

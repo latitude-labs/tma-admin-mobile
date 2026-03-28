@@ -152,13 +152,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontFamily: 'Manrope_700Bold',
+    fontFamily: 'System', fontWeight: '700',
     marginBottom: Theme.spacing.md,
     textAlign: 'center',
   },
   message: {
     fontSize: 16,
-    fontFamily: 'Manrope_400Regular',
+    fontFamily: 'System', fontWeight: '400',
     textAlign: 'center',
     marginBottom: Theme.spacing.xl,
     lineHeight: 24,
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
   },
   timerText: {
     fontSize: 14,
-    fontFamily: 'Manrope_500Medium',
+    fontFamily: 'System', fontWeight: '500',
   },
   retryButton: {
     flexDirection: 'row',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontSize: 16,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'System', fontWeight: '600',
   },
   infoBox: {
     flexDirection: 'row',
@@ -210,7 +210,7 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 12,
-    fontFamily: 'Manrope_400Regular',
+    fontFamily: 'System', fontWeight: '400',
     lineHeight: 18,
   },
 });

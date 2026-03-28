@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   View,
   Text,
@@ -10,11 +11,12 @@ import {
 } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 import { Stack } from 'expo-router';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
+import { IconBox } from '@/components/ui/IconBox';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useAuthStore } from '@/store/authStore';
 import { twoFactorService, TwoFactorStatus } from '@/services/twoFactor.service';
@@ -209,6 +211,7 @@ export default function SecuritySettingsScreen() {
   if (isLoading) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <LinearGradient colors={[colors.backgroundGradientStart, colors.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={colors.tint} />
           <Text style={[styles.loadingText, { color: colors.textSecondary }]}>
@@ -229,9 +232,10 @@ export default function SecuritySettingsScreen() {
           {/* 2FA Status Card */}
           <Card variant="filled" style={styles.card}>
             <View style={styles.cardHeader}>
-              <Ionicons
-                name="shield-checkmark"
-                size={32}
+              <IconBox
+                icon="shield-checkmark"
+                size="md"
+                variant="filled"
                 color={twoFactorStatus?.enabled ? colors.statusSuccess : colors.textTertiary}
               />
               <View style={styles.cardHeaderText}>
@@ -274,9 +278,10 @@ export default function SecuritySettingsScreen() {
           {biometricAvailable && (
             <Card variant="filled" style={styles.card}>
               <View style={styles.cardHeader}>
-                <MaterialIcons
-                  name="fingerprint"
-                  size={32}
+                <IconBox
+                  icon="finger-print"
+                  size="md"
+                  variant="filled"
                   color={biometricEnabled ? colors.statusSuccess : colors.textTertiary}
                 />
                 <View style={styles.cardHeaderText}>
@@ -312,9 +317,10 @@ export default function SecuritySettingsScreen() {
               <View style={styles.devicesList}>
                 {twoFactorStatus.trustedDevices.map((device) => (
                   <View key={device.id} style={styles.deviceItem}>
-                    <Ionicons
-                      name={device.isCurrent ? 'phone-portrait' : 'laptop-outline'}
-                      size={24}
+                    <IconBox
+                      icon={device.isCurrent ? 'phone-portrait' : 'laptop-outline'}
+                      size="md"
+                      variant="filled"
                       color={colors.textSecondary}
                     />
                     <View style={styles.deviceInfo}>
@@ -340,9 +346,14 @@ export default function SecuritySettingsScreen() {
           )}
 
           {/* Security Tips Card */}
-          <Card variant="outlined" style={styles.card}>
+          <Card variant="elevated" style={styles.card}>
             <View style={styles.tipsHeader}>
-              <Ionicons name="information-circle" size={24} color={colors.statusInfo} />
+              <IconBox
+                icon="information-circle"
+                size="sm"
+                variant="filled"
+                color={colors.statusInfo}
+              />
               <Text style={[styles.tipsTitle, { color: colors.textPrimary }]}>
                 Security Tips
               </Text>
@@ -383,7 +394,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: Theme.spacing.md,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   card: {
     marginBottom: Theme.spacing.lg,
@@ -399,19 +410,19 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     marginBottom: Theme.spacing.xs,
   },
   cardSubtitle: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   methodsList: {
     marginTop: Theme.spacing.md,
   },
   sectionTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginBottom: Theme.spacing.md,
   },
   methodItem: {
@@ -423,7 +434,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: Theme.spacing.md,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
   },
   badge: {
     paddingHorizontal: Theme.spacing.sm,
@@ -432,7 +443,7 @@ const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
   },
   enrollButton: {
     marginTop: Theme.spacing.md,
@@ -453,11 +464,11 @@ const styles = StyleSheet.create({
   },
   deviceName: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   deviceDate: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginTop: Theme.spacing.xs,
   },
   tipsHeader: {
@@ -467,12 +478,12 @@ const styles = StyleSheet.create({
   },
   tipsTitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginLeft: Theme.spacing.sm,
   },
   tipText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     marginBottom: Theme.spacing.sm,
     lineHeight: 20,
   },

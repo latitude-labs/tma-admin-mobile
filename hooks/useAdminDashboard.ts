@@ -60,10 +60,21 @@ export const useAdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const [bookingTotals, clubsCount] = await Promise.all([
+      const [bookingTotalsResult, clubsCountResult] = await Promise.allSettled([
         bookingsService.getBookingsTotals(),
         clubsService.getClubsCount()
       ]);
+
+      const bookingTotals = bookingTotalsResult.status === 'fulfilled' ? bookingTotalsResult.value : { month: 0, today: 0, trials_today: 0, upcoming: 0 };
+      const clubsCount = clubsCountResult.status === 'fulfilled' ? clubsCountResult.value : { total: 0 };
+
+      if (bookingTotalsResult.status === 'rejected') {
+        console.error('Failed to fetch booking totals:', bookingTotalsResult.reason);
+      }
+
+      if (clubsCountResult.status === 'rejected') {
+        console.error('Failed to fetch clubs count:', clubsCountResult.reason);
+      }
 
       setStats({
         monthlyBookings: bookingTotals.month || 0,

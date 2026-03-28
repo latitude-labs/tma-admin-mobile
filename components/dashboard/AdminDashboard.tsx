@@ -7,6 +7,7 @@ import { useAdminDashboard } from '@/hooks/useAdminDashboard';
 import { DashboardHeader } from './admin/DashboardHeader';
 import { StatsGrid } from './admin/StatsGrid';
 import { DashboardLoading } from './admin/DashboardLoading';
+import { TrialsBanner } from '@/components/features/TrialsBanner';
 
 export default function AdminDashboardScreen() {
   const { isOffline } = useOffline();
@@ -17,7 +18,10 @@ export default function AdminDashboardScreen() {
     stats, 
     trends, 
     handleRefresh, 
-    user 
+    user,
+    clubs,
+    selectedClubId,
+    setSelectedClubId
   } = useAdminDashboard();
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -39,12 +43,7 @@ export default function AdminDashboardScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          colors.backgroundSecondary,
-          colors.background,
-          colors.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[colors.backgroundGradientStart, colors.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
@@ -60,11 +59,16 @@ export default function AdminDashboardScreen() {
             onRefresh={handleRefresh}
           />
 
+          <TrialsBanner />
+
           <StatsGrid 
             colors={colors}
             stats={stats}
             trends={trends}
             loading={isLoading}
+            clubs={clubs}
+            selectedClubId={selectedClubId}
+            onClubChange={setSelectedClubId}
           />
           
           <View style={{ height: 150 }} />

@@ -5,6 +5,7 @@ import { Theme } from '@/constants/Theme';
 import { Card } from '@/components/ui';
 import { ScreenHeader } from '@/components/ui/ScreenHeader';
 import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function ReportsScreen() {
   const palette = useThemeColors();
@@ -14,6 +15,7 @@ export default function ReportsScreen() {
     <>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
         <ScreenHeader title="Reports" />
         <ScrollView style={styles.scrollView}>
           <View style={styles.content}>
@@ -44,7 +46,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   subtitle: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
+    fontFamily: 'System', fontWeight: '400',
     color: palette.textSecondary,
     textAlign: 'center',
   },

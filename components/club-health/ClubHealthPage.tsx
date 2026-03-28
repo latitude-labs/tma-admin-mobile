@@ -31,7 +31,7 @@ export const ClubHealthPage: React.FC<ClubHealthPageProps> = ({
   if (isLoading && !clubData) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={Theme.colors.primary} />
+        <ActivityIndicator size="large" color={palette.tint} />
         <Text style={styles.loadingText}>Loading club data...</Text>
       </View>
     );
@@ -47,9 +47,9 @@ export const ClubHealthPage: React.FC<ClubHealthPageProps> = ({
   }
 
   const getHealthScoreColor = (score: number) => {
-    if (score >= 80) return Theme.colors.status.success;
-    if (score >= 60) return Theme.colors.status.warning;
-    return Theme.colors.status.error;
+    if (score >= 80) return palette.statusSuccess;
+    if (score >= 60) return palette.statusWarning;
+    return palette.statusError;
   };
 
   // Calculate a simple health score based on metrics
@@ -73,7 +73,7 @@ export const ClubHealthPage: React.FC<ClubHealthPageProps> = ({
           <RefreshControl
             refreshing={isLoading}
             onRefresh={onRefresh}
-            tintColor={Theme.colors.primary}
+            tintColor={palette.tint}
           />
         ) : undefined
       }
@@ -101,28 +101,28 @@ export const ClubHealthPage: React.FC<ClubHealthPageProps> = ({
       <MetricsCard metrics={clubData.metrics} />
 
       {/* Facebook Ads */}
-      {clubData.facebook_ads && (
+      {clubData.facebook_ads ? (
         <FacebookAdsCard metrics={clubData.facebook_ads} />
-      )}
+      ) : null}
 
       {/* Quick Stats Grid */}
       <View style={styles.quickStatsContainer}>
         <Text style={styles.quickStatsTitle}>Quick Stats</Text>
         <View style={styles.quickStatsGrid}>
           <View style={styles.quickStatItem}>
-            <Ionicons name="person-add" size={20} color={Theme.colors.status.success} />
+            <Ionicons name="person-add" size={20} color={palette.statusSuccess} />
             <Text style={styles.quickStatValue}>{clubData.metrics.new_students}</Text>
             <Text style={styles.quickStatLabel}>New Students</Text>
           </View>
 
           <View style={styles.quickStatItem}>
-            <Ionicons name="refresh" size={20} color={Theme.colors.status.info} />
+            <Ionicons name="refresh" size={20} color={palette.statusInfo} />
             <Text style={styles.quickStatValue}>{clubData.metrics.returning_students}</Text>
             <Text style={styles.quickStatLabel}>Returning</Text>
           </View>
 
           <View style={styles.quickStatItem}>
-            <Ionicons name="school" size={20} color={Theme.colors.primary} />
+            <Ionicons name="school" size={20} color={palette.tint} />
             <Text style={styles.quickStatValue}>
               {clubData.metrics.average_class_size || '—'}
             </Text>
@@ -227,11 +227,6 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     margin: 16,
     padding: 20,
     borderRadius: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
     borderWidth: 1,
     borderColor: palette.borderLight,
   },

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-nati
 import Animated, {
   useAnimatedStyle,
   withTiming,
+  withDelay,
   withSpring,
   useSharedValue,
 } from 'react-native-reanimated';
@@ -33,14 +34,8 @@ export const ClubHealthCard: React.FC<ClubHealthCardProps> = ({
   const translateY = useSharedValue(20);
 
   React.useEffect(() => {
-    opacity.value = withTiming(1, {
-      duration: 300,
-      delay: index * 50,
-    });
-    translateY.value = withTiming(0, {
-      duration: 300,
-      delay: index * 50,
-    });
+    opacity.value = withDelay(index * 50, withTiming(1, { duration: 300 }));
+    translateY.value = withDelay(index * 50, withTiming(0, { duration: 300 }));
   }, [index]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -161,74 +156,74 @@ export const ClubHealthCard: React.FC<ClubHealthCardProps> = ({
 
           {/* Key Metrics Grid */}
           <View style={styles.metricsGrid}>
-            {metrics && (
+            {metrics ? (
               <>
                 <MetricItem
                   label="Show Rate"
                   value={`${Math.round(100 - metrics.no_show_rate)}%`}
                   icon="people"
-                  color={clubData.individual_scores.show_up_rate >= 60 ? '#10b981' : '#f59e0b'}
+                  color={clubData.individual_scores.show_up_rate >= 60 ? palette.statusSuccess : palette.statusWarning}
                 />
                 <MetricItem
                   label="Enrollment"
                   value={`${Math.round(metrics.enrollment_rate)}%`}
                   icon="person-add"
-                  color={clubData.individual_scores.enrollment_conversion >= 60 ? '#10b981' : '#f59e0b'}
+                  color={clubData.individual_scores.enrollment_conversion >= 60 ? palette.statusSuccess : palette.statusWarning}
                 />
               </>
-            )}
-            {adMetrics && adMetrics.cost_per_booking !== null && (
+            ) : null}
+            {adMetrics && adMetrics.cost_per_booking !== null ? (
               <MetricItem
                 label="Cost/Booking"
                 value={`£${adMetrics.cost_per_booking.toFixed(2)}`}
                 icon="cash"
-                color={clubData.individual_scores.booking_efficiency >= 60 ? '#10b981' : '#f59e0b'}
+                color={clubData.individual_scores.booking_efficiency >= 60 ? palette.statusSuccess : palette.statusWarning}
               />
-            )}
+            ) : null}
           </View>
 
           {/* Critical Issue */}
-          {criticalIssue && (
+          {criticalIssue ? (
             <View style={[
               styles.issueContainer,
               {
                 backgroundColor: criticalIssue.severity === 'critical'
-                  ? '#ef444415'
-                  : '#f59e0b15',
+                  ? palette.statusError + '15'
+                  : palette.statusWarning + '15',
                 borderColor: criticalIssue.severity === 'critical'
-                  ? '#ef4444'
-                  : '#f59e0b',
+                  ? palette.statusError
+                  : palette.statusWarning,
               }
             ]}>
               <Ionicons
                 name={criticalIssue.severity === 'critical' ? 'alert-circle' : 'warning'}
                 size={16}
-                color={criticalIssue.severity === 'critical' ? '#ef4444' : '#f59e0b'}
+                color={criticalIssue.severity === 'critical' ? palette.statusError : palette.statusWarning}
               />
               <Text style={[
                 styles.issueText,
-                { color: criticalIssue.severity === 'critical' ? '#ef4444' : '#f59e0b' }
+                { color: criticalIssue.severity === 'critical' ? palette.statusError : palette.statusWarning }
               ]} numberOfLines={2}>
                 {criticalIssue.message}
               </Text>
             </View>
-          )}
+          ) : null}
 
           {/* AI Summary Preview */}
-          {clubData.ai_summary && (
+          {clubData.ai_summary ? (
             <View style={styles.summaryContainer}>
               <Text style={styles.summaryText} numberOfLines={2}>
                 {clubData.ai_summary.split('•')[1]?.trim() || clubData.ai_summary}
               </Text>
             </View>
-          )}
+          ) : null}
 
           {/* View Details */}
           <View style={styles.footer}>
-            <Text style={[styles.viewDetails, { color: Theme.colors.primary }]}>
+            <Text style={[styles.viewDetails, { color: palette.tint }]}>
               View Details
             </Text>
-            <Ionicons name="chevron-forward" size={20} color={Theme.colors.primary} />
+            <Ionicons name="chevron-forward" size={20} color={palette.tint} />
           </View>
         </View>
       </Animated.View>
@@ -264,11 +259,6 @@ const createStyles = (palette: ThemeColors) =>
       marginBottom: 12,
       borderRadius: 16,
       overflow: 'hidden',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.08,
-      shadowRadius: 6,
-      elevation: 3,
     },
     statusIndicator: {
       height: 4,

@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 12,
-    fontFamily: 'Manrope_600SemiBold',
+    fontFamily: 'System', fontWeight: '600',
     marginTop: 4,
   },
 });

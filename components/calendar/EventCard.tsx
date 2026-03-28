@@ -159,11 +159,11 @@ export const EventCard: React.FC<EventCardProps> = ({
                 <Text style={styles.title} numberOfLines={1}>
                   {event.title}
                 </Text>
-                {(event.club || event.class_time) && (
+                {(event.club || event.class_time) ? (
                   <Text style={styles.subtitle} numberOfLines={1}>
-                    {event.club?.name || event.class_time?.name}
+                    {event.club?.name || event.class_time?.name || ''}
                   </Text>
-                )}
+                ) : null}
               </View>
             </View>
             {getStatusBadge()}
@@ -181,14 +181,14 @@ export const EventCard: React.FC<EventCardProps> = ({
                 {format(new Date(event.start_date), 'HH:mm')} -
                 {format(new Date(event.end_date), 'HH:mm')}
               </Text>
-              {event.all_day && (
-                <Badge variant="secondary" size="xs" style={styles.allDayBadge}>
+              {event.all_day ? (
+                <Badge variant="secondary" size="sm" style={styles.allDayBadge}>
                   All Day
                 </Badge>
-              )}
+              ) : null}
             </View>
 
-            {event.coach && (
+            {event.coach ? (
               <View style={styles.detailRow}>
                 <Ionicons
                   name="person-outline"
@@ -196,25 +196,25 @@ export const EventCard: React.FC<EventCardProps> = ({
                   color={palette.textSecondary}
                 />
                 <Text style={styles.detailText}>
-                  {event.coach.name}
-                  {event.is_cover && event.original_user && (
+                  {event.coach.name || ''}
+                  {event.is_cover && event.original_user ? (
                     <Text style={styles.coverageText}>
                       {' (covering for '}{event.original_user}{')'}
                     </Text>
-                  )}
+                  ) : null}
                 </Text>
               </View>
-            )}
+            ) : null}
 
-            {event.description && (
+            {event.description ? (
               <Text style={styles.description} numberOfLines={2}>
                 {event.description}
               </Text>
-            )}
+            ) : null}
           </View>
 
           {/* Actions */}
-          {showActions && (
+          {showActions ? (
             <View style={styles.actions}>
               <TouchableOpacity
                 style={styles.actionButton}
@@ -243,10 +243,10 @@ export const EventCard: React.FC<EventCardProps> = ({
                 />
               </TouchableOpacity>
             </View>
-          )}
+          ) : null}
 
           {/* Coverage Needed Indicator */}
-          {event.metadata?.needs_coverage && (
+          {event.metadata?.needs_coverage ? (
             <View style={styles.coverageNeeded}>
               <Ionicons
                 name="alert-circle"
@@ -255,7 +255,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               />
               <Text style={styles.coverageNeededText}>Coverage Needed</Text>
             </View>
-          )}
+          ) : null}
         </View>
       </Animated.View>
     </AnimatedPressable>
@@ -268,7 +268,6 @@ const createStyles = (palette: ThemeColors) =>
       backgroundColor: palette.background,
       borderRadius: Theme.borderRadius.lg,
       marginBottom: Theme.spacing.md,
-      ...Theme.shadows.sm,
       overflow: 'hidden',
     },
     colorStrip: {

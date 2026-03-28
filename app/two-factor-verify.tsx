@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -13,9 +13,10 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import Animated from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { Theme } from '@/constants/Theme';
-import { useThemeColors } from '@/hooks/useThemeColors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { twoFactorService, TwoFactorMethod } from '@/services/twoFactor.service';
 import { biometricService } from '@/services/biometric.service';
@@ -28,6 +29,7 @@ type VerificationMethod = 'biometric' | 'otp';
 
 export default function TwoFactorVerifyScreen() {
   const colors = useThemeColors();
+  const styles = useMemo(() => createStyles(colors), [colors]);
   const { completeLogin } = useAuthStore();
 
   const [method, setMethod] = useState<VerificationMethod>('biometric');
@@ -249,7 +251,11 @@ export default function TwoFactorVerifyScreen() {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={styles.container}>
+      <LinearGradient
+        colors={[colors.backgroundGradientStart, colors.backgroundGradientEnd]}
+        style={StyleSheet.absoluteFillObject}
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -260,15 +266,15 @@ export default function TwoFactorVerifyScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
-            <View style={[styles.iconContainer, { backgroundColor: colors.backgroundSecondary }]}>
+            <View style={styles.iconContainer}>
               <Ionicons name="shield-checkmark" size={48} color={colors.tint} />
             </View>
 
-            <Text style={[styles.title, { color: colors.textPrimary }]}>
+            <Text style={styles.title}>
               Verify Your Identity
             </Text>
 
-            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+            <Text style={styles.subtitle}>
               Complete the two-factor authentication to access your account
             </Text>
           </View>
@@ -295,10 +301,11 @@ export default function TwoFactorVerifyScreen() {
                       Development Mode: Enter any 6 digits
                     </Text>
                   </View>
+
                 )}
 
                 <View style={styles.resendContainer}>
-                  <Text style={[styles.resendText, { color: colors.textSecondary }]}>
+                  <Text style={styles.resendText}>
                     Didn't receive the code?
                   </Text>
                   <Button
@@ -312,7 +319,7 @@ export default function TwoFactorVerifyScreen() {
 
                 <View style={styles.trustDeviceContainer}>
                   <View style={styles.trustDeviceRow}>
-                    <Text style={[styles.trustDeviceText, { color: colors.textPrimary }]}>
+                    <Text style={styles.trustDeviceText}>
                       Trust this device for 30 days
                     </Text>
                     <Switch
@@ -322,7 +329,7 @@ export default function TwoFactorVerifyScreen() {
                       thumbColor={colors.background}
                     />
                   </View>
-                  <Text style={[styles.trustDeviceHint, { color: colors.textSecondary }]}>
+                  <Text style={styles.trustDeviceHint}>
                     You won't need to verify on this device for 30 days
                   </Text>
                 </View>
@@ -344,7 +351,7 @@ export default function TwoFactorVerifyScreen() {
 
                 {error && (
                   <View style={styles.errorContainer}>
-                    <Text style={[styles.errorText, { color: colors.statusError }]}>
+                    <Text style={styles.errorText}>
                       {error}
                     </Text>
                   </View>
@@ -380,128 +387,137 @@ export default function TwoFactorVerifyScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  keyboardView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingHorizontal: Theme.spacing.lg,
-    paddingVertical: Theme.spacing.xl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: Theme.spacing.xl,
-  },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: Theme.spacing.lg,
-  },
-  title: {
-    fontSize: Theme.typography.sizes['2xl'],
-    fontFamily: Theme.typography.fonts.bold,
-    marginBottom: Theme.spacing.sm,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.regular,
-    textAlign: 'center',
-    paddingHorizontal: Theme.spacing.xl,
-  },
-  methodSelector: {
-    flexDirection: 'row',
-    gap: Theme.spacing.md,
-    marginBottom: Theme.spacing.xl,
-  },
-  methodButton: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Theme.spacing.sm,
-    paddingVertical: Theme.spacing.md,
-    borderWidth: 2,
-    borderRadius: Theme.borderRadius.lg,
-  },
-  methodButtonActive: {
-    backgroundColor: 'rgba(255, 129, 51, 0.1)',
-  },
-  methodButtonText: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
-  },
-  verificationContainer: {
-    marginBottom: Theme.spacing.xl,
-  },
-  resendContainer: {
-    alignItems: 'center',
-    marginTop: Theme.spacing.lg,
-  },
-  resendText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.regular,
-    marginBottom: Theme.spacing.xs,
-  },
-  trustDeviceContainer: {
-    marginTop: Theme.spacing.xl,
-    padding: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.md,
-    backgroundColor: 'rgba(0, 0, 0, 0.03)',
-  },
-  trustDeviceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Theme.spacing.xs,
-  },
-  trustDeviceText: {
-    fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
-  },
-  trustDeviceHint: {
-    fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.regular,
-  },
-  biometricContainer: {
-    alignItems: 'center',
-    paddingVertical: Theme.spacing.xl,
-  },
-  errorContainer: {
-    marginTop: Theme.spacing.md,
-    padding: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.md,
-    backgroundColor: 'rgba(244, 67, 54, 0.1)',
-  },
-  errorText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-    textAlign: 'center',
-  },
-  footer: {
-    alignItems: 'center',
-    marginTop: 'auto',
-    paddingTop: Theme.spacing.xl,
-  },
-  devModeIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Theme.spacing.sm,
-    marginTop: Theme.spacing.md,
-    paddingVertical: Theme.spacing.sm,
-    paddingHorizontal: Theme.spacing.md,
-    borderRadius: Theme.borderRadius.md,
-  },
-  devModeText: {
-    fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
-  },
-});
+const createStyles = (palette: ThemeColors) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: palette.background,
+    },
+    keyboardView: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingHorizontal: Theme.spacing.lg,
+      paddingVertical: Theme.spacing.xl,
+    },
+    header: {
+      alignItems: 'center',
+      marginBottom: Theme.spacing.xl,
+    },
+    iconContainer: {
+      width: 96,
+      height: 96,
+      borderRadius: 48,
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginBottom: Theme.spacing.lg,
+      backgroundColor: palette.backgroundSecondary,
+    },
+    title: {
+      fontSize: Theme.typography.sizes['2xl'],
+      fontWeight: '700',
+      color: palette.textPrimary,
+      marginBottom: Theme.spacing.sm,
+      textAlign: 'center',
+    },
+    subtitle: {
+      fontSize: Theme.typography.sizes.md,
+      fontWeight: '400',
+      color: palette.textSecondary,
+      textAlign: 'center',
+      paddingHorizontal: Theme.spacing.xl,
+    },
+    methodSelector: {
+      flexDirection: 'row',
+      gap: Theme.spacing.md,
+      marginBottom: Theme.spacing.xl,
+    },
+    methodButton: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Theme.spacing.sm,
+      paddingVertical: Theme.spacing.md,
+      borderWidth: 2,
+      borderRadius: Theme.borderRadius.lg,
+    },
+    methodButtonActive: {
+      backgroundColor: palette.tint + '1A',
+    },
+    methodButtonText: {
+      fontSize: Theme.typography.sizes.md,
+      fontWeight: '600',
+    },
+    verificationContainer: {
+      marginBottom: Theme.spacing.xl,
+    },
+    resendContainer: {
+      alignItems: 'center',
+      marginTop: Theme.spacing.lg,
+    },
+    resendText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontWeight: '400',
+      color: palette.textSecondary,
+      marginBottom: Theme.spacing.xs,
+    },
+    trustDeviceContainer: {
+      marginTop: Theme.spacing.xl,
+      padding: Theme.spacing.md,
+      borderRadius: Theme.borderRadius.md,
+      backgroundColor: palette.backgroundSecondary,
+    },
+    trustDeviceRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: Theme.spacing.xs,
+    },
+    trustDeviceText: {
+      fontSize: Theme.typography.sizes.md,
+      fontWeight: '500',
+      color: palette.textPrimary,
+    },
+    trustDeviceHint: {
+      fontSize: Theme.typography.sizes.xs,
+      fontWeight: '400',
+      color: palette.textSecondary,
+    },
+    biometricContainer: {
+      alignItems: 'center',
+      paddingVertical: Theme.spacing.xl,
+    },
+    errorContainer: {
+      marginTop: Theme.spacing.md,
+      padding: Theme.spacing.md,
+      borderRadius: Theme.borderRadius.md,
+      backgroundColor: palette.statusError + '1A',
+    },
+    errorText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontWeight: '500',
+      color: palette.statusError,
+      textAlign: 'center',
+    },
+    footer: {
+      alignItems: 'center',
+      marginTop: 'auto',
+      paddingTop: Theme.spacing.xl,
+    },
+    devModeIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Theme.spacing.sm,
+      marginTop: Theme.spacing.md,
+      paddingVertical: Theme.spacing.sm,
+      paddingHorizontal: Theme.spacing.md,
+      borderRadius: Theme.borderRadius.md,
+    },
+    devModeText: {
+      fontSize: Theme.typography.sizes.sm,
+      fontWeight: '500',
+    },
+  });

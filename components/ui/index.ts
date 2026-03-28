@@ -8,5 +8,8 @@ export { Skeleton } from './Skeleton';
 export { Dropdown } from './Dropdown';
 export type { DropdownOption } from './Dropdown';
 export { ScreenHeader } from './ScreenHeader';
+export { IconBox } from './IconBox';
 export { Toast, toast, ToastProvider } from './Toast';
 export type { ToastType } from './Toast';
+export { GlassView, GlassContainer } from './GlassView';
+export type { GlassViewProps, GlassContainerProps, GlassIntensity } from './GlassView';

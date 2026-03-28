@@ -1,8 +1,10 @@
 import { Badge, Card } from '@/components/ui';
+import { GlassView } from '@/components/ui/GlassView';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { useAuthStore } from '@/store/authStore';
 import { useClubStore } from '@/store/clubStore';
+import { ClassTime } from '@/types/api';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -73,7 +75,7 @@ const ClubItem = React.memo(({
       <AnimatedCard
         variant="elevated"
         style={styles.clubCard}
-        entering={FadeInDown.delay(index * 100).duration(400).springify()}
+        entering={FadeInDown.delay(index * 60).duration(300).withInitialValues({ transform: [{ translateY: 8 }] })}
         layout={Layout.springify()}
       >
         <View style={styles.clubHeader}>
@@ -136,14 +138,14 @@ const ClubItem = React.memo(({
 
             <View style={styles.scheduleGrid}>
               {club.class_times
-                .sort((a, b) => {
+                .sort((a: ClassTime, b: ClassTime) => {
                   const dayOrder = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                   const dayA = dayOrder.indexOf(a.day.toLowerCase());
                   const dayB = dayOrder.indexOf(b.day.toLowerCase());
                   if (dayA !== dayB) return dayA - dayB;
                   return (a.start_time || '').localeCompare(b.start_time || '');
                 })
-                .map((cls, classIndex) => (
+                .map((cls: ClassTime, classIndex: number) => (
                   <Animated.View
                     key={cls.id}
                     style={styles.scheduleItem}
@@ -225,10 +227,10 @@ export default function ClubsScreen() {
     return (
       <View style={[styles.container, styles.centerContent]}>
         <Animated.View style={loadingAnimatedStyle}>
-          <View style={styles.loadingContainer}>
+          <GlassView style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={palette.tint} />
             <Text style={styles.loadingText}>Loading your clubs...</Text>
-          </View>
+          </GlassView>
         </Animated.View>
       </View>
     );
@@ -242,22 +244,24 @@ export default function ClubsScreen() {
           entering={FadeIn.duration(400)}
           style={styles.errorContainer}
         >
-          <View style={styles.errorIconContainer}>
-            <Ionicons name="alert-circle" size={56} color={palette.statusError} />
-          </View>
-          <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
-          <Text style={styles.errorMessage}>{error}</Text>
-          <Pressable
-            style={styles.retryButton}
-            onPress={() => {
-              if (Platform.OS === 'ios') {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              }
-              fetchClubs();
-            }}
-          >
-            <Text style={styles.retryButtonText}>Try Again</Text>
-          </Pressable>
+          <GlassView style={styles.errorGlass}>
+            <View style={styles.errorIconContainer}>
+              <Ionicons name="alert-circle" size={56} color={palette.statusError} />
+            </View>
+            <Text style={styles.errorTitle}>Oops! Something went wrong</Text>
+            <Text style={styles.errorMessage}>{error}</Text>
+            <Pressable
+              style={styles.retryButton}
+              onPress={() => {
+                if (Platform.OS === 'ios') {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                }
+                fetchClubs();
+              }}
+            >
+              <Text style={styles.retryButtonText}>Try Again</Text>
+            </Pressable>
+          </GlassView>
         </Animated.View>
       </View>
     );
@@ -307,12 +311,7 @@ export default function ClubsScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[
-          palette.backgroundSecondary,
-          palette.background,
-          palette.backgroundSecondary,
-        ]}
-        locations={[0, 0.5, 1]}
+        colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]}
         style={StyleSheet.absoluteFillObject}
       />
       <ScrollView
@@ -389,18 +388,20 @@ export default function ClubsScreen() {
           ))}
         </View>
 
-        {clubs.length === 0 && !isLoading && (
+        {clubs.length === 0 && !isLoading ? (
           <Animated.View
             entering={FadeIn.duration(400)}
             style={styles.emptyState}
           >
-            <View style={styles.emptyIconContainer}>
-              <Ionicons name="business-outline" size={64} color={palette.textTertiary} />
-            </View>
-            <Text style={styles.emptyTitle}>No clubs yet</Text>
-            <Text style={styles.emptyMessage}>Your clubs will appear here once they're added</Text>
+            <GlassView style={styles.emptyGlass}>
+              <View style={styles.emptyIconContainer}>
+                <Ionicons name="business-outline" size={64} color={palette.textTertiary} />
+              </View>
+              <Text style={styles.emptyTitle}>No clubs yet</Text>
+              <Text style={styles.emptyMessage}>Your clubs will appear here once they're added</Text>
+            </GlassView>
           </Animated.View>
-        )}
+        ) : null}
       </View>
 
       {/* Floating Action Button for Admins */}
@@ -450,9 +451,8 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   loadingContainer: {
     alignItems: 'center',
     padding: Theme.spacing['2xl'],
-    backgroundColor: palette.background,
     borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
+    overflow: 'hidden',
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
@@ -462,11 +462,13 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   errorContainer: {
     alignItems: 'center',
-    padding: Theme.spacing['2xl'],
-    backgroundColor: palette.background,
-    borderRadius: Theme.borderRadius.xl,
-    ...Theme.shadows.md,
     maxWidth: 320,
+  },
+  errorGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   errorIconContainer: {
     padding: Theme.spacing.lg,
@@ -493,7 +495,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingHorizontal: Theme.spacing.xl,
     paddingVertical: Theme.spacing.md,
     borderRadius: Theme.borderRadius.full,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   retryButtonText: {
     color: palette.textInverse,
@@ -513,7 +515,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     paddingBottom: Theme.spacing.xl,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    shadowColor: '#000',
+    shadowColor: palette.textPrimary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
     shadowRadius: 8,
@@ -553,7 +555,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     gap: Theme.spacing.xs,
     marginTop: Theme.spacing.sm,
     alignSelf: 'flex-start',
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   offlineText: {
     color: palette.textInverse,
@@ -690,6 +692,14 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   emptyState: {
     alignItems: 'center',
     paddingVertical: Theme.spacing['3xl'],
+    paddingHorizontal: Theme.spacing.md,
+  },
+  emptyGlass: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
+    width: '100%',
   },
   emptyIconContainer: {
     padding: Theme.spacing.xl,
@@ -723,7 +733,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     backgroundColor: palette.tint,
     justifyContent: 'center',
     alignItems: 'center',
-    ...Theme.shadows.lg,
+    ...Theme.shadows.elevated,
     elevation: 8,
   },
 });

@@ -10,9 +10,8 @@ import {
   Text,
   TouchableOpacity,
   View,
-  useColorScheme,
 } from 'react-native';
-import ColorPalette from '@/constants/Colors';
+import { useThemeColors, ThemeColors } from '@/hooks/useThemeColors';
 
 interface Reminder {
   id: number;
@@ -45,8 +44,7 @@ export function RemindersSection({
   const [animatedValues] = useState(() =>
     new Array(2).fill(null).map(() => new Animated.Value(1))
   );
-  const colorScheme = useColorScheme();
-  const colors = ColorPalette[colorScheme ?? 'light'];
+  const colors = useThemeColors();
   const styles = React.useMemo(() => createStyles(colors), [colors]);
 
   // Filter and sort reminders
@@ -239,9 +237,7 @@ export function RemindersSection({
   );
 }
 
-type Palette = (typeof ColorPalette)['light'];
-
-const createStyles = (palette: Palette) =>
+const createStyles = (palette: ThemeColors) =>
   StyleSheet.create({
     container: {
       marginHorizontal: Theme.spacing.lg,
@@ -250,11 +246,6 @@ const createStyles = (palette: Palette) =>
       backgroundColor: palette.tint + '08',
       borderWidth: 1,
       borderColor: palette.tint + '20',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-      elevation: 2,
     },
     content: {
       padding: 0,

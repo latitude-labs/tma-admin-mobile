@@ -180,7 +180,7 @@ export const MetricsRadarChart: React.FC<MetricsRadarChartProps> = ({
           cy={point.y}
           r="5"
           fill={color}
-          stroke="#FFFFFF"
+          stroke={palette.background}
           strokeWidth="2"
         />
       );

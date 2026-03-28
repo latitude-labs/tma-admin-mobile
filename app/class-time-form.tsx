@@ -1,4 +1,5 @@
 import { Button, Input, ScreenHeader, toast } from '@/components/ui';
+import { GlassView } from '@/components/ui/GlassView';
 import { Theme } from '@/constants/Theme';
 import { ThemeColors, useThemeColors } from '@/hooks/useThemeColors';
 import { ClassTimeFormData, classTimesService } from '@/services/api/classTimes.service';
@@ -24,8 +25,10 @@ import Animated, {
   FadeInDown,
   useAnimatedStyle,
   useSharedValue,
-  withSpring
+  withSpring,
+  withTiming,
 } from 'react-native-reanimated';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const DAYS = [
   'Monday',
@@ -193,6 +196,51 @@ const TimePickerField = React.memo(({
   );
 });
 
+// Extracted toggle component so hooks aren't called inside render/Controller
+interface AnimatedToggleProps {
+  value: boolean;
+  onPress: () => void;
+  label: string;
+  toggleRowStyle: object;
+  toggleLabelStyle: object;
+  toggleStyle: object;
+  toggleActiveStyle: object;
+  toggleThumbStyle: object;
+}
+
+function AnimatedToggle({
+  value,
+  onPress,
+  label,
+  toggleRowStyle,
+  toggleLabelStyle,
+  toggleStyle,
+  toggleActiveStyle,
+  toggleThumbStyle,
+}: AnimatedToggleProps) {
+  const thumbPosition = useSharedValue(value ? 20 : 0);
+
+  useEffect(() => {
+    thumbPosition.value = withTiming(value ? 20 : 0, { duration: 250 });
+  }, [value, thumbPosition]);
+
+  const thumbAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: thumbPosition.value }],
+  }));
+
+  return (
+    <Pressable
+      style={toggleRowStyle}
+      onPress={onPress}
+    >
+      <Text style={toggleLabelStyle}>{label}</Text>
+      <View style={[toggleStyle, value ? toggleActiveStyle : null]}>
+        <Animated.View style={[toggleThumbStyle, thumbAnimatedStyle]} />
+      </View>
+    </Pressable>
+  );
+}
+
 export default function ClassTimeFormScreen() {
   const palette = useThemeColors();
   const styles = useMemo(() => createStyles(palette), [palette]);
@@ -300,10 +348,13 @@ export default function ClassTimeFormScreen() {
       <>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.container}>
+      <LinearGradient colors={[palette.backgroundGradientStart, palette.backgroundGradientEnd]} style={StyleSheet.absoluteFillObject} />
           <ScreenHeader title="Loading..." />
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={palette.tint} />
-            <Text style={styles.loadingText}>Loading class time...</Text>
+          <View style={styles.loadingWrapper}>
+            <GlassView style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={palette.tint} />
+              <Text style={styles.loadingText}>Loading class time...</Text>
+            </GlassView>
           </View>
         </View>
       </>
@@ -457,27 +508,16 @@ export default function ClassTimeFormScreen() {
                   control={control}
                   name="is_accepting_bookings"
                   render={({ field: { value, onChange } }) => (
-                    <Pressable
-                      style={styles.toggleRow}
+                    <AnimatedToggle
+                      value={value}
                       onPress={() => onChange(!value)}
-                    >
-                      <Text style={styles.toggleLabel}>Accepting Bookings</Text>
-                      <View style={[
-                        styles.toggle,
-                        value && styles.toggleActive
-                      ]}>
-                        <Animated.View
-                          style={[
-                            styles.toggleThumb,
-                            {
-                              transform: [{
-                                translateX: value ? 20 : 0
-                              }]
-                            }
-                          ]}
-                        />
-                      </View>
-                    </Pressable>
+                      label="Accepting Bookings"
+                      toggleRowStyle={styles.toggleRow}
+                      toggleLabelStyle={styles.toggleLabel}
+                      toggleStyle={styles.toggle}
+                      toggleActiveStyle={styles.toggleActive}
+                      toggleThumbStyle={styles.toggleThumb}
+                    />
                   )}
                 />
               </View>
@@ -538,16 +578,23 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   scrollContent: {
     paddingBottom: Theme.spacing['3xl'],
   },
-  loadingContainer: {
+  loadingWrapper: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    padding: Theme.spacing.xl,
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    padding: Theme.spacing['2xl'],
+    borderRadius: Theme.borderRadius.xl,
+    overflow: 'hidden',
   },
   loadingText: {
     marginTop: Theme.spacing.lg,
     fontSize: Theme.typography.sizes.md,
     color: palette.textSecondary,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
   },
   formSection: {
     padding: Theme.spacing.lg,
@@ -559,12 +606,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     padding: Theme.spacing.md,
     borderRadius: Theme.borderRadius.lg,
     marginBottom: Theme.spacing.xl,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   clubName: {
     marginLeft: Theme.spacing.sm,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   inputContainer: {
@@ -572,7 +619,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   label: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
     marginBottom: Theme.spacing.xs,
   },
@@ -603,12 +650,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   dayChipText: {
     fontSize: Theme.typography.sizes.sm,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   dayChipTextSelected: {
     color: palette.textInverse,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   timeRow: {
     flexDirection: 'row',
@@ -629,7 +676,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   toggleLabel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   toggle: {
@@ -647,12 +694,12 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     height: 24,
     borderRadius: 12,
     backgroundColor: palette.background,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   errorText: {
     color: palette.statusError,
     fontSize: Theme.typography.sizes.xs,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     marginTop: Theme.spacing.xs,
     marginBottom: Theme.spacing.sm,
   },
@@ -679,7 +726,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   buttonText: {
     color: palette.textInverse,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.bold,
+    fontFamily: 'System', fontWeight: '700',
   },
   classTypeContainer: {
     flexDirection: 'row',
@@ -697,7 +744,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
     borderRadius: Theme.borderRadius.xl,
     borderWidth: 2,
     borderColor: palette.border,
-    ...Theme.shadows.sm,
+    ...Theme.shadows.subtle,
   },
   classTypeButtonSelected: {
     backgroundColor: palette.tint,
@@ -705,7 +752,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   classTypeText: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textSecondary,
   },
   classTypeTextSelected: {
@@ -724,7 +771,7 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   timePickerText: {
     flex: 1,
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textPrimary,
   },
   modalOverlay: {
@@ -748,17 +795,17 @@ const createStyles = (palette: ThemeColors) => StyleSheet.create({
   },
   modalTitle: {
     fontSize: Theme.typography.sizes.lg,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.textPrimary,
   },
   modalCancel: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.medium,
+    fontFamily: 'System', fontWeight: '500',
     color: palette.textSecondary,
   },
   modalDone: {
     fontSize: Theme.typography.sizes.md,
-    fontFamily: Theme.typography.fonts.semibold,
+    fontFamily: 'System', fontWeight: '600',
     color: palette.tint,
   },
   iosTimePicker: {
